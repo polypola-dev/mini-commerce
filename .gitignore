@@ -1,0 +1,44 @@
+# ===== Java / Gradle =====
+build/
+.gradle/
+*.class
+*.jar
+*.war
+out/
+target/
+
+# ===== Node.js / Next.js =====
+node_modules/
+.next/
+.turbo/
+dist/
+*.log
+npm-debug.log*
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+*.env
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== OMC / Claude / Local Tooling =====
+.omc/
+.omx/
+.agents/
+.claude/
+.antigravitycli/
+skills-lock.json
+
+# ===== TypeScript =====
+tsconfig.tsbuildinfo

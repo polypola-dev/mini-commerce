@@ -1,0 +1,422 @@
+:root {
+  color: #161616;
+  background: #f7f5f0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #006b5f;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.05;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.productCard {
+  overflow: hidden;
+  border: 1px solid #ded8ce;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.imageFrame {
+  aspect-ratio: 4 / 3;
+  background: #ebe7df;
+}
+
+.imageFrame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.productBody {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.productBody h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.productBody p {
+  margin: 0;
+  color: #59524a;
+}
+
+.metaRow,
+.orderPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metaRow span {
+  color: #006b5f;
+  font-weight: 700;
+}
+
+.orderPanel {
+  flex-wrap: wrap;
+}
+
+.orderPanel label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #5a534b;
+}
+
+.orderPanel input {
+  width: 92px;
+  border: 1px solid #cfc6ba;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.orderPanel button {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: #111111;
+  color: white;
+  cursor: pointer;
+}
+
+.orderPanel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.message {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   🔑 Premium Login Page (Glassmorphism & Gradient Blobs)
+   ========================================================================== */
+
+.loginViewport {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: #0f0f13;
+  overflow: hidden;
+}
+
+/* 그라데이션 구체 (유리막 블러 배경 효과) */
+.gradientBlob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 1;
+  opacity: 0.45;
+}
+
+.blob1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #00897b 0%, rgba(0, 137, 123, 0) 70%);
+  top: -10%;
+  left: 10%;
+}
+
+.blob2 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, #7e57c2 0%, rgba(126, 87, 194, 0) 70%);
+  bottom: -10%;
+  right: 10%;
+}
+
+/* 글래스모피즘 메인 카드 */
+.glassCard {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  color: #f1f3f5;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glassCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px 0 rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.authHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.authHeader h1 {
+  font-size: 32px;
+  color: #ffffff;
+  margin: 12px auto 8px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.authHeader p {
+  font-size: 14px;
+  color: #a0aec0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00897b 0%, #7e57c2 100%);
+  color: white;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+/* 구글 소셜 로그인 버튼 */
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.googleBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.googleBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 구분선 */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0;
+  color: #718096;
+  font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.divider:not(:empty)::before {
+  margin-right: 12px;
+}
+
+.divider:not(:empty)::after {
+  margin-left: 12px;
+}
+
+/* 입력 폼 */
+.authForm {
+  display: grid;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e0;
+}
+
+.inputGroup input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #00897b;
+  box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.2);
+}
+
+.inputGroup input::placeholder {
+  color: #4a5568;
+}
+
+.errorMessage {
+  padding: 10px 14px;
+  background: rgba(229, 62, 62, 0.15);
+  border: 1px solid rgba(229, 62, 62, 0.3);
+  border-radius: 8px;
+  color: #fc8181;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* 로그인 완료/제출 버튼 */
+.submitBtn {
+  position: relative;
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #00897b 0%, #00796b 100%);
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 137, 123, 0.3);
+  transition: all 0.25s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #009688 0%, #00897b 100%);
+  box-shadow: 0 6px 20px rgba(0, 137, 123, 0.4);
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 모의 대기 로더 스피너 */
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   🧩 Auth Header Status Bar Styles
+   ========================================================================== */
+
+.authStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 12px;
+  background: #ebe7df;
+  border: 1px solid #cfc6ba;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.userLabel {
+  color: #111111;
+}
+
+.logoutBtn {
+  border: 0;
+  background: transparent;
+  color: #c53030;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.logoutBtn:hover {
+  color: #9b2c2c;
+}
+
+.loginLink {
+  color: #006b5f;
+  text-decoration: none;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+}
+
+.loginLink:hover {
+  transform: scale(1.03);
+}
