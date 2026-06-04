@@ -46,6 +46,82 @@ h1 {
   line-height: 1.05;
 }
 
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.searchInputWrap {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #8a8278;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  border: 1px solid #cfc6ba;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+  color: #161616;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #006b5f;
+  box-shadow: 0 0 0 3px rgba(0, 107, 95, 0.12);
+}
+
+.searchInput::placeholder {
+  color: #a89f96;
+}
+
+.searchClearBtn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #8a8278;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.searchClearBtn:hover {
+  color: #161616;
+}
+
+.searchPending {
+  font-size: 13px;
+  color: #8a8278;
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 0;
+  color: #8a8278;
+  font-size: 15px;
+}
+
 .productGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -419,4 +495,176 @@ h1 {
 
 .loginLink:hover {
   transform: scale(1.03);
+}
+
+/* ==========================================================================
+   Review Section
+   ========================================================================== */
+
+.reviewSection {
+  border-top: 1px solid #ede9e3;
+  padding-top: 12px;
+}
+
+.reviewToggle {
+  border: 0;
+  background: transparent;
+  color: #006b5f;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.reviewBody {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.reviewLoading {
+  font-size: 13px;
+  color: #8a8278;
+  margin: 0;
+}
+
+.reviewAvg {
+  font-size: 14px;
+  font-weight: 700;
+  color: #b7791f;
+  margin: 0;
+}
+
+.reviewForm {
+  display: grid;
+  gap: 8px;
+}
+
+.starRating {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  border: 0;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  color: #d1c7bb;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.star--filled {
+  color: #d4a017;
+}
+
+.star:hover {
+  color: #d4a017;
+}
+
+.reviewTextarea {
+  width: 100%;
+  border: 1px solid #cfc6ba;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+  background: #faf9f7;
+}
+
+.reviewTextarea:focus {
+  outline: none;
+  border-color: #006b5f;
+  box-shadow: 0 0 0 3px rgba(0, 107, 95, 0.1);
+}
+
+.reviewSubmit {
+  justify-self: start;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #006b5f;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reviewSubmit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reviewSubmit:hover:not(:disabled) {
+  background: #005a50;
+}
+
+.reviewHint {
+  font-size: 12px;
+  color: #8a8278;
+  margin: 0;
+}
+
+.reviewList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.reviewItem {
+  background: #faf9f7;
+  border: 1px solid #ede9e3;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.reviewItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewStars {
+  color: #d4a017;
+  font-size: 14px;
+  letter-spacing: -1px;
+}
+
+.reviewDate {
+  font-size: 11px;
+  color: #a89f96;
+  margin-left: auto;
+}
+
+.reviewDelete {
+  border: 0;
+  background: transparent;
+  color: #c53030;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.reviewContent {
+  margin: 0;
+  font-size: 13px;
+  color: #3d3630;
+  line-height: 1.5;
+}
+
+.reviewEmpty {
+  font-size: 13px;
+  color: #8a8278;
+  margin: 0;
 }

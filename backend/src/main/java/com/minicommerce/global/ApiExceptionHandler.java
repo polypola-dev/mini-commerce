@@ -1,6 +1,7 @@
 package com.minicommerce.global;
 
 import com.minicommerce.inventory.OutOfStockException;
+import jakarta.persistence.EntityNotFoundException;
 import java.net.URI;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -15,6 +16,13 @@ public class ApiExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setType(URI.create("https://mini-commerce.local/problems/out-of-stock"));
         problem.setTitle("Out of stock");
+        return problem;
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    ProblemDetail handleNotFound(EntityNotFoundException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+        problem.setTitle("Not found");
         return problem;
     }
 
