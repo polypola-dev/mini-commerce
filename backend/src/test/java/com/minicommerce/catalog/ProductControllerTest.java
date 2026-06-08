@@ -29,13 +29,16 @@ class ProductControllerTest {
     private ProductRepository productRepository;
 
     @Mock
+    private ProductOptionRepository productOptionRepository;
+
+    @Mock
     private InventoryService inventoryService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        ProductController controller = new ProductController(productRepository, inventoryService);
+        ProductController controller = new ProductController(productRepository, productOptionRepository, inventoryService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -46,6 +49,7 @@ class ProductControllerTest {
         Product product = new Product("p1", "사과", "새콤달콤한 과일", BigDecimal.valueOf(2000), 10, "img.jpg");
         when(productRepository.findByActiveTrueOrderByNameAsc()).thenReturn(List.of(product));
         when(inventoryService.availableStock("p1", 10L)).thenReturn(8L);
+        when(productOptionRepository.findByProductId("p1")).thenReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/products")
@@ -72,6 +76,7 @@ class ProductControllerTest {
         Product product = new Product("p2", "검색어 상품", "검색어가 포함된 설명", BigDecimal.valueOf(5000), 3, "img2.jpg");
         when(productRepository.searchActive(query)).thenReturn(List.of(product));
         when(inventoryService.availableStock("p2", 3L)).thenReturn(3L);
+        when(productOptionRepository.findByProductId("p2")).thenReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/products")

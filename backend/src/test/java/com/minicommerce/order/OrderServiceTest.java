@@ -1,6 +1,8 @@
 package com.minicommerce.order;
 
 import com.minicommerce.catalog.Product;
+import com.minicommerce.catalog.ProductOption;
+import com.minicommerce.catalog.ProductOptionRepository;
 import com.minicommerce.catalog.ProductRepository;
 import com.minicommerce.inventory.InventoryHold;
 import com.minicommerce.inventory.InventoryItem;
@@ -35,6 +37,8 @@ class OrderServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
+    private ProductOptionRepository productOptionRepository;
+    @Mock
     private OrderRepository orderRepository;
     @Mock
     private InventoryReservationRepository reservationRepository;
@@ -51,6 +55,7 @@ class OrderServiceTest {
     void setUp() {
         orderService = new OrderService(
                 productRepository,
+                productOptionRepository,
                 orderRepository,
                 reservationRepository,
                 inventoryService,
@@ -71,7 +76,7 @@ class OrderServiceTest {
         // given
         String productId = "prod-1";
         CreateOrderRequest request = new CreateOrderRequest(
-                List.of(new CreateOrderRequest.CreateOrderItemRequest(productId, 2L))
+                List.of(new CreateOrderRequest.CreateOrderItemRequest(productId, 2L, null))
         );
 
         InventoryHold expectedHold = new InventoryHold(
@@ -83,7 +88,7 @@ class OrderServiceTest {
         Product expectedProduct = new Product(productId, "테스트 상품", "상품 설명", BigDecimal.valueOf(10000), 10L, "imageUrl");
 
         Order mockSavedOrder = new Order("order-1", "cust-1", List.of(
-                new OrderLineDraft(productId, "테스트 상품", BigDecimal.valueOf(10000), 2L)
+                new OrderLineDraft(productId, "테스트 상품", BigDecimal.valueOf(10000), 2L, null)
         ));
 
         when(inventoryService.reserve(any())).thenReturn(expectedHold);
@@ -105,12 +110,44 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("성공: 옵션이 지정되면 추가금액이 단가에 더해지고 OrderLine에 옵션값이 저장된다")
+    void createOrder_withOption_addsAdditionalPrice() {
+        // given
+        String productId = "prod-1";
+        String optionId = "option-1";
+        CreateOrderRequest request = new CreateOrderRequest(
+                List.of(new CreateOrderRequest.CreateOrderItemRequest(productId, 1L, optionId))
+        );
+
+        InventoryHold expectedHold = new InventoryHold(
+                "res-1",
+                Instant.now().plusSeconds(600),
+                List.of(new InventoryItem(productId, 1L))
+        );
+
+        Product expectedProduct = new Product(productId, "테스트 상품", "상품 설명", BigDecimal.valueOf(10000), 10L, "imageUrl");
+        ProductOption option = new ProductOption(optionId, productId, "색상", "화이트", BigDecimal.valueOf(5000));
+
+        when(inventoryService.reserve(any())).thenReturn(expectedHold);
+        when(productRepository.findById(productId)).thenReturn(Optional.of(expectedProduct));
+        when(productOptionRepository.findById(optionId)).thenReturn(Optional.of(option));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        Order order = orderService.createOrder(request, "cust-1");
+
+        // then: 단가 10000 + 추가금액 5000 = 15000
+        assertThat(order.getTotalAmount()).isEqualByComparingTo(BigDecimal.valueOf(15000));
+        verify(orderRepository).save(any(Order.class));
+    }
+
+    @Test
     @DisplayName("실패: 상품이 존재하지 않으면 주문 생성 트랜잭션이 실패하고 예약된 Redis 재고를 롤백(release)한다")
     void createOrder_ProductNotFound_ShouldRollbackRedisInventory() {
         // given
         String productId = "prod-not-found";
         CreateOrderRequest request = new CreateOrderRequest(
-                List.of(new CreateOrderRequest.CreateOrderItemRequest(productId, 2L))
+                List.of(new CreateOrderRequest.CreateOrderItemRequest(productId, 2L, null))
         );
 
         InventoryHold expectedHold = new InventoryHold(

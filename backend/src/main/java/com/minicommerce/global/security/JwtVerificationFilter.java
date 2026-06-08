@@ -81,18 +81,22 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
 
             // 5. 검증 성공 - userId를 Request Attribute에 보관
             request.setAttribute("authenticatedUserId", verified.getSubject());
-            filterChain.doFilter(request, response);
 
         } catch (TokenExpiredException e) {
             sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
                     "Unauthorized: Token has expired");
+            return;
         } catch (JWTVerificationException e) {
             sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
                     "Unauthorized: Invalid token signature");
+            return;
         } catch (Exception e) {
             sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
                     "Unauthorized: " + e.getMessage());
+            return;
         }
+
+        filterChain.doFilter(request, response);
     }
 
     private void sendError(HttpServletResponse response, int status, String message) throws IOException {

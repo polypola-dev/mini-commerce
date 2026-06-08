@@ -41,7 +41,7 @@ public class Order {
                 .map(OrderLineDraft::subtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         this.lines = lineDrafts.stream()
-                .map(draft -> new OrderLine(this, draft.productId(), draft.productName(), draft.unitPrice(), draft.quantity()))
+                .map(draft -> new OrderLine(this, draft.productId(), draft.productName(), draft.unitPrice(), draft.quantity(), draft.selectedOptionValue()))
                 .toList();
     }
 

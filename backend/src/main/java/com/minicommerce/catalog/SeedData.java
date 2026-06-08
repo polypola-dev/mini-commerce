@@ -9,10 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class SeedData implements ApplicationRunner {
     private final ProductRepository productRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final InventoryService inventoryService;
 
-    public SeedData(ProductRepository productRepository, InventoryService inventoryService) {
+    public SeedData(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryService inventoryService) {
         this.productRepository = productRepository;
+        this.productOptionRepository = productOptionRepository;
         this.inventoryService = inventoryService;
     }
 
@@ -42,10 +44,21 @@ public class SeedData implements ApplicationRunner {
                 50,
                 "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=80"
         ));
+
+        seedOption(new ProductOption("option-keyboard-black", "sku-keyboard", "색상", "블랙", BigDecimal.ZERO));
+        seedOption(new ProductOption("option-keyboard-white", "sku-keyboard", "색상", "화이트", BigDecimal.valueOf(10000)));
+        seedOption(new ProductOption("option-headphones-std", "sku-headphones", "모델", "Standard", BigDecimal.ZERO));
+        seedOption(new ProductOption("option-headphones-pro", "sku-headphones", "모델", "Pro", BigDecimal.valueOf(30000)));
+        seedOption(new ProductOption("option-lamp-warm", "sku-lamp", "색온도", "웜", BigDecimal.ZERO));
+        seedOption(new ProductOption("option-lamp-cool", "sku-lamp", "색온도", "쿨", BigDecimal.valueOf(5000)));
     }
 
     private void seedProduct(Product product) {
         productRepository.findById(product.getId()).orElseGet(() -> productRepository.save(product));
         inventoryService.initializeStockIfAbsent(product.getId(), product.getStock());
+    }
+
+    private void seedOption(ProductOption option) {
+        productOptionRepository.findById(option.getId()).orElseGet(() -> productOptionRepository.save(option));
     }
 }

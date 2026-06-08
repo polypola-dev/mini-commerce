@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/products")
 public class ProductController {
     private final ProductRepository productRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final InventoryService inventoryService;
 
-    public ProductController(ProductRepository productRepository, InventoryService inventoryService) {
+    public ProductController(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryService inventoryService) {
         this.productRepository = productRepository;
+        this.productOptionRepository = productOptionRepository;
         this.inventoryService = inventoryService;
     }
 
@@ -25,7 +27,10 @@ public class ProductController {
                 : productRepository.findByActiveTrueOrderByNameAsc();
 
         return products.stream()
-                .map(product -> ProductResponse.from(product, inventoryService.availableStock(product.getId(), product.getStock())))
+                .map(product -> ProductResponse.from(
+                        product,
+                        inventoryService.availableStock(product.getId(), product.getStock()),
+                        productOptionRepository.findByProductId(product.getId())))
                 .toList();
     }
 }

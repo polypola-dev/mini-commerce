@@ -1,6 +1,8 @@
 package com.minicommerce.order;
 
 import com.minicommerce.catalog.Product;
+import com.minicommerce.catalog.ProductOption;
+import com.minicommerce.catalog.ProductOptionRepository;
 import com.minicommerce.catalog.ProductRepository;
 import com.minicommerce.inventory.InventoryHold;
 import com.minicommerce.inventory.InventoryItem;
@@ -9,6 +11,7 @@ import com.minicommerce.inventory.InventoryReservationRepository;
 import com.minicommerce.inventory.InventoryService;
 import com.minicommerce.inventory.ReservationLine;
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class OrderService {
     private final ProductRepository productRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final OrderRepository orderRepository;
     private final InventoryReservationRepository reservationRepository;
     private final InventoryService inventoryService;
@@ -26,6 +30,7 @@ public class OrderService {
 
     public OrderService(
             ProductRepository productRepository,
+            ProductOptionRepository productOptionRepository,
             OrderRepository orderRepository,
             InventoryReservationRepository reservationRepository,
             InventoryService inventoryService,
@@ -33,6 +38,7 @@ public class OrderService {
             ApplicationEventPublisher eventPublisher
     ) {
         this.productRepository = productRepository;
+        this.productOptionRepository = productOptionRepository;
         this.orderRepository = orderRepository;
         this.reservationRepository = reservationRepository;
         this.inventoryService = inventoryService;
@@ -59,7 +65,17 @@ public class OrderService {
                 .map(item -> {
                     Product product = productRepository.findById(item.productId())
                             .orElseThrow(() -> new EntityNotFoundException("Product not found: " + item.productId()));
-                    return new OrderLineDraft(product.getId(), product.getName(), product.getPrice(), item.quantity());
+
+                    BigDecimal unitPrice = product.getPrice();
+                    String selectedOptionValue = null;
+                    if (item.selectedOptionId() != null && !item.selectedOptionId().isBlank()) {
+                        ProductOption option = productOptionRepository.findById(item.selectedOptionId())
+                                .orElseThrow(() -> new EntityNotFoundException("Product option not found: " + item.selectedOptionId()));
+                        unitPrice = unitPrice.add(option.getAdditionalPrice());
+                        selectedOptionValue = option.getOptionValue();
+                    }
+
+                    return new OrderLineDraft(product.getId(), product.getName(), unitPrice, item.quantity(), selectedOptionValue);
                 })
                 .toList();
 

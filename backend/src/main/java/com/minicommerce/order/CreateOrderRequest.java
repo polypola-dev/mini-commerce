@@ -15,7 +15,9 @@ public record CreateOrderRequest(
             String productId,
 
             @Min(value = 1, message = "quantity must be greater than zero")
-            long quantity
+            long quantity,
+
+            String selectedOptionId
     ) {
     }
 }

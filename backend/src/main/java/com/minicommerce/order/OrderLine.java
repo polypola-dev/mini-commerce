@@ -24,15 +24,17 @@ public class OrderLine {
     private String productName;
     private BigDecimal unitPrice;
     private long quantity;
+    private String selectedOptionValue;
 
     protected OrderLine() {
     }
 
-    public OrderLine(Order order, String productId, String productName, BigDecimal unitPrice, long quantity) {
+    public OrderLine(Order order, String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
         this.order = order;
         this.productId = productId;
         this.productName = productName;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
+        this.selectedOptionValue = selectedOptionValue;
     }
 }

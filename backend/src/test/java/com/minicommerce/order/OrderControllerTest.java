@@ -44,10 +44,10 @@ class OrderControllerTest {
         // given
         String customerId = "cust-1";
         CreateOrderRequest request = new CreateOrderRequest(
-                List.of(new CreateOrderRequest.CreateOrderItemRequest("prod-1", 2L))
+                List.of(new CreateOrderRequest.CreateOrderItemRequest("prod-1", 2L, null))
         );
         Order mockOrder = new Order("order-1", customerId, List.of(
-                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 2L)
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 2L, null)
         ));
 
         when(orderService.createOrder(any(CreateOrderRequest.class), eq(customerId)))
@@ -71,7 +71,7 @@ class OrderControllerTest {
         // given
         String orderId = "order-1";
         Order mockOrder = new Order("order-1", "cust-1", List.of(
-                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L)
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
         ));
         mockOrder.markPaid(); // PENDING_PAYMENT → PAID 상태 전이
 
