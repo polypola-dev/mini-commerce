@@ -1,3 +1,38 @@
+export type ProductOption = {
+  id: string;
+  optionGroupName: string;
+  optionValue: string;
+  additionalPrice: number;
+};
+
+export type CartItem = {
+  itemId: string;
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+  selectedOptionValue: string | null;
+};
+
+export type Cart = {
+  customerId: string;
+  items: CartItem[];
+  totalAmount: number;
+};
+
+export type AddCartItemRequest = {
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  selectedOptionId?: string;
+};
+
+export type UpdateCartItemRequest = {
+  quantity: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -5,6 +40,7 @@ export type Product = {
   price: number;
   availableStock: number;
   imageUrl: string;
+  options: ProductOption[];
 };
 
 export type Review = {
@@ -119,5 +155,66 @@ export async function deleteReview(reviewId: string): Promise<void> {
   if (!response.ok) {
     const problem = await response.text();
     throw new Error(problem || "Failed to delete review");
+  }
+}
+
+export async function getCart(): Promise<Cart> {
+  const response = await fetch("/api/proxy/cart", { cache: "no-store" });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to fetch cart");
+  }
+
+  return response.json();
+}
+
+export async function addToCart(request: AddCartItemRequest): Promise<CartItem> {
+  const response = await fetch("/api/proxy/cart", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to add to cart");
+  }
+
+  return response.json();
+}
+
+export async function updateCartItem(itemId: string, request: UpdateCartItemRequest): Promise<Cart> {
+  const response = await fetch(`/api/proxy/cart/items/${itemId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to update cart item");
+  }
+
+  return response.json();
+}
+
+export async function removeCartItem(itemId: string): Promise<void> {
+  const response = await fetch(`/api/proxy/cart/items/${itemId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to remove cart item");
+  }
+}
+
+export async function clearCart(): Promise<void> {
+  const response = await fetch("/api/proxy/cart", { method: "DELETE" });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to clear cart");
   }
 }

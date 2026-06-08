@@ -1,6 +1,8 @@
 import { getProducts } from "@/lib/api";
 import OrderPanel from "./order-panel";
 import AuthHeader from "./auth-header";
+import CartButton from "./cart-button";
+import CartHeader from "./cart-header";
 import SearchBar from "./search-bar";
 import ReviewSection from "./review-section";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +24,10 @@ export default async function HomePage({
           <p className="eyebrow">Mini Commerce</p>
           <h1>상품 재고를 Redis 예약으로 보호하는 주문 흐름</h1>
         </div>
-        <AuthHeader />
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <CartHeader />
+          <AuthHeader />
+        </div>
       </section>
 
       <SearchBar initialQuery={q ?? ""} />
@@ -45,6 +50,7 @@ export default async function HomePage({
                 <strong>{product.price.toLocaleString("ko-KR")}원</strong>
                 <span>재고 {product.availableStock}</span>
               </div>
+              <CartButton product={{ id: product.id, name: product.name, price: product.price, options: product.options }} />
               <OrderPanel product={product} />
               <ReviewSection productId={product.id} currentUserId={currentUserId} />
             </div>
