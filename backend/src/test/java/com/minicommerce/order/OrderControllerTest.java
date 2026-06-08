@@ -1,6 +1,13 @@
 package com.minicommerce.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minicommerce.order.adapter.in.web.CreateOrderRequest;
+import com.minicommerce.order.adapter.in.web.OrderController;
+import com.minicommerce.order.application.PlaceOrderCommand;
+import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
+import com.minicommerce.order.domain.Order;
+import com.minicommerce.order.domain.OrderLineDraft;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,14 +33,17 @@ class OrderControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private OrderService orderService;
+    private PlaceOrderUseCase placeOrderUseCase;
+
+    @Mock
+    private CompletePaymentUseCase completePaymentUseCase;
 
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         // JWT 필터를 우회하기 위해 standaloneSetup 사용
-        mockMvc = MockMvcBuilders.standaloneSetup(new OrderController(orderService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new OrderController(placeOrderUseCase, completePaymentUseCase))
                 .build();
         objectMapper = new ObjectMapper();
     }
@@ -50,7 +60,7 @@ class OrderControllerTest {
                 new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 2L, null)
         ));
 
-        when(orderService.createOrder(any(CreateOrderRequest.class), eq(customerId)))
+        when(placeOrderUseCase.place(any(PlaceOrderCommand.class), eq(customerId)))
                 .thenReturn(mockOrder);
 
         // when & then
@@ -75,7 +85,7 @@ class OrderControllerTest {
         ));
         mockOrder.markPaid(); // PENDING_PAYMENT → PAID 상태 전이
 
-        when(orderService.completeFakePayment(orderId)).thenReturn(mockOrder);
+        when(completePaymentUseCase.complete(orderId)).thenReturn(mockOrder);
 
         // when & then
         mockMvc.perform(post("/api/orders/{orderId}/complete-payment", orderId))

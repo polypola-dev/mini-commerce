@@ -1,4 +1,4 @@
-package com.minicommerce.order;
+package com.minicommerce.order.domain;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;

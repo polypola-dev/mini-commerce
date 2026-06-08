@@ -1,4 +1,4 @@
-package com.minicommerce.order;
+package com.minicommerce.order.domain;
 
 public enum OrderStatus {
     PENDING_PAYMENT,

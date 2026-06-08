@@ -1,4 +1,4 @@
-package com.minicommerce.order;
+package com.minicommerce.order.adapter.in.web;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;

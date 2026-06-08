@@ -1,5 +1,6 @@
-package com.minicommerce.order;
+package com.minicommerce.order.domain;
 
+import com.minicommerce.order.domain.Order;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

@@ -1,7 +1,7 @@
 package com.minicommerce.notification;
 
-import com.minicommerce.order.OrderPaidEvent;
-import com.minicommerce.order.OrderPlacedEvent;
+import com.minicommerce.order.domain.OrderPaidEvent;
+import com.minicommerce.order.domain.OrderPlacedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.modulith.events.ApplicationModuleListener;
