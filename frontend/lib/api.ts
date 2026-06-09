@@ -218,3 +218,20 @@ export async function clearCart(): Promise<void> {
     throw new Error(problem || "Failed to clear cart");
   }
 }
+
+export type NotificationItem = {
+  id: string;
+  orderId: string;
+  customerId: string;
+  type: string;
+  status: string;
+  message: string;
+  createdAt: string;
+  sentAt: string | null;
+};
+
+export async function getNotifications(): Promise<NotificationItem[]> {
+  const response = await fetch("/api/proxy/notifications", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch notifications");
+  return response.json();
+}

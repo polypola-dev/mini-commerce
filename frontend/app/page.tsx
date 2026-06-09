@@ -5,6 +5,7 @@ import CartButton from "./cart-button";
 import CartHeader from "./cart-header";
 import SearchBar from "./search-bar";
 import ReviewSection from "./review-section";
+import NotificationBell from "./notification-bell";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage({
@@ -25,6 +26,7 @@ export default async function HomePage({
           <h1>상품 재고를 Redis 예약으로 보호하는 주문 흐름</h1>
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <NotificationBell />
           <CartHeader />
           <AuthHeader />
         </div>

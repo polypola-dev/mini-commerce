@@ -1,4 +1,4 @@
-package com.minicommerce.order.domain;
+package com.minicommerce.order;
 
 import java.math.BigDecimal;
 
