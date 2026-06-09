@@ -68,16 +68,20 @@ describe("CartDrawer", () => {
 
   describe("Bug #2: 주문 완료 메시지 표시", () => {
     it("주문 완료 후 장바구니가 비워져도 결제 완료 메시지가 표시된다", async () => {
-      mockApi.createOrder.mockResolvedValue({
+      const mockOrder = {
         orderId: "order-123",
         status: "PAID",
         totalAmount: 35000,
-      });
-      mockApi.completeFakePayment.mockResolvedValue({
-        orderId: "order-123",
-        status: "PAID",
-        totalAmount: 35000,
-      });
+        createdAt: "2026-06-09T00:00:00Z",
+        lines: [],
+        shippingRecipient: null,
+        shippingPhone: null,
+        shippingAddress: null,
+        shippingDetailAddress: null,
+        shippingZipCode: null,
+      };
+      mockApi.createOrder.mockResolvedValue(mockOrder);
+      mockApi.completeFakePayment.mockResolvedValue(mockOrder);
       mockApi.clearCart.mockResolvedValue(undefined);
 
       render(<CartDrawer isOpen={true} onClose={() => {}} />);

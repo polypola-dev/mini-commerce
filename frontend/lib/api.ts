@@ -68,16 +68,46 @@ export type CreateOrderRequest = {
   items: Array<{
     productId: string;
     quantity: number;
+    selectedOptionId?: string;
   }>;
+  shippingRecipient?: string;
+  shippingPhone?: string;
+  shippingAddress?: string;
+  shippingDetailAddress?: string;
+  shippingZipCode?: string;
+};
+
+export type OrderLineItem = {
+  productId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+  selectedOptionValue: string | null;
 };
 
 export type OrderResponse = {
   orderId: string;
   status: string;
   totalAmount: number;
+  createdAt: string;
+  lines: OrderLineItem[];
+  shippingRecipient: string | null;
+  shippingPhone: string | null;
+  shippingAddress: string | null;
+  shippingDetailAddress: string | null;
+  shippingZipCode: string | null;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:18080";
+export type ShippingInfo = {
+  shippingRecipient: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  shippingDetailAddress: string;
+  shippingZipCode: string;
+};
+
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:18080";
 
 export async function getProducts(q?: string): Promise<Product[]> {
   const url = new URL(`${API_BASE_URL}/api/products`);
@@ -233,5 +263,88 @@ export type NotificationItem = {
 export async function getNotifications(): Promise<NotificationItem[]> {
   const response = await fetch("/api/proxy/notifications", { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch notifications");
+  return response.json();
+}
+
+export async function getMyOrders(): Promise<OrderResponse[]> {
+  const response = await fetch("/api/proxy/orders", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch orders");
+  return response.json();
+}
+
+export async function getOrderById(orderId: string): Promise<OrderResponse> {
+  const response = await fetch(`/api/proxy/orders/${orderId}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch order");
+  return response.json();
+}
+
+export async function getProductById(productId: string): Promise<Product> {
+  const response = await fetch(`/api/proxy/products/${productId}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch product");
+  return response.json();
+}
+
+// Admin APIs
+export type AdminProductRequest = {
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  imageUrl: string;
+};
+
+export async function adminGetProducts(): Promise<Product[]> {
+  const response = await fetch("/api/proxy/admin/products", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch products");
+  return response.json();
+}
+
+export async function adminCreateProduct(data: AdminProductRequest): Promise<Product> {
+  const response = await fetch("/api/proxy/admin/products", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "Failed to create product");
+  }
+  return response.json();
+}
+
+export async function adminUpdateProduct(id: string, data: AdminProductRequest): Promise<Product> {
+  const response = await fetch(`/api/proxy/admin/products/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "Failed to update product");
+  }
+  return response.json();
+}
+
+export async function adminDeleteProduct(id: string): Promise<void> {
+  const response = await fetch(`/api/proxy/admin/products/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Failed to delete product");
+}
+
+export async function adminGetOrders(): Promise<OrderResponse[]> {
+  const response = await fetch("/api/proxy/admin/orders", { cache: "no-store" });
+  if (!response.ok) throw new Error("Failed to fetch orders");
+  return response.json();
+}
+
+export async function adminUpdateOrderStatus(id: string, status: string): Promise<OrderResponse> {
+  const response = await fetch(`/api/proxy/admin/orders/${id}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "Failed to update order status");
+  }
   return response.json();
 }
