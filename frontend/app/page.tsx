@@ -28,6 +28,11 @@ export default async function HomePage({
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <NotificationBell />
           <CartHeader />
+          {user && (
+            <a href="/orders" style={{ fontSize: "0.875rem", padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--border)", textDecoration: "none", color: "inherit" }}>
+              주문 내역
+            </a>
+          )}
           <AuthHeader />
         </div>
       </section>
@@ -40,12 +45,16 @@ export default async function HomePage({
         )}
         {products.map((product) => (
           <article className="productCard" key={product.id}>
-            <div className="imageFrame">
-              <img src={product.imageUrl} alt="" />
-            </div>
+            <a href={`/products/${product.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <div className="imageFrame">
+                <img src={product.imageUrl} alt="" />
+              </div>
+            </a>
             <div className="productBody">
               <div>
-                <h2>{product.name}</h2>
+                <a href={`/products/${product.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  <h2>{product.name}</h2>
+                </a>
                 <p>{product.description}</p>
               </div>
               <div className="metaRow">

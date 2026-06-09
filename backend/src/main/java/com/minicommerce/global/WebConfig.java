@@ -1,5 +1,6 @@
 package com.minicommerce.global;
 
+import com.minicommerce.global.security.AdminAuthorizationFilter;
 import com.minicommerce.global.security.JwtVerificationFilter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +38,25 @@ public class WebConfig implements WebMvcConfigurer {
     public FilterRegistrationBean<JwtVerificationFilter> jwtVerificationFilter() {
         FilterRegistrationBean<JwtVerificationFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new JwtVerificationFilter(jwksUrl, bffSecretKey));
-        registrationBean.addUrlPatterns("/api/orders/*", "/api/reviews", "/api/reviews/*", "/api/cart", "/api/cart/*", "/api/notifications");
+        registrationBean.addUrlPatterns(
+                "/api/orders",
+                "/api/orders/*",
+                "/api/reviews",
+                "/api/reviews/*",
+                "/api/cart",
+                "/api/cart/*",
+                "/api/notifications"
+        );
+        registrationBean.setOrder(1);
+        return registrationBean;
+    }
+
+    @Bean
+    public FilterRegistrationBean<AdminAuthorizationFilter> adminAuthorizationFilter() {
+        FilterRegistrationBean<AdminAuthorizationFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new AdminAuthorizationFilter(jwksUrl, bffSecretKey));
+        registrationBean.addUrlPatterns("/api/admin/*");
+        registrationBean.setOrder(1);
         return registrationBean;
     }
 }

@@ -38,4 +38,12 @@ public class OrderLine {
         this.quantity = quantity;
         this.selectedOptionValue = selectedOptionValue;
     }
+
+    public Long getId() { return id; }
+    public String getProductId() { return productId; }
+    public String getProductName() { return productName; }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public long getQuantity() { return quantity; }
+    public String getSelectedOptionValue() { return selectedOptionValue; }
+    public BigDecimal getSubtotal() { return unitPrice.multiply(BigDecimal.valueOf(quantity)); }
 }

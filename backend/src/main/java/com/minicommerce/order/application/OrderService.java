@@ -1,6 +1,7 @@
 package com.minicommerce.order.application;
 
 import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import com.minicommerce.order.application.port.out.InventoryPort;
 import com.minicommerce.order.application.port.out.InventoryPort.StockHold;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase {
+public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase {
 
     private final ProductQueryPort productQueryPort;
     private final InventoryPort inventoryPort;
@@ -62,7 +63,11 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase {
                     })
                     .toList();
 
-            Order order = orderRepository.save(new Order(UUID.randomUUID().toString(), customerId, lines));
+            Order order = orderRepository.save(new Order(
+                    UUID.randomUUID().toString(), customerId, lines,
+                    command.shippingRecipient(), command.shippingPhone(),
+                    command.shippingAddress(), command.shippingDetailAddress(), command.shippingZipCode()
+            ));
             inventoryPort.createReservationForOrder(order.getId(), hold);
             eventPublisher.publishOrderPlaced(order.getId(), order.getCustomerId(), order.getTotalAmount());
             return order;
@@ -70,6 +75,23 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase {
             inventoryPort.release(hold);
             throw e;
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> getOrders(String customerId) {
+        return orderRepository.findAllByCustomerId(customerId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Order getOrder(String orderId, String customerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+        if (!order.getCustomerId().equals(customerId)) {
+            throw new EntityNotFoundException("Order not found: " + orderId);
+        }
+        return order;
     }
 
     @Override

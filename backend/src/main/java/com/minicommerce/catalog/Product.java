@@ -58,4 +58,20 @@ public class Product {
     public boolean isActive() {
         return active;
     }
+
+    public void update(String name, String description, java.math.BigDecimal price, long stock, String imageUrl) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+        this.imageUrl = imageUrl;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
 }

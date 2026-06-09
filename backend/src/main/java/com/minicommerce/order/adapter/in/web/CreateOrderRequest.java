@@ -8,7 +8,13 @@ import java.util.List;
 
 public record CreateOrderRequest(
         @NotEmpty(message = "items are required")
-        List<@Valid CreateOrderItemRequest> items
+        List<@Valid CreateOrderItemRequest> items,
+
+        String shippingRecipient,
+        String shippingPhone,
+        String shippingAddress,
+        String shippingDetailAddress,
+        String shippingZipCode
 ) {
     public record CreateOrderItemRequest(
             @NotBlank(message = "productId is required")
