@@ -4,7 +4,7 @@ build/
 *.class
 *.jar
 *.war
-out/
+/out/
 target/
 
 # ===== Node.js / Next.js =====
