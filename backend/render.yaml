@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: mini-commerce-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/products
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: 6379
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: BFF_SECRET_KEY
+        sync: false
