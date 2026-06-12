@@ -23,12 +23,26 @@ const FILTER_CHIPS = [
   { key: "CANCELED",        label: "취소됨" },
 ];
 
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+type SortCol = "createdAt" | "status" | "totalAmount" | null;
+type SortDir = "asc" | "desc";
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sortCol, setSortCol] = useState<SortCol>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [drawerOrder, setDrawerOrder] = useState<OrderResponse | null>(null);
+  const [drawerStatus, setDrawerStatus] = useState("");
 
   async function load() {
     setLoading(true);
@@ -43,6 +57,9 @@ export default function AdminOrdersPage() {
     try {
       await adminUpdateOrderStatus(orderId, status);
       await load();
+      if (drawerOrder?.orderId === orderId) {
+        setDrawerOrder((prev) => prev ? { ...prev, status } : null);
+      }
     } catch (e) {
       alert(e instanceof Error ? e.message : "상태 변경 실패");
     } finally {
@@ -50,9 +67,32 @@ export default function AdminOrdersPage() {
     }
   }
 
+  async function handleDrawerStatusChange() {
+    if (!drawerOrder) return;
+    await handleStatusChange(drawerOrder.orderId, drawerStatus);
+  }
+
+  function handleSortClick(col: SortCol) {
+    if (sortCol === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCol(col);
+      setSortDir("desc");
+    }
+  }
+
+  function openDrawer(order: OrderResponse) {
+    setDrawerOrder(order);
+    setDrawerStatus(order.status);
+  }
+
+  function closeDrawer() {
+    setDrawerOrder(null);
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return orders.filter((o) => {
+    const result = orders.filter((o) => {
       const matchStatus = statusFilter === "ALL" || o.status === statusFilter;
       const matchSearch = !q ||
         o.orderId.toLowerCase().includes(q) ||
@@ -60,7 +100,59 @@ export default function AdminOrdersPage() {
         o.lines?.some((l) => l.productName.toLowerCase().includes(q));
       return matchStatus && matchSearch;
     });
-  }, [orders, search, statusFilter]);
+
+    if (!sortCol) return result;
+
+    return [...result].sort((a, b) => {
+      let av: string | number;
+      let bv: string | number;
+      if (sortCol === "createdAt") {
+        av = a.createdAt;
+        bv = b.createdAt;
+      } else if (sortCol === "status") {
+        av = a.status;
+        bv = b.status;
+      } else {
+        av = a.totalAmount;
+        bv = b.totalAmount;
+      }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [orders, search, statusFilter, sortCol, sortDir]);
+
+  const allIds = filtered.map((o) => o.orderId);
+  const allChecked = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  const someChecked = allIds.some((id) => selected.has(id)) && !allChecked;
+
+  function toggleAll() {
+    if (allChecked) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        allIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => new Set([...prev, ...allIds]));
+    }
+  }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function sortArrow(col: SortCol) {
+    if (sortCol !== col) return null;
+    return <span className={styles.sortArrow}>{sortDir === "asc" ? "▲" : "▼"}</span>;
+  }
+
+  const selectedCount = allIds.filter((id) => selected.has(id)).length;
 
   return (
     <div className={styles.content}>
@@ -112,16 +204,43 @@ export default function AdminOrdersPage() {
             <span>
               <span className={styles.tableToolsCount}>{filtered.length}</span>건 표시 중
             </span>
+            {selectedCount > 0 && (
+              <span className={styles.selectedBadge}>{selectedCount}건 선택됨</span>
+            )}
           </div>
           <table className={styles.table}>
             <thead>
               <tr>
+                <th style={{ width: 40, paddingLeft: 18 }}>
+                  <input
+                    type="checkbox"
+                    className={styles.ck}
+                    checked={allChecked}
+                    ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                    onChange={toggleAll}
+                  />
+                </th>
                 <th>주문번호</th>
                 <th>고객 ID</th>
                 <th>상품</th>
-                <th>금액</th>
-                <th>주문일시</th>
-                <th>상태</th>
+                <th
+                  className={`${styles.thSortable}${sortCol === "totalAmount" ? " " + styles.thSortActive : ""}`}
+                  onClick={() => handleSortClick("totalAmount")}
+                >
+                  금액 {sortArrow("totalAmount")}
+                </th>
+                <th
+                  className={`${styles.thSortable}${sortCol === "createdAt" ? " " + styles.thSortActive : ""}`}
+                  onClick={() => handleSortClick("createdAt")}
+                >
+                  주문일시 {sortArrow("createdAt")}
+                </th>
+                <th
+                  className={`${styles.thSortable}${sortCol === "status" ? " " + styles.thSortActive : ""}`}
+                  onClick={() => handleSortClick("status")}
+                >
+                  상태 {sortArrow("status")}
+                </th>
                 <th>상태 변경</th>
               </tr>
             </thead>
@@ -129,10 +248,31 @@ export default function AdminOrdersPage() {
               {filtered.map((order) => {
                 const meta = STATUS_META[order.status];
                 return (
-                  <tr key={order.orderId}>
-                    <td className={styles.cellMono}>{order.orderId.slice(0, 8)}…</td>
+                  <tr
+                    key={order.orderId}
+                    className={styles.rowClickable}
+                    onClick={() => openDrawer(order)}
+                  >
+                    <td style={{ paddingLeft: 18 }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className={styles.ck}
+                        checked={selected.has(order.orderId)}
+                        onChange={() => toggleOne(order.orderId)}
+                      />
+                    </td>
+                    <td className={styles.cellMono} title={order.orderId}>{order.orderId.slice(0, 8)}…</td>
                     <td className={styles.cellMono}>
-                      {order.customerId ? `${order.customerId.slice(0, 8)}…` : "—"}
+                      {order.customerId ? (
+                        <span>
+                          <span style={{ display: "block", fontWeight: 700 }}>
+                            {order.customerId.slice(0, 8)}
+                          </span>
+                          <span className={styles.pmeta}>
+                            u_{order.customerId.slice(0, 4)}…
+                          </span>
+                        </span>
+                      ) : "—"}
                     </td>
                     <td style={{ maxWidth: 220 }}>
                       {order.lines?.map((l) => l.productName).join(", ") || "—"}
@@ -141,7 +281,7 @@ export default function AdminOrdersPage() {
                       {order.totalAmount.toLocaleString("ko-KR")}원
                     </td>
                     <td style={{ color: "#8b95a1", fontSize: 12.5 }}>
-                      {new Date(order.createdAt).toLocaleString("ko-KR")}
+                      {fmtDate(order.createdAt)}
                     </td>
                     <td>
                       {meta ? (
@@ -153,7 +293,7 @@ export default function AdminOrdersPage() {
                         <span className={styles.badge}>{order.status}</span>
                       )}
                     </td>
-                    <td>
+                    <td onClick={(e) => e.stopPropagation()}>
                       <select
                         className={styles.statusSelect}
                         value={order.status}
@@ -172,6 +312,109 @@ export default function AdminOrdersPage() {
           </table>
         </div>
       )}
+
+      {drawerOrder && (
+        <div className={styles.drawerMask} onClick={closeDrawer} />
+      )}
+      <div className={`${styles.drawer}${drawerOrder ? " " + styles.drawerOpen : ""}`}>
+        {drawerOrder && (
+          <>
+            <div className={styles.drawerHead}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>주문 상세</span>
+              <button
+                onClick={closeDrawer}
+                style={{
+                  marginLeft: "auto",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  color: "#8b95a1",
+                  lineHeight: 1,
+                  padding: "4px 6px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.drawerBody}>
+              <dl className={styles.dl}>
+                <dt className={styles.dlTerm}>주문번호</dt>
+                <dd className={`${styles.dlDesc} ${styles.cellMono}`}>{drawerOrder.orderId}</dd>
+
+                <dt className={styles.dlTerm}>주문일시</dt>
+                <dd className={styles.dlDesc}>
+                  {fmtDate(drawerOrder.createdAt)}
+                </dd>
+
+                <dt className={styles.dlTerm}>고객 ID</dt>
+                <dd className={`${styles.dlDesc} ${styles.cellMono}`}>
+                  {drawerOrder.customerId ?? "—"}
+                </dd>
+              </dl>
+
+              <p className={styles.sectTitle}>주문 상품</p>
+              {drawerOrder.lines?.length > 0 ? (
+                drawerOrder.lines.map((line, i) => (
+                  <div key={i} className={styles.lineItem}>
+                    <span className={styles.lineItemName}>
+                      {line.productName}
+                      {line.selectedOptionValue && (
+                        <span className={styles.pmeta}> ({line.selectedOptionValue})</span>
+                      )}
+                    </span>
+                    <span className={styles.lineItemMeta}>
+                      {line.quantity}개 · {line.subtotal.toLocaleString("ko-KR")}원
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p style={{ color: "#8b95a1", fontSize: 13 }}>상품 정보 없음</p>
+              )}
+
+              <p className={styles.sectTitle}>배송지</p>
+              <dl className={styles.dl}>
+                <dt className={styles.dlTerm}>수령인</dt>
+                <dd className={styles.dlDesc}>{drawerOrder.shippingRecipient ?? "—"}</dd>
+
+                <dt className={styles.dlTerm}>주소</dt>
+                <dd className={styles.dlDesc}>
+                  {drawerOrder.shippingAddress
+                    ? `${drawerOrder.shippingAddress} ${drawerOrder.shippingDetailAddress ?? ""}`.trim()
+                    : "—"}
+                </dd>
+              </dl>
+
+              <dl className={styles.dl} style={{ marginTop: 16 }}>
+                <dt className={styles.dlTerm}>총 결제금액</dt>
+                <dd className={`${styles.dlDesc} ${styles.cellNum}`} style={{ fontSize: 15 }}>
+                  {drawerOrder.totalAmount.toLocaleString("ko-KR")}원
+                </dd>
+              </dl>
+            </div>
+            <div className={styles.drawerFoot}>
+              <select
+                className={styles.statusSelect}
+                value={drawerStatus}
+                disabled={updating === drawerOrder.orderId}
+                onChange={(e) => setDrawerStatus(e.target.value)}
+                style={{ flex: 1 }}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{STATUS_META[s]?.label ?? s}</option>
+                ))}
+              </select>
+              <button
+                className={styles.btnPrimary}
+                disabled={updating === drawerOrder.orderId}
+                onClick={handleDrawerStatusChange}
+              >
+                상태 변경
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -606,3 +606,171 @@
   border: 1px solid #e5e8eb;
   border-radius: 14px;
 }
+
+/* ===== Checkbox ===== */
+.ck {
+  accent-color: #3182f6;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ===== Selected badge ===== */
+.selectedBadge {
+  background: #e8f3ff;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* ===== Sortable th ===== */
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.thSortable:hover {
+  color: #4e5968;
+}
+
+.thSortActive {
+  color: #3182f6 !important;
+}
+
+.sortArrow {
+  color: #3182f6;
+  font-size: 10px;
+  margin-left: 3px;
+}
+
+/* ===== Clickable row ===== */
+.rowClickable {
+  cursor: pointer;
+}
+
+/* ===== Customer meta ===== */
+.pmeta {
+  font-size: 11px;
+  color: #b0b8c1;
+  display: block;
+}
+
+/* ===== Drawer ===== */
+.drawerMask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 50;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: -440px;
+  width: 440px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -4px 0 24px rgba(0, 27, 55, 0.12);
+  z-index: 51;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawerOpen {
+  right: 0;
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e8eb;
+  flex-shrink: 0;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.drawerFoot {
+  border-top: 1px solid #e5e8eb;
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ===== Definition list ===== */
+.dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 8px 12px;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+.dlTerm {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8b95a1;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dlDesc {
+  font-size: 13.5px;
+  color: #191f28;
+  margin: 0;
+  padding: 0;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Drawer section title ===== */
+.sectTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8b95a1;
+  margin: 20px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ===== Line item ===== */
+.lineItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f5;
+  gap: 8px;
+}
+
+.lineItem:last-child {
+  border-bottom: none;
+}
+
+.lineItemName {
+  font-size: 13.5px;
+  color: #191f28;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+}
+
+.lineItemMeta {
+  font-size: 12.5px;
+  color: #4e5968;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
