@@ -55,7 +55,8 @@ class OrderServiceTest {
         // given
         String productId = "prod-1";
         PlaceOrderCommand command = new PlaceOrderCommand(
-                List.of(new PlaceOrderCommand.OrderItem(productId, 2L, null))
+                List.of(new PlaceOrderCommand.OrderItem(productId, 2L, null)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
         StockHold expectedHold = new StockHold(
@@ -94,7 +95,8 @@ class OrderServiceTest {
         String productId = "prod-1";
         String optionId = "option-1";
         PlaceOrderCommand command = new PlaceOrderCommand(
-                List.of(new PlaceOrderCommand.OrderItem(productId, 1L, optionId))
+                List.of(new PlaceOrderCommand.OrderItem(productId, 1L, optionId)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
         StockHold expectedHold = new StockHold(
@@ -125,7 +127,8 @@ class OrderServiceTest {
         // given
         String productId = "prod-not-found";
         PlaceOrderCommand command = new PlaceOrderCommand(
-                List.of(new PlaceOrderCommand.OrderItem(productId, 2L, null))
+                List.of(new PlaceOrderCommand.OrderItem(productId, 2L, null)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
         StockHold expectedHold = new StockHold(

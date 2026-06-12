@@ -40,6 +40,7 @@ export type Product = {
   price: number;
   availableStock: number;
   imageUrl: string;
+  active: boolean;
   options: ProductOption[];
 };
 
@@ -88,6 +89,7 @@ export type OrderLineItem = {
 
 export type OrderResponse = {
   orderId: string;
+  customerId?: string;
   status: string;
   totalAmount: number;
   createdAt: string;

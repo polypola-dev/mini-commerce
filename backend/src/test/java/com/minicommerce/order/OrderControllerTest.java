@@ -5,6 +5,7 @@ import com.minicommerce.order.adapter.in.web.CreateOrderRequest;
 import com.minicommerce.order.adapter.in.web.OrderController;
 import com.minicommerce.order.application.PlaceOrderCommand;
 import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
@@ -38,12 +39,15 @@ class OrderControllerTest {
     @Mock
     private CompletePaymentUseCase completePaymentUseCase;
 
+    @Mock
+    private GetOrdersUseCase getOrdersUseCase;
+
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         // JWT 필터를 우회하기 위해 standaloneSetup 사용
-        mockMvc = MockMvcBuilders.standaloneSetup(new OrderController(placeOrderUseCase, completePaymentUseCase))
+        mockMvc = MockMvcBuilders.standaloneSetup(new OrderController(placeOrderUseCase, completePaymentUseCase, getOrdersUseCase))
                 .build();
         objectMapper = new ObjectMapper();
     }
@@ -54,7 +58,8 @@ class OrderControllerTest {
         // given
         String customerId = "cust-1";
         CreateOrderRequest request = new CreateOrderRequest(
-                List.of(new CreateOrderRequest.CreateOrderItemRequest("prod-1", 2L, null))
+                List.of(new CreateOrderRequest.CreateOrderItemRequest("prod-1", 2L, null)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
         Order mockOrder = new Order("order-1", customerId, List.of(
                 new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 2L, null)

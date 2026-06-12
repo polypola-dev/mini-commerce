@@ -10,6 +10,7 @@ public record ProductResponse(
         BigDecimal price,
         long availableStock,
         String imageUrl,
+        boolean active,
         List<ProductOptionResponse> options
 ) {
     static ProductResponse from(Product product, long availableStock, List<ProductOption> options) {
@@ -20,6 +21,7 @@ public record ProductResponse(
                 product.getPrice(),
                 availableStock,
                 product.getImageUrl(),
+                product.isActive(),
                 options.stream().map(ProductOptionResponse::from).toList()
         );
     }

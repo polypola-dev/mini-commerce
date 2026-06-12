@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mini-commerce · 백오피스 (토스 스타일 샘플)</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  /* ===== Toss-style design tokens ===== */
+  :root {
+    --blue: #3182f6;
+    --blue-weak: #e8f3ff;
+    --blue-hover: #1b64da;
+    --bg: #f2f4f6;
+    --card: #ffffff;
+    --border: #e5e8eb;
+    --border-strong: #d1d6db;
+    --text: #191f28;
+    --text-2: #4e5968;
+    --text-3: #8b95a1;
+    --text-4: #b0b8c1;
+    --green: #00b86b; --green-bg:#e6f7ef;
+    --orange:#ff9500; --orange-bg:#fff3e0;
+    --red:#f04452; --red-bg:#ffeceb;
+    --purple:#6c5ce7; --purple-bg:#eeebfd;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,27,55,.04), 0 4px 16px rgba(0,27,55,.04);
+    --sidebar-w: 232px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    background: #fff;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 22px 18px;
+  }
+  .brand .logo {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--blue); color:#fff;
+    display:grid; place-items:center; font-weight:800; font-size:15px;
+  }
+  .brand b { font-size: 16px; letter-spacing: -.3px; }
+  .brand small { color: var(--text-4); font-size: 11px; display:block; margin-top:-2px; }
+  .nav { padding: 4px 12px; overflow-y:auto; flex:1; }
+  .nav .group { margin-top: 14px; }
+  .nav .group-title {
+    font-size: 11px; font-weight: 700; color: var(--text-4);
+    padding: 8px 12px 6px; letter-spacing: .3px;
+  }
+  .nav a {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    color: var(--text-2); text-decoration: none; font-weight: 600;
+    font-size: 13.5px; cursor: pointer; transition: background .12s;
+    margin-bottom: 2px;
+  }
+  .nav a .ico { width: 18px; text-align:center; font-size:15px; opacity:.9; }
+  .nav a:hover { background: #f6f8fa; }
+  .nav a.active { background: var(--blue-weak); color: var(--blue); }
+  .nav a .badge {
+    margin-left: auto; background: var(--red); color:#fff;
+    font-size: 11px; font-weight: 700; border-radius: 999px;
+    padding: 1px 7px; min-width: 18px; text-align:center;
+  }
+  .sidebar-foot {
+    border-top: 1px solid var(--border); padding: 14px 18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .avatar { width:32px; height:32px; border-radius:50%; background:#d8e6ff; color:var(--blue);
+    display:grid; place-items:center; font-weight:800; font-size:13px; }
+  .sidebar-foot .who b { font-size:13px; display:block; }
+  .sidebar-foot .who span { font-size:11px; color:var(--text-4); }
+
+  /* ===== Main ===== */
+  .main { display:flex; flex-direction:column; min-width:0; }
+  .topbar {
+    height: 60px; background:#fff; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:16px; padding: 0 28px;
+    position: sticky; top:0; z-index: 20;
+  }
+  .crumb { color: var(--text-3); font-size:13px; font-weight:600; }
+  .crumb b { color: var(--text); }
+  .topbar .grow { flex:1; }
+  .global-search {
+    display:flex; align-items:center; gap:8px;
+    background:var(--bg); border:1px solid transparent; border-radius:10px;
+    padding: 8px 12px; width: 280px; color:var(--text-3);
+  }
+  .global-search input { border:none; background:transparent; outline:none; flex:1; font-size:13px; color:var(--text); }
+  .icon-btn {
+    width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
+    background:#fff; display:grid; place-items:center; cursor:pointer; font-size:16px; color:var(--text-2);
+  }
+  .icon-btn:hover { background:#f6f8fa; }
+
+  .content { padding: 28px; max-width: 1280px; width:100%; }
+  .page-head { display:flex; align-items:flex-end; gap:14px; margin-bottom: 22px; }
+  .page-head h1 { font-size: 23px; letter-spacing:-.5px; }
+  .page-head p { color: var(--text-3); font-size:13px; margin-top:4px; }
+  .page-head .actions { margin-left:auto; display:flex; gap:8px; }
+
+  .btn {
+    border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:700;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition: all .12s;
+  }
+  .btn.primary { background: var(--blue); color:#fff; }
+  .btn.primary:hover { background: var(--blue-hover); }
+  .btn.ghost { background:#fff; color:var(--text-2); border:1px solid var(--border); }
+  .btn.ghost:hover { background:#f6f8fa; }
+  .btn.sm { padding:7px 12px; font-size:12.5px; border-radius:8px; }
+
+  /* ===== Section tabs (top of page) ===== */
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* ===== KPI cards ===== */
+  .kpis { display:grid; grid-template-columns: repeat(4,1fr); gap:16px; margin-bottom: 22px; }
+  .kpi {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding: 20px; box-shadow:var(--shadow);
+  }
+  .kpi .label { color:var(--text-3); font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:7px; }
+  .kpi .num { font-size: 28px; font-weight:800; letter-spacing:-1px; margin-top:10px; }
+  .kpi .num small { font-size:15px; font-weight:700; color:var(--text-3); margin-left:2px; }
+  .kpi .delta { font-size:12px; font-weight:700; margin-top:8px; display:inline-flex; align-items:center; gap:4px; }
+  .kpi .delta.up { color:var(--green); }
+  .kpi .delta.down { color:var(--red); }
+  .kpi .ico-box { width:36px; height:36px; border-radius:10px; display:grid; place-items:center; font-size:18px; float:right; }
+
+  .grid-2 { display:grid; grid-template-columns: 1.6fr 1fr; gap:16px; margin-bottom:22px; }
+  .panel {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .panel-head { padding:18px 20px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+  .panel-head h3 { font-size:15px; letter-spacing:-.3px; }
+  .panel-head .link { margin-left:auto; color:var(--blue); font-size:12.5px; font-weight:700; cursor:pointer; }
+  .panel-body { padding: 8px 20px 16px; }
+
+  /* fake chart */
+  .chart { height: 190px; display:flex; align-items:flex-end; gap:10px; padding: 18px 8px 0; }
+  .bar { flex:1; background: linear-gradient(180deg, var(--blue) 0%, #8fc0ff 100%); border-radius:6px 6px 0 0; position:relative; min-height:8px; }
+  .bar span { position:absolute; top:-20px; left:0; right:0; text-align:center; font-size:11px; font-weight:700; color:var(--text-2); }
+  .chart-x { display:flex; gap:10px; padding: 8px 8px 0; }
+  .chart-x div { flex:1; text-align:center; font-size:11px; color:var(--text-4); }
+
+  .feed-item { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--border); }
+  .feed-item:last-child { border-bottom:none; }
+  .feed-item .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .feed-item .t { flex:1; font-size:13px; }
+  .feed-item .t b { font-weight:700; }
+  .feed-item .time { color:var(--text-4); font-size:11.5px; }
+
+  /* ===== Filter bar ===== */
+  .toolbar {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding: 16px; margin-bottom:16px; box-shadow:var(--shadow);
+  }
+  .filters { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .field label { font-size:11.5px; font-weight:700; color:var(--text-3); padding-left:2px; }
+  .control {
+    border:1px solid var(--border-strong); border-radius:10px; background:#fff;
+    padding: 9px 12px; font-size:13px; color:var(--text); outline:none; min-width:140px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .control:focus-within, .control:focus { border-color: var(--blue); box-shadow:0 0 0 3px var(--blue-weak); }
+  .control input, .control select { border:none; outline:none; background:transparent; font-size:13px; flex:1; color:var(--text); }
+  .control.search { min-width:240px; color:var(--text-3); }
+  .filters .spacer { flex:1; }
+  .chips { display:flex; gap:7px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+  .chip {
+    border:1px solid var(--border-strong); background:#fff; border-radius:999px;
+    padding:6px 13px; font-size:12.5px; font-weight:600; color:var(--text-2); cursor:pointer;
+  }
+  .chip.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .chips .count { margin-left:auto; color:var(--text-3); font-size:12.5px; }
+  .chips .count b { color:var(--text); }
+
+  /* ===== Table ===== */
+  .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .table-tools { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .table-tools .sel { font-size:13px; color:var(--text-2); font-weight:600; }
+  .table-tools .sel b { color:var(--blue); }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    text-align:left; font-size:12px; font-weight:700; color:var(--text-3);
+    padding: 13px 18px; background:#fafbfc; border-bottom:1px solid var(--border);
+    white-space:nowrap; user-select:none;
+  }
+  thead th.sortable { cursor:pointer; }
+  thead th.sortable:hover { color:var(--text-2); }
+  thead th .arrow { font-size:10px; color:var(--blue); margin-left:3px; }
+  tbody td { padding: 14px 18px; border-bottom:1px solid var(--border); font-size:13.5px; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:#fafbff; }
+  td.mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size:12.5px; color:var(--text-2); }
+  td.num { font-weight:700; text-align:right; font-variant-numeric: tabular-nums; }
+  .ck { width:17px; height:17px; accent-color:var(--blue); cursor:pointer; }
+
+  .prod { display:flex; align-items:center; gap:11px; }
+  .prod .thumb { width:38px; height:38px; border-radius:9px; object-fit:cover; background:#eef2f6; flex-shrink:0; display:grid; place-items:center; font-size:16px; color:var(--text-4); }
+  .prod .pn { font-weight:700; }
+  .prod .pmeta { font-size:11.5px; color:var(--text-4); }
+
+  .badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; border-radius:999px; padding:4px 10px; white-space:nowrap; }
+  .badge .d { width:6px; height:6px; border-radius:50%; }
+  .b-paid    { background:var(--green-bg); color:var(--green); }
+  .b-pending { background:var(--orange-bg); color:var(--orange); }
+  .b-ship    { background:var(--blue-weak); color:var(--blue); }
+  .b-done    { background:var(--purple-bg); color:var(--purple); }
+  .b-cancel  { background:var(--red-bg); color:var(--red); }
+  .b-active  { background:var(--green-bg); color:var(--green); }
+  .b-off     { background:#f1f3f5; color:var(--text-3); }
+
+  .stock-bar { width:80px; height:6px; background:#eef0f3; border-radius:999px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:8px; }
+  .stock-bar i { display:block; height:100%; border-radius:999px; }
+
+  .row-act { display:flex; gap:6px; justify-content:flex-end; }
+  .mini { border:1px solid var(--border); background:#fff; color:var(--text-2); border-radius:8px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; }
+  .mini:hover { background:#f6f8fa; }
+  .mini.danger { color:var(--red); border-color:#f7d3d6; }
+  .mini.danger:hover { background:var(--red-bg); }
+
+  /* status select inline */
+  .status-select { border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:12.5px; font-weight:700; background:#fff; cursor:pointer; outline:none; }
+
+  /* ===== Pagination ===== */
+  .pager { display:flex; align-items:center; gap:6px; padding:16px 18px; }
+  .pager .info { color:var(--text-3); font-size:12.5px; margin-right:auto; }
+  .pg { width:34px; height:34px; border-radius:9px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:13px; font-weight:600; color:var(--text-2); }
+  .pg:hover { background:#f6f8fa; }
+  .pg.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .pg:disabled { opacity:.4; cursor:default; }
+  .page-size { margin-left:8px; }
+
+  /* ===== Detail drawer ===== */
+  .drawer-mask { position:fixed; inset:0; background:rgba(15,23,42,.35); display:none; z-index:50; }
+  .drawer-mask.open { display:block; }
+  .drawer {
+    position:fixed; top:0; right:-460px; width:440px; height:100%; background:#fff;
+    box-shadow:-8px 0 30px rgba(0,27,55,.12); z-index:51; transition:right .25s ease;
+    display:flex; flex-direction:column;
+  }
+  .drawer.open { right:0; }
+  .drawer-head { padding:20px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .drawer-head h3 { font-size:16px; }
+  .drawer-head .x { margin-left:auto; cursor:pointer; font-size:20px; color:var(--text-3); }
+  .drawer-body { padding:22px; overflow-y:auto; flex:1; }
+  .dl { display:grid; grid-template-columns: 96px 1fr; gap:12px 14px; font-size:13.5px; }
+  .dl dt { color:var(--text-3); font-weight:600; }
+  .dl dd { font-weight:600; }
+  .sect-title { font-size:12px; font-weight:800; color:var(--text-4); margin:22px 0 12px; letter-spacing:.3px; }
+  .line-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .line-item:last-child { border-bottom:none; }
+  .drawer-foot { padding:16px 22px; border-top:1px solid var(--border); display:flex; gap:8px; }
+
+  /* ===== Sidebar search trigger ===== */
+  .side-search {
+    margin: 4px 14px 6px; display:flex; align-items:center; gap:8px;
+    background:var(--bg); border:1px solid transparent; border-radius:10px;
+    padding:9px 11px; color:var(--text-3); font-size:13px; cursor:pointer; user-select:none;
+  }
+  .side-search:hover { background:#eef1f4; }
+  .side-search .kbd {
+    margin-left:auto; display:flex; gap:3px;
+  }
+  .side-search .kbd b {
+    background:#fff; border:1px solid var(--border-strong); border-radius:5px;
+    font-size:11px; font-weight:700; color:var(--text-3); padding:1px 5px; line-height:1.4;
+  }
+
+  /* ===== Pins ===== */
+  .pins { margin: 2px 0 6px; }
+  .pin-row { display:flex; align-items:center; position:relative; }
+  .pin-row a { flex:1; }
+  .pin-row .unpin {
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    opacity:0; cursor:pointer; color:var(--text-4); font-size:13px; padding:3px 5px;
+    border-radius:6px; transition:opacity .12s, background .12s, color .12s;
+  }
+  .pin-row:hover .unpin { opacity:1; }
+  .pin-row .unpin:hover { background:var(--red-bg); color:var(--red); }
+  .nav-divider { height:1px; background:var(--border); margin:8px 12px 6px; }
+  .nav a .star {
+    margin-left:auto; opacity:0; font-size:13px; color:var(--text-4);
+    transition:opacity .12s; cursor:pointer; padding:2px;
+  }
+  .nav a:hover .star { opacity:1; }
+  .nav a .star.on { opacity:1; color:#ffb400; }
+
+  /* ===== Accordion ===== */
+  .acc { margin-top: 2px; }
+  .acc-head {
+    width:100%; display:flex; align-items:center; gap:11px;
+    padding:10px 12px; border:none; background:transparent; border-radius:var(--radius-sm);
+    color:var(--text-2); font-weight:700; font-size:13.5px; cursor:pointer; text-align:left;
+    transition:background .12s;
+  }
+  .acc-head:hover { background:#f6f8fa; }
+  .acc-head .ico { width:18px; text-align:center; font-size:15px; opacity:.9; }
+  .acc-head .cnt {
+    margin-left:auto; font-size:11px; font-weight:700; color:var(--text-4);
+    background:var(--bg); border-radius:999px; padding:1px 7px; min-width:18px; text-align:center;
+  }
+  .acc-head .chev {
+    font-size:11px; color:var(--text-4); transition:transform .2s; margin-left:8px;
+  }
+  .acc.open .acc-head { color:var(--text); }
+  .acc.open .acc-head .chev { transform:rotate(90deg); }
+  .acc-body {
+    max-height:0; overflow:hidden; transition:max-height .22s ease;
+    padding-left: 18px; position:relative;
+  }
+  .acc-body::before {
+    content:''; position:absolute; left:21px; top:4px; bottom:8px; width:2px; background:var(--border);
+  }
+  .acc.open .acc-body { max-height:320px; }
+  .acc-body a {
+    font-size:13px; font-weight:600; padding:8px 12px; padding-left:18px; color:var(--text-2);
+  }
+  .acc-body a.active { background:var(--blue-weak); color:var(--blue); }
+
+  /* ===== Command palette (⌘K) ===== */
+  .cmdk-mask { position:fixed; inset:0; background:rgba(15,23,42,.4); display:none; z-index:80; }
+  .cmdk-mask.open { display:flex; align-items:flex-start; justify-content:center; padding-top:14vh; }
+  .cmdk {
+    width:560px; max-width:92vw; background:#fff; border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,27,55,.28); overflow:hidden; animation:cpop .14s ease;
+  }
+  @keyframes cpop { from{ transform:translateY(8px); opacity:0; } to{ transform:none; opacity:1; } }
+  .cmdk-input { display:flex; align-items:center; gap:11px; padding:18px 20px; border-bottom:1px solid var(--border); }
+  .cmdk-input span { font-size:18px; color:var(--text-3); }
+  .cmdk-input input { flex:1; border:none; outline:none; font-size:16px; color:var(--text); }
+  .cmdk-list { max-height:340px; overflow-y:auto; padding:8px; }
+  .cmdk-sect { font-size:11px; font-weight:800; color:var(--text-4); padding:10px 12px 6px; letter-spacing:.3px; }
+  .cmdk-item {
+    display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:10px;
+    cursor:pointer; font-size:14px; color:var(--text); font-weight:600;
+  }
+  .cmdk-item .ci { width:20px; text-align:center; font-size:16px; }
+  .cmdk-item .path { margin-left:auto; font-size:11.5px; color:var(--text-4); font-weight:600; }
+  .cmdk-item.sel, .cmdk-item:hover { background:var(--blue-weak); color:var(--blue); }
+  .cmdk-item.sel .path { color:var(--blue); }
+  .cmdk-empty { padding:28px; text-align:center; color:var(--text-4); font-size:14px; }
+  .cmdk-foot { display:flex; gap:14px; padding:10px 16px; border-top:1px solid var(--border); font-size:11.5px; color:var(--text-4); }
+  .cmdk-foot b { background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:0 5px; font-weight:700; color:var(--text-3); }
+
+  /* ===== Toast ===== */
+  .toast {
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:#fff; padding:12px 18px; border-radius:12px;
+    font-size:13.5px; font-weight:600; box-shadow:0 8px 24px rgba(0,27,55,.25);
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:90;
+    display:flex; align-items:center; gap:9px;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast b { color:#8fc0ff; }
+
+  @media (max-width: 1100px){ .kpis{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div><b>mini-commerce</b><small>Back office</small></div>
+    </div>
+    <div class="side-search" onclick="openCmdk()">
+      🔎 <span>메뉴 검색</span>
+      <span class="kbd"><b>⌘</b><b>K</b></span>
+    </div>
+    <nav class="nav" id="nav">
+      <!-- 즐겨찾기 -->
+      <div class="pins" id="pins">
+        <div class="group-title">즐겨찾기</div>
+        <div class="pin-row"><a data-view="orders" data-pin-label="주문 목록"><span class="ico">🧾</span> 주문 목록 <span class="badge">5</span></a><span class="unpin" onclick="removePin(event,'주문 목록')">✕</span></div>
+        <div class="pin-row"><a data-pin-label="재고 부족"><span class="ico">⚠</span> 재고 부족</a><span class="unpin" onclick="removePin(event,'재고 부족')">✕</span></div>
+      </div>
+
+      <div class="nav-divider"></div>
+
+      <!-- 단독 메뉴 -->
+      <a class="active" data-view="dashboard"><span class="ico">▦</span> 대시보드</a>
+
+      <!-- 주문 관리 (현재 그룹: 기본 펼침) -->
+      <div class="acc open" data-group="order">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">🧾</span> 주문 관리 <span class="cnt">5</span><span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-view="orders" data-label="주문 목록" data-grp="주문 관리"><span>주문 목록</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="취소·환불" data-grp="주문 관리"><span>취소·환불</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="배송 관리" data-grp="주문 관리"><span>배송 관리</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+
+      <!-- 상품 관리 -->
+      <div class="acc" data-group="product">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">📦</span> 상품 관리 <span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-view="products" data-label="상품 목록" data-grp="상품 관리"><span>상품 목록</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="카테고리" data-grp="상품 관리"><span>카테고리</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="재고 현황" data-grp="상품 관리"><span>재고 현황</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+
+      <!-- 고객 -->
+      <div class="acc" data-group="customer">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">👤</span> 고객 <span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-label="고객 목록" data-grp="고객"><span>고객 목록</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="리뷰 관리" data-grp="고객"><span>리뷰 관리</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+
+      <!-- 정산 -->
+      <div class="acc" data-group="settle">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">💳</span> 정산 <span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-label="매출 현황" data-grp="정산"><span>매출 현황</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="정산 내역" data-grp="정산"><span>정산 내역</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+
+      <!-- 마케팅 -->
+      <div class="acc" data-group="mkt">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">🏷</span> 마케팅 <span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-label="쿠폰" data-grp="마케팅"><span>쿠폰</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="프로모션" data-grp="마케팅"><span>프로모션</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+
+      <!-- 시스템 -->
+      <div class="acc" data-group="system">
+        <button class="acc-head" onclick="toggleAcc(this)"><span class="ico">⚙</span> 시스템 <span class="chev">▸</span></button>
+        <div class="acc-body">
+          <a data-label="관리자 권한" data-grp="시스템"><span>관리자 권한</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+          <a data-label="환경 설정" data-grp="시스템"><span>환경 설정</span><span class="star" onclick="togglePin(event,this)">☆</span></a>
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar">A</div>
+      <div class="who"><b>관리자</b><span>aa@a.com</span></div>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN ========== -->
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb" id="crumb">Admin / <b>대시보드</b></div>
+      <div class="grow"></div>
+      <div class="global-search">🔎 <input id="globalSearch" placeholder="주문번호·고객·상품 검색 후 Enter" onkeydown="if(event.key==='Enter')runGlobalSearch()" /></div>
+      <button class="icon-btn" title="알림">🔔</button>
+      <button class="icon-btn" title="도움말">？</button>
+    </header>
+
+    <div class="content">
+
+      <!-- ====== DASHBOARD ====== -->
+      <section class="view active" id="view-dashboard">
+        <div class="page-head">
+          <div>
+            <h1>대시보드</h1>
+            <p>2026년 6월 12일 · 오늘의 운영 현황</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost">📅 기간 설정</button>
+            <button class="btn primary">＋ 상품 등록</button>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="ico-box" style="background:var(--blue-weak);color:var(--blue);">₩</div>
+            <div class="label">오늘 매출</div>
+            <div class="num">3,240,000<small>원</small></div>
+            <div class="delta up">▲ 12.4% <span style="color:var(--text-4);font-weight:600;">전일 대비</span></div>
+          </div>
+          <div class="kpi">
+            <div class="ico-box" style="background:var(--orange-bg);color:var(--orange);">🧾</div>
+            <div class="label">신규 주문</div>
+            <div class="num">48<small>건</small></div>
+            <div class="delta up">▲ 8건 <span style="color:var(--text-4);font-weight:600;">전일 대비</span></div>
+          </div>
+          <div class="kpi">
+            <div class="ico-box" style="background:var(--red-bg);color:var(--red);">⚠</div>
+            <div class="label">재고 부족</div>
+            <div class="num">7<small>개</small></div>
+            <div class="delta down">▼ 즉시 보충 필요</div>
+          </div>
+          <div class="kpi">
+            <div class="ico-box" style="background:var(--green-bg);color:var(--green);">👤</div>
+            <div class="label">신규 가입</div>
+            <div class="num">23<small>명</small></div>
+            <div class="delta up">▲ 4.1% <span style="color:var(--text-4);font-weight:600;">전일 대비</span></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h3>최근 7일 매출 추이</h3><span class="link">리포트 보기</span></div>
+            <div class="panel-body">
+              <div class="chart">
+                <div class="bar" style="height:55%"><span>1.8M</span></div>
+                <div class="bar" style="height:42%"><span>1.3M</span></div>
+                <div class="bar" style="height:70%"><span>2.4M</span></div>
+                <div class="bar" style="height:60%"><span>2.0M</span></div>
+                <div class="bar" style="height:48%"><span>1.5M</span></div>
+                <div class="bar" style="height:80%"><span>2.9M</span></div>
+                <div class="bar" style="height:95%"><span>3.2M</span></div>
+              </div>
+              <div class="chart-x">
+                <div>6/6</div><div>6/7</div><div>6/8</div><div>6/9</div><div>6/10</div><div>6/11</div><div>오늘</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>실시간 활동</h3><span class="link">전체</span></div>
+            <div class="panel-body">
+              <div class="feed-item"><span class="dot" style="background:var(--green)"></span><div class="t"><b>이지은</b>님 결제 완료 · 89,000원</div><div class="time">방금</div></div>
+              <div class="feed-item"><span class="dot" style="background:var(--orange)"></span><div class="t">주문 <b>#A1F2</b> 결제 대기</div><div class="time">2분 전</div></div>
+              <div class="feed-item"><span class="dot" style="background:var(--blue)"></span><div class="t">무선 이어폰 Pro <b>배송 시작</b></div><div class="time">11분 전</div></div>
+              <div class="feed-item"><span class="dot" style="background:var(--red)"></span><div class="t">캠핑 의자 <b>재고 0</b> 도달</div><div class="time">24분 전</div></div>
+              <div class="feed-item"><span class="dot" style="background:var(--purple)"></span><div class="t"><b>박서준</b>님 리뷰 작성 ★★★★★</div><div class="time">38분 전</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== ORDERS ====== -->
+      <section class="view" id="view-orders">
+        <div class="page-head">
+          <div>
+            <h1>주문 관리</h1>
+            <p>전체 1,284건 · 처리 대기 5건</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost">⬇ 엑셀 내보내기</button>
+            <button class="btn primary">＋ 수동 주문 등록</button>
+          </div>
+        </div>
+
+        <!-- filter toolbar -->
+        <div class="toolbar">
+          <div class="filters">
+            <div class="field">
+              <label>검색</label>
+              <div class="control search">🔎 <input id="ordersSearch" placeholder="주문번호 · 고객명 · 상품명" /></div>
+            </div>
+            <div class="field">
+              <label>기간</label>
+              <div class="control"><input type="date" value="2026-06-01" /> ~ <input type="date" value="2026-06-12" /></div>
+            </div>
+            <div class="field">
+              <label>주문 상태</label>
+              <div class="control"><select><option>전체</option><option>결제 대기</option><option>결제 완료</option><option>배송 중</option><option>배송 완료</option><option>취소</option></select></div>
+            </div>
+            <div class="field">
+              <label>결제 수단</label>
+              <div class="control"><select><option>전체</option><option>카드</option><option>계좌이체</option><option>간편결제</option></select></div>
+            </div>
+            <div class="spacer"></div>
+            <div class="field"><label>&nbsp;</label><button class="btn primary" style="padding:9px 18px;">조회</button></div>
+            <div class="field"><label>&nbsp;</label><button class="btn ghost" style="padding:9px 16px;">초기화</button></div>
+          </div>
+          <div class="chips">
+            <div class="chip on">전체 1,284</div>
+            <div class="chip">결제대기 5</div>
+            <div class="chip">결제완료 312</div>
+            <div class="chip">배송중 88</div>
+            <div class="chip">배송완료 870</div>
+            <div class="chip">취소 9</div>
+          </div>
+        </div>
+
+        <!-- table -->
+        <div class="table-wrap">
+          <div class="table-tools">
+            <input type="checkbox" class="ck" id="ckAll" onchange="toggleAll(this)" />
+            <span class="sel"><b id="selCount">0</b>건 선택됨</span>
+            <button class="btn ghost sm">일괄 상태 변경</button>
+            <button class="btn ghost sm">송장 일괄 등록</button>
+            <div style="flex:1"></div>
+            <button class="btn ghost sm">⟳ 새로고침</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th class="sortable">주문번호 <span class="arrow">▼</span></th>
+                <th>고객</th>
+                <th>상품</th>
+                <th class="sortable" style="text-align:right">금액</th>
+                <th>결제수단</th>
+                <th class="sortable">주문일시</th>
+                <th>상태</th>
+                <th style="text-align:right">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="openDrawer(event)">
+                <td><input type="checkbox" class="ck row-ck" onclick="event.stopPropagation();onRowCk()" /></td>
+                <td class="mono">#A1F2C8…</td>
+                <td><b>이지은</b><div class="pmeta" style="font-size:11.5px;color:var(--text-4)">u_8f2a…</div></td>
+                <td>무선 이어폰 Pro 외 1건</td>
+                <td class="num">89,000원</td>
+                <td>카드</td>
+                <td>06-12 14:22</td>
+                <td><span class="badge b-pending"><span class="d" style="background:var(--orange)"></span>결제 대기</span></td>
+                <td><div class="row-act" onclick="event.stopPropagation()"><select class="status-select"><option>결제 대기</option><option>결제 완료</option><option>배송 중</option></select></div></td>
+              </tr>
+              <tr onclick="openDrawer(event)">
+                <td><input type="checkbox" class="ck row-ck" onclick="event.stopPropagation();onRowCk()" /></td>
+                <td class="mono">#B7D041…</td>
+                <td><b>박서준</b><div class="pmeta" style="font-size:11.5px;color:var(--text-4)">u_1c93…</div></td>
+                <td>스탠리 텀블러 473ml</td>
+                <td class="num">42,000원</td>
+                <td>간편결제</td>
+                <td>06-12 13:05</td>
+                <td><span class="badge b-paid"><span class="d" style="background:var(--green)"></span>결제 완료</span></td>
+                <td><div class="row-act" onclick="event.stopPropagation()"><select class="status-select"><option>결제 완료</option><option>배송 중</option><option>배송 완료</option></select></div></td>
+              </tr>
+              <tr onclick="openDrawer(event)">
+                <td><input type="checkbox" class="ck row-ck" onclick="event.stopPropagation();onRowCk()" /></td>
+                <td class="mono">#C3E9A2…</td>
+                <td><b>김민서</b><div class="pmeta" style="font-size:11.5px;color:var(--text-4)">u_77b0…</div></td>
+                <td>기계식 키보드 외 2건</td>
+                <td class="num">156,000원</td>
+                <td>계좌이체</td>
+                <td>06-12 11:48</td>
+                <td><span class="badge b-ship"><span class="d" style="background:var(--blue)"></span>배송 중</span></td>
+                <td><div class="row-act" onclick="event.stopPropagation()"><select class="status-select"><option>배송 중</option><option>배송 완료</option></select></div></td>
+              </tr>
+              <tr onclick="openDrawer(event)">
+                <td><input type="checkbox" class="ck row-ck" onclick="event.stopPropagation();onRowCk()" /></td>
+                <td class="mono">#D5102F…</td>
+                <td><b>최유나</b><div class="pmeta" style="font-size:11.5px;color:var(--text-4)">u_44e1…</div></td>
+                <td>캠핑 의자 (블랙)</td>
+                <td class="num">68,000원</td>
+                <td>카드</td>
+                <td>06-11 19:30</td>
+                <td><span class="badge b-done"><span class="d" style="background:var(--purple)"></span>배송 완료</span></td>
+                <td><div class="row-act" onclick="event.stopPropagation()"><button class="mini">상세</button></div></td>
+              </tr>
+              <tr onclick="openDrawer(event)">
+                <td><input type="checkbox" class="ck row-ck" onclick="event.stopPropagation();onRowCk()" /></td>
+                <td class="mono">#E8B7C1…</td>
+                <td><b>정도윤</b><div class="pmeta" style="font-size:11.5px;color:var(--text-4)">u_05af…</div></td>
+                <td>아로마 디퓨저 세트</td>
+                <td class="num">35,000원</td>
+                <td>간편결제</td>
+                <td>06-11 16:12</td>
+                <td><span class="badge b-cancel"><span class="d" style="background:var(--red)"></span>취소</span></td>
+                <td><div class="row-act" onclick="event.stopPropagation()"><button class="mini">상세</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pager">
+            <div class="info">1,284건 중 1–20 표시</div>
+            <button class="pg" disabled>‹</button>
+            <button class="pg on">1</button>
+            <button class="pg">2</button>
+            <button class="pg">3</button>
+            <button class="pg">4</button>
+            <button class="pg">…</button>
+            <button class="pg">65</button>
+            <button class="pg">›</button>
+            <select class="control page-size" style="min-width:auto;padding:7px 10px;"><option>20개씩</option><option>50개씩</option><option>100개씩</option></select>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====== PRODUCTS ====== -->
+      <section class="view" id="view-products">
+        <div class="page-head">
+          <div>
+            <h1>상품 관리</h1>
+            <p>전체 142개 · 비활성 8개 · 재고 부족 7개</p>
+          </div>
+          <div class="actions">
+            <button class="btn ghost">⬇ 엑셀 내보내기</button>
+            <button class="btn primary">＋ 상품 등록</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filters">
+            <div class="field">
+              <label>검색</label>
+              <div class="control search">🔎 <input placeholder="상품명 · 상품코드" /></div>
+            </div>
+            <div class="field">
+              <label>카테고리</label>
+              <div class="control"><select><option>전체</option><option>전자기기</option><option>리빙</option><option>아웃도어</option></select></div>
+            </div>
+            <div class="field">
+              <label>판매 상태</label>
+              <div class="control"><select><option>전체</option><option>활성</option><option>비활성</option></select></div>
+            </div>
+            <div class="field">
+              <label>재고</label>
+              <div class="control"><select><option>전체</option><option>재고 부족 (10개 이하)</option><option>품절</option></select></div>
+            </div>
+            <div class="spacer"></div>
+            <div class="field"><label>&nbsp;</label><button class="btn primary" style="padding:9px 18px;">조회</button></div>
+            <div class="field"><label>&nbsp;</label><button class="btn ghost" style="padding:9px 16px;">초기화</button></div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-tools">
+            <input type="checkbox" class="ck" onchange="toggleAll(this)" />
+            <span class="sel"><b>0</b>건 선택됨</span>
+            <button class="btn ghost sm">활성화</button>
+            <button class="btn ghost sm">비활성화</button>
+            <div style="flex:1"></div>
+            <button class="btn ghost sm">⟳ 새로고침</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>상품</th>
+                <th>카테고리</th>
+                <th class="sortable" style="text-align:right">가격 <span class="arrow">▼</span></th>
+                <th>재고</th>
+                <th class="sortable">판매량</th>
+                <th>상태</th>
+                <th style="text-align:right">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" class="ck row-ck" onclick="onRowCk()" /></td>
+                <td><div class="prod"><div class="thumb">🎧</div><div><div class="pn">무선 이어폰 Pro</div><div class="pmeta">SKU · EARP-001</div></div></div></td>
+                <td>전자기기</td>
+                <td class="num">89,000원</td>
+                <td><span class="stock-bar"><i style="width:72%;background:var(--green)"></i></span>124</td>
+                <td>1,204</td>
+                <td><span class="badge b-active"><span class="d" style="background:var(--green)"></span>활성</span></td>
+                <td><div class="row-act"><button class="mini">수정</button><button class="mini danger">비활성</button></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="ck row-ck" onclick="onRowCk()" /></td>
+                <td><div class="prod"><div class="thumb">⌨️</div><div><div class="pn">기계식 키보드 청축</div><div class="pmeta">SKU · KEYB-014</div></div></div></td>
+                <td>전자기기</td>
+                <td class="num">112,000원</td>
+                <td><span class="stock-bar"><i style="width:40%;background:var(--blue)"></i></span>52</td>
+                <td>843</td>
+                <td><span class="badge b-active"><span class="d" style="background:var(--green)"></span>활성</span></td>
+                <td><div class="row-act"><button class="mini">수정</button><button class="mini danger">비활성</button></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="ck row-ck" onclick="onRowCk()" /></td>
+                <td><div class="prod"><div class="thumb">🪑</div><div><div class="pn">캠핑 의자 (블랙)</div><div class="pmeta">SKU · CAMP-007</div></div></div></td>
+                <td>아웃도어</td>
+                <td class="num">68,000원</td>
+                <td><span class="stock-bar"><i style="width:4%;background:var(--red)"></i></span><span style="color:var(--red);font-weight:700">0</span></td>
+                <td>612</td>
+                <td><span class="badge b-off"><span class="d" style="background:var(--text-3)"></span>비활성</span></td>
+                <td><div class="row-act"><button class="mini">수정</button><button class="mini">활성화</button></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="ck row-ck" onclick="onRowCk()" /></td>
+                <td><div class="prod"><div class="thumb">🥤</div><div><div class="pn">스탠리 텀블러 473ml</div><div class="pmeta">SKU · TUMB-022</div></div></div></td>
+                <td>리빙</td>
+                <td class="num">42,000원</td>
+                <td><span class="stock-bar"><i style="width:18%;background:var(--orange)"></i></span><span style="color:var(--orange);font-weight:700">9</span></td>
+                <td>2,033</td>
+                <td><span class="badge b-active"><span class="d" style="background:var(--green)"></span>활성</span></td>
+                <td><div class="row-act"><button class="mini">수정</button><button class="mini danger">비활성</button></div></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="ck row-ck" onclick="onRowCk()" /></td>
+                <td><div class="prod"><div class="thumb">🌿</div><div><div class="pn">아로마 디퓨저 세트</div><div class="pmeta">SKU · DIFF-003</div></div></div></td>
+                <td>리빙</td>
+                <td class="num">35,000원</td>
+                <td><span class="stock-bar"><i style="width:88%;background:var(--green)"></i></span>210</td>
+                <td>489</td>
+                <td><span class="badge b-active"><span class="d" style="background:var(--green)"></span>활성</span></td>
+                <td><div class="row-act"><button class="mini">수정</button><button class="mini danger">비활성</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pager">
+            <div class="info">142개 중 1–20 표시</div>
+            <button class="pg" disabled>‹</button>
+            <button class="pg on">1</button>
+            <button class="pg">2</button>
+            <button class="pg">3</button>
+            <button class="pg">›</button>
+            <select class="control page-size" style="min-width:auto;padding:7px 10px;"><option>20개씩</option><option>50개씩</option></select>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== ORDER DETAIL DRAWER ========== -->
+<div class="drawer-mask" id="mask" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>주문 상세</h3>
+    <span class="badge b-pending"><span class="d" style="background:var(--orange)"></span>결제 대기</span>
+    <span class="x" onclick="closeDrawer()">✕</span>
+  </div>
+  <div class="drawer-body">
+    <dl class="dl">
+      <dt>주문번호</dt><dd class="mono">#A1F2C8D4-2026</dd>
+      <dt>주문일시</dt><dd>2026-06-12 14:22:08</dd>
+      <dt>고객</dt><dd>이지은 (u_8f2a…)</dd>
+      <dt>연락처</dt><dd>010-****-1234</dd>
+      <dt>결제수단</dt><dd>신용카드 (국민 ****-9012)</dd>
+    </dl>
+
+    <div class="sect-title">배송지</div>
+    <dl class="dl">
+      <dt>수령인</dt><dd>이지은</dd>
+      <dt>주소</dt><dd>서울 강남구 테헤란로 123, 4층</dd>
+      <dt>요청사항</dt><dd>부재 시 문 앞에 놔주세요</dd>
+    </dl>
+
+    <div class="sect-title">주문 상품</div>
+    <div class="line-item">
+      <div class="thumb" style="width:44px;height:44px;border-radius:10px;background:#eef2f6;display:grid;place-items:center;font-size:18px;">🎧</div>
+      <div style="flex:1"><b>무선 이어폰 Pro</b><div class="pmeta" style="font-size:12px;color:var(--text-4)">화이트 / 1개</div></div>
+      <div style="font-weight:700">59,000원</div>
+    </div>
+    <div class="line-item">
+      <div class="thumb" style="width:44px;height:44px;border-radius:10px;background:#eef2f6;display:grid;place-items:center;font-size:18px;">🔌</div>
+      <div style="flex:1"><b>USB-C 충전 케이블</b><div class="pmeta" style="font-size:12px;color:var(--text-4)">2m / 1개</div></div>
+      <div style="font-weight:700">30,000원</div>
+    </div>
+
+    <div class="sect-title">결제 금액</div>
+    <dl class="dl">
+      <dt>상품 합계</dt><dd>89,000원</dd>
+      <dt>배송비</dt><dd>무료</dd>
+      <dt style="color:var(--text);font-weight:800">총 결제</dt><dd style="color:var(--blue);font-weight:800;font-size:16px;">89,000원</dd>
+    </dl>
+  </div>
+  <div class="drawer-foot">
+    <select class="control" style="flex:1"><option>결제 대기</option><option>결제 완료</option><option>배송 중</option><option>배송 완료</option><option>취소</option></select>
+    <button class="btn primary">상태 변경</button>
+  </div>
+</aside>
+
+<!-- ========== TOAST ========== -->
+<div class="toast" id="toast"></div>
+
+<!-- ========== COMMAND PALETTE (⌘K) ========== -->
+<div class="cmdk-mask" id="cmdkMask" onclick="if(event.target===this)closeCmdk()">
+  <div class="cmdk" role="dialog">
+    <div class="cmdk-input">
+      <span>🔎</span>
+      <input id="cmdkInput" placeholder="메뉴·작업 검색 (예: 주문, 재고, 쿠폰)" autocomplete="off" />
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-foot">
+      <span><b>↑</b><b>↓</b> 이동</span><span><b>↵</b> 열기</span><span><b>esc</b> 닫기</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== view switching (works for accordion + pins) =====
+  function navigate(a){
+    const v = a.dataset.view;
+    document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    if (!v) return;
+    document.querySelectorAll('.view').forEach(s => s.classList.remove('active'));
+    document.getElementById('view-' + v).classList.add('active');
+    const names = {dashboard:'대시보드', orders:'주문 목록', products:'상품 목록'};
+    document.getElementById('crumb').innerHTML = 'Admin / <b>' + (names[v]||'') + '</b>';
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.nav a').forEach(a => {
+    a.addEventListener('click', (e) => {
+      if (e.target.classList.contains('star')) return; // 핀 클릭은 제외
+      navigate(a);
+    });
+  });
+
+  // ===== toast =====
+  let toastTimer;
+  function showToast(html){
+    const t = document.getElementById('toast');
+    t.innerHTML = html; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), 2600);
+  }
+
+  // ===== global (entity) search — ⌘K와 역할 분리: 데이터 검색 =====
+  function runGlobalSearch(){
+    const q = document.getElementById('globalSearch').value.trim();
+    if (!q) return;
+    // 주문 목록 화면으로 이동 + 해당 화면 필터에 질의 주입
+    document.querySelectorAll('.acc').forEach(x=>x.classList.remove('open'));
+    document.querySelector('.acc[data-group="order"]').classList.add('open');
+    navigate(document.querySelector('a[data-view="orders"]'));
+    const os = document.getElementById('ordersSearch'); if (os) os.value = q;
+    showToast(`<b>'${q}'</b> 검색 결과 · 주문 목록`);
+  }
+
+  // ===== accordion (single-open) =====
+  function toggleAcc(btn){
+    const acc = btn.closest('.acc');
+    const willOpen = !acc.classList.contains('open');
+    document.querySelectorAll('.acc').forEach(x => x.classList.remove('open'));
+    if (willOpen) acc.classList.add('open');
+  }
+
+  // ===== pins =====
+  function syncStar(label, on){
+    const src = [...document.querySelectorAll('.acc-body a')].find(a => a.dataset.label === label);
+    if (src){ const s = src.querySelector('.star'); if(s){ s.classList.toggle('on', on); s.textContent = on ? '★' : '☆'; } }
+  }
+  function togglePin(e, star){
+    e.stopPropagation();
+    const leaf = star.closest('a');
+    const label = leaf.dataset.label;
+    const pins = document.getElementById('pins');
+    const exists = [...pins.querySelectorAll('a')].find(a => a.dataset.pinLabel === label);
+    if (exists){ exists.closest('.pin-row').remove(); syncStar(label, false); }
+    else {
+      syncStar(label, true);
+      const row = document.createElement('div'); row.className='pin-row';
+      const a = document.createElement('a'); a.dataset.pinLabel = label;
+      if (leaf.dataset.view) a.dataset.view = leaf.dataset.view;
+      a.innerHTML = '<span class="ico">📌</span> ' + label;
+      a.addEventListener('click', ()=> navigate(a));
+      const x = document.createElement('span'); x.className='unpin'; x.textContent='✕';
+      x.onclick = (ev)=> removePin(ev, label);
+      row.appendChild(a); row.appendChild(x); pins.appendChild(row);
+    }
+  }
+  // 핀 영역에서 바로 해제 (출처 별표도 동기화)
+  function removePin(e, label){
+    e.stopPropagation();
+    const pins = document.getElementById('pins');
+    const a = [...pins.querySelectorAll('a')].find(x => x.dataset.pinLabel === label);
+    if (a) a.closest('.pin-row').remove();
+    syncStar(label, false);
+  }
+  // 마크업에 박힌 기본 핀의 출처 별표도 초기 동기화
+  syncStar('주문 목록', true);
+
+  // ===== command palette =====
+  const ITEMS = [...document.querySelectorAll('.acc-body a')].map(a => ({
+    label: a.dataset.label || a.textContent.trim(),
+    grp: a.dataset.grp || '바로가기',
+    view: a.dataset.view || '',
+    el: a
+  }));
+  // 대시보드 단독 항목 보강
+  ITEMS.unshift({label:'대시보드', grp:'바로가기', view:'dashboard', el:document.querySelector('a[data-view="dashboard"]')});
+
+  let cmdkSel = 0, cmdkFiltered = [];
+  function renderCmdk(q){
+    const list = document.getElementById('cmdkList');
+    cmdkFiltered = ITEMS.filter(it => (it.label + it.grp).toLowerCase().includes(q.toLowerCase()));
+    if (cmdkFiltered.length === 0){ list.innerHTML = '<div class="cmdk-empty">결과가 없습니다</div>'; return; }
+    cmdkSel = Math.min(cmdkSel, cmdkFiltered.length-1);
+    list.innerHTML = '<div class="cmdk-sect">메뉴</div>' + cmdkFiltered.map((it,i)=>
+      `<div class="cmdk-item ${i===cmdkSel?'sel':''}" data-i="${i}">
+        <span class="ci">${it.view?'▦':'›'}</span>${it.label}<span class="path">${it.grp}</span>
+      </div>`).join('');
+    list.querySelectorAll('.cmdk-item').forEach(el=>{
+      el.addEventListener('click', ()=> runCmdk(+el.dataset.i));
+    });
+  }
+  function runCmdk(i){
+    const it = cmdkFiltered[i]; if(!it) return;
+    // 해당 그룹 아코디언 펼치고 이동
+    const acc = it.el.closest('.acc');
+    if (acc){ document.querySelectorAll('.acc').forEach(x=>x.classList.remove('open')); acc.classList.add('open'); }
+    navigate(it.el);
+    closeCmdk();
+  }
+  function openCmdk(){
+    const m = document.getElementById('cmdkMask'); m.classList.add('open');
+    const inp = document.getElementById('cmdkInput'); inp.value=''; cmdkSel=0; renderCmdk('');
+    setTimeout(()=>inp.focus(), 30);
+  }
+  function closeCmdk(){ document.getElementById('cmdkMask').classList.remove('open'); }
+  document.getElementById('cmdkInput').addEventListener('input', e=>{ cmdkSel=0; renderCmdk(e.target.value); });
+  document.addEventListener('keydown', e=>{
+    if ((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openCmdk(); return; }
+    const open = document.getElementById('cmdkMask').classList.contains('open');
+    if (!open) return;
+    if (e.key==='Escape') closeCmdk();
+    if (e.key==='ArrowDown'){ e.preventDefault(); cmdkSel=Math.min(cmdkSel+1, cmdkFiltered.length-1); renderCmdk(document.getElementById('cmdkInput').value); }
+    if (e.key==='ArrowUp'){ e.preventDefault(); cmdkSel=Math.max(cmdkSel-1, 0); renderCmdk(document.getElementById('cmdkInput').value); }
+    if (e.key==='Enter') runCmdk(cmdkSel);
+  });
+
+  // checkbox selection
+  function onRowCk(){
+    const all = document.querySelectorAll('#view-orders .row-ck');
+    const n = document.querySelectorAll('#view-orders .row-ck:checked').length;
+    const el = document.getElementById('selCount');
+    if (el) el.textContent = n;
+  }
+  function toggleAll(box){
+    const view = box.closest('.view');
+    view.querySelectorAll('.row-ck').forEach(c => c.checked = box.checked);
+    onRowCk();
+  }
+
+  // chips
+  document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+    c.parentElement.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+  }));
+
+  // drawer
+  function openDrawer(e){
+    document.getElementById('mask').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer(){
+    document.getElementById('mask').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+  }
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import java.util.List;
 
 public record OrderResponse(
         String orderId,
+        String customerId,
         OrderStatus status,
         BigDecimal totalAmount,
         Instant createdAt,
@@ -21,6 +22,7 @@ public record OrderResponse(
     public static OrderResponse from(Order order) {
         return new OrderResponse(
                 order.getId(),
+                order.getCustomerId(),
                 order.getStatus(),
                 order.getTotalAmount(),
                 order.getCreatedAt(),

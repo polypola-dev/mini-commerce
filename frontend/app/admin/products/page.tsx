@@ -2,19 +2,31 @@
 
 import { adminDeleteProduct, adminGetProducts, type Product } from "@/lib/api";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import styles from "../admin.module.css";
+
+const FILTER_CHIPS = [
+  { key: "ALL",    label: "전체" },
+  { key: "ACTIVE", label: "활성" },
+  { key: "OFF",    label: "비활성" },
+];
+
+function stockColor(ratio: number) {
+  if (ratio > 0.5) return "#3182f6";
+  if (ratio > 0.2) return "#ff9500";
+  return "#f04452";
+}
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   async function load() {
     setLoading(true);
-    try {
-      setProducts(await adminGetProducts());
-    } finally {
-      setLoading(false);
-    }
+    try { setProducts(await adminGetProducts()); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => { load(); }, []);
@@ -29,85 +41,171 @@ export default function AdminProductsPage() {
     }
   }
 
+  const maxStock = useMemo(
+    () => Math.max(...products.map((p) => p.availableStock), 1),
+    [products]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return products.filter((p) => {
+      const matchStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "ACTIVE" && p.active) ||
+        (statusFilter === "OFF" && !p.active);
+      const matchSearch = !q || p.name.toLowerCase().includes(q);
+      return matchStatus && matchSearch;
+    });
+  }, [products, search, statusFilter]);
+
   return (
-    <main className="shell">
-      <section className="masthead">
+    <div className={styles.content}>
+      <div className={styles.pageHead}>
         <div>
-          <p className="eyebrow">Admin / Products</p>
-          <h1>상품 관리</h1>
+          <h1 className={styles.pageTitle}>상품 관리</h1>
+          <p className={styles.pageSubtitle}>상품 목록을 조회하고 관리합니다</p>
         </div>
-        <Link href="/admin/products/new" className="button">+ 상품 등록</Link>
-      </section>
+        <div className={styles.pageActions}>
+          <Link href="/admin/products/new" className={styles.btnPrimary}>
+            + 상품 등록
+          </Link>
+        </div>
+      </div>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filters}>
+          <div className={styles.filterField}>
+            <span className={styles.filterLabel}>검색</span>
+            <div className={styles.filterControl}>
+              <span>🔍</span>
+              <input
+                className={styles.filterInput}
+                placeholder="상품명 검색"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div className={styles.chips}>
+          {FILTER_CHIPS.map((chip) => (
+            <button
+              key={chip.key}
+              className={`${styles.chip}${statusFilter === chip.key ? " " + styles.chipActive : ""}`}
+              onClick={() => setStatusFilter(chip.key)}
+            >
+              {chip.label}
+            </button>
+          ))}
+          <span className={styles.chipCount}>
+            총 <b style={{ color: "#191f28" }}>{filtered.length}</b>개
+          </span>
+        </div>
+      </div>
 
       {loading ? (
-        <p className="emptyState">불러오는 중...</p>
+        <div className={styles.emptyState}>불러오는 중...</div>
+      ) : filtered.length === 0 ? (
+        <div className={styles.emptyState}>상품이 없습니다.</div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
-              <th style={{ padding: "0.75rem" }}>상품명</th>
-              <th style={{ padding: "0.75rem" }}>가격</th>
-              <th style={{ padding: "0.75rem" }}>재고</th>
-              <th style={{ padding: "0.75rem" }}>상태</th>
-              <th style={{ padding: "0.75rem" }}>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                <td style={{ padding: "0.75rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    {product.imageUrl && (
-                      <img src={product.imageUrl} alt="" style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "4px" }} />
-                    )}
-                    <span style={{ fontWeight: 600 }}>{product.name}</span>
-                  </div>
-                </td>
-                <td style={{ padding: "0.75rem" }}>{product.price.toLocaleString("ko-KR")}원</td>
-                <td style={{ padding: "0.75rem" }}>{product.availableStock}</td>
-                <td style={{ padding: "0.75rem" }}>
-                  <span style={{
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "999px",
-                    fontSize: "0.75rem",
-                    background: "var(--accent)",
-                    color: "#fff",
-                  }}>활성</span>
-                </td>
-                <td style={{ padding: "0.75rem", display: "flex", gap: "0.5rem" }}>
-                  <Link
-                    href={`/admin/products/${product.id}/edit`}
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border)",
-                      fontSize: "0.75rem",
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
-                  >
-                    수정
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(product.id, product.name)}
-                    style={{
-                      padding: "0.25rem 0.75rem",
-                      borderRadius: "6px",
-                      border: "1px solid #ef4444",
-                      fontSize: "0.75rem",
-                      color: "#ef4444",
-                      background: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    비활성화
-                  </button>
-                </td>
+        <div className={styles.tableWrap}>
+          <div className={styles.tableTools}>
+            <span>
+              <span className={styles.tableToolsCount}>{filtered.length}</span>개 표시 중
+            </span>
+          </div>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>상품</th>
+                <th>가격</th>
+                <th>재고</th>
+                <th>상태</th>
+                <th style={{ textAlign: "right" }}>관리</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((product) => {
+                const ratio = Math.min(product.availableStock / maxStock, 1);
+                const color = stockColor(ratio);
+                return (
+                  <tr key={product.id}>
+                    <td>
+                      <div className={styles.prodCell}>
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt=""
+                            className={styles.prodThumbImg}
+                          />
+                        ) : (
+                          <div className={styles.prodThumb}>📦</div>
+                        )}
+                        <div>
+                          <div className={styles.prodName}>{product.name}</div>
+                          {product.description && (
+                            <div className={styles.prodMeta}>
+                              {product.description.slice(0, 40)}
+                              {product.description.length > 40 ? "…" : ""}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className={styles.cellNum}>
+                      {product.price.toLocaleString("ko-KR")}원
+                    </td>
+                    <td>
+                      <div className={styles.stockWrap}>
+                        <div className={styles.stockBar}>
+                          <span
+                            className={styles.stockFill}
+                            style={{ width: `${ratio * 100}%`, background: color }}
+                          />
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color }}>
+                          {product.availableStock.toLocaleString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      {product.active ? (
+                        <span className={`${styles.badge} ${styles.badgeActive}`}>
+                          <span className={styles.badgeDot} style={{ background: "#00b86b" }} />
+                          활성
+                        </span>
+                      ) : (
+                        <span className={`${styles.badge} ${styles.badgeInactive}`}>
+                          <span className={styles.badgeDot} style={{ background: "#8b95a1" }} />
+                          비활성
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <div className={styles.rowAct}>
+                        <Link
+                          href={`/admin/products/${product.id}/edit`}
+                          className={styles.btnMini}
+                        >
+                          수정
+                        </Link>
+                        {product.active && (
+                          <button
+                            className={`${styles.btnMini} ${styles.btnMiniDanger}`}
+                            onClick={() => handleDelete(product.id, product.name)}
+                          >
+                            비활성화
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
-    </main>
+    </div>
   );
 }
