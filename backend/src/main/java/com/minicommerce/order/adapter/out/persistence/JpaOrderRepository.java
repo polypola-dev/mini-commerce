@@ -18,12 +18,12 @@ interface JpaOrderRepository extends JpaRepository<Order, String> {
 
     @Query(value = "SELECT o.id FROM Order o WHERE " +
                    "(:status IS NULL OR o.status = :status) AND " +
-                   "(:q IS NULL OR LOWER(o.id) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
-                   "LOWER(COALESCE(o.customerId, '')) LIKE LOWER(CONCAT('%', :q, '%')))",
+                   "(:q IS NULL OR LOWER(CAST(o.id AS String)) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
+                   "LOWER(COALESCE(o.customerId, '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))",
            countQuery = "SELECT COUNT(o) FROM Order o WHERE " +
                         "(:status IS NULL OR o.status = :status) AND " +
-                        "(:q IS NULL OR LOWER(o.id) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
-                        "LOWER(COALESCE(o.customerId, '')) LIKE LOWER(CONCAT('%', :q, '%')))")
+                        "(:q IS NULL OR LOWER(CAST(o.id AS String)) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
+                        "LOWER(COALESCE(o.customerId, '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))")
     Page<String> findOrderIdsPaged(@Param("status") OrderStatus status,
                                    @Param("q") String q,
                                    Pageable pageable);

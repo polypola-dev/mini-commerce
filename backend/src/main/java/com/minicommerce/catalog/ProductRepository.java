@@ -15,9 +15,9 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
     @Query(value = "SELECT p FROM Product p WHERE " +
                    "(:active IS NULL OR p.active = :active) AND " +
-                   "(:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :q, '%')))",
+                   "(:q IS NULL OR LOWER(p.name) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR LOWER(p.description) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))",
            countQuery = "SELECT COUNT(p) FROM Product p WHERE " +
                         "(:active IS NULL OR p.active = :active) AND " +
-                        "(:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :q, '%')))")
+                        "(:q IS NULL OR LOWER(p.name) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR LOWER(p.description) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))")
     Page<Product> findWithFilters(@Param("active") Boolean active, @Param("q") String q, Pageable pageable);
 }
