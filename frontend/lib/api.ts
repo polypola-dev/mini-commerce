@@ -295,12 +295,19 @@ export type PageResponse<T> = {
 };
 
 // Admin APIs
+export type ProductOptionInput = {
+  optionGroupName: string;
+  optionValue: string;
+  additionalPrice: number;
+};
+
 export type AdminProductRequest = {
   name: string;
   description: string;
   price: number;
   stock: number;
   imageUrl: string;
+  options: ProductOptionInput[];
 };
 
 export async function adminGetProducts(params?: {
@@ -348,6 +355,15 @@ export async function adminUpdateProduct(id: string, data: AdminProductRequest):
 export async function adminDeleteProduct(id: string): Promise<void> {
   const response = await fetch(`/api/proxy/admin/products/${id}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Failed to delete product");
+}
+
+export async function adminActivateProduct(id: string): Promise<Product> {
+  const response = await fetch(`/api/proxy/admin/products/${id}`, { method: "PATCH" });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "Failed to activate product");
+  }
+  return response.json();
 }
 
 export async function adminGetOrders(params?: {

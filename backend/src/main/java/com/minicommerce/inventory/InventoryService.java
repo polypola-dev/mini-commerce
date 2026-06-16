@@ -76,6 +76,10 @@ public class InventoryService {
         redisTemplate.opsForValue().setIfAbsent(stockKey(productId), String.valueOf(stock));
     }
 
+    public void setStock(String productId, long stock) {
+        redisTemplate.opsForValue().set(stockKey(productId), String.valueOf(stock));
+    }
+
     public long availableStock(String productId, long defaultStock) {
         String value = redisTemplate.opsForValue().get(stockKey(productId));
         if (value == null) {

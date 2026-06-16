@@ -37,6 +37,30 @@ export async function PUT(
   });
 }
 
+export async function PATCH(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!BFF_SECRET_KEY) return new NextResponse("Server misconfiguration", { status: 500 });
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+
+  const { id } = await params;
+  const backendResponse = await fetch(`${BACKEND_URL}/api/admin/products/${id}/activate`, {
+    method: "PATCH",
+    headers: {
+      "X-Internal-BFF-Key": BFF_SECRET_KEY,
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+  });
+
+  const responseBody = await backendResponse.text();
+  return new NextResponse(responseBody, {
+    status: backendResponse.status,
+    headers: { "Content-Type": backendResponse.headers.get("Content-Type") ?? "application/json" },
+  });
+}
+
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

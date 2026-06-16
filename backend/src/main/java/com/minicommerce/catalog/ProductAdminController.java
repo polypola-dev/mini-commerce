@@ -4,6 +4,7 @@ import com.minicommerce.global.PageResult;
 import com.minicommerce.inventory.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,10 +67,9 @@ public class ProductAdminController {
         String id = UUID.randomUUID().toString();
         Product product = new Product(id, request.name(), request.description(),
                 request.price(), request.stock(), request.imageUrl());
-        return ProductResponse.from(
-                productRepository.save(product),
-                request.stock(),
-                List.of());
+        productRepository.save(product);
+        List<ProductOption> savedOptions = saveOptions(id, request.options());
+        return ProductResponse.from(product, request.stock(), savedOptions);
     }
 
     @PutMapping("/{id}")
@@ -77,10 +78,28 @@ public class ProductAdminController {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         product.update(request.name(), request.description(), request.price(),
                 request.stock(), request.imageUrl());
+        productRepository.save(product);
+        inventoryService.setStock(id, request.stock());
+        productOptionRepository.deleteByProductId(id);
+        List<ProductOption> savedOptions = saveOptions(id, request.options());
         return ProductResponse.from(
-                productRepository.save(product),
+                product,
                 inventoryService.availableStock(product.getId(), request.stock()),
-                productOptionRepository.findByProductId(id));
+                savedOptions);
+    }
+
+    private List<ProductOption> saveOptions(String productId, List<ProductOptionRequest> requests) {
+        if (requests == null || requests.isEmpty()) return List.of();
+        List<ProductOption> options = requests.stream()
+                .map(o -> new ProductOption(
+                        UUID.randomUUID().toString(),
+                        productId,
+                        o.optionGroupName(),
+                        o.optionValue(),
+                        o.additionalPrice() != null ? o.additionalPrice() : BigDecimal.ZERO))
+                .toList();
+        productOptionRepository.saveAll(options);
+        return options;
     }
 
     @DeleteMapping("/{id}")
@@ -90,5 +109,17 @@ public class ProductAdminController {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         product.deactivate();
         productRepository.save(product);
+    }
+
+    @PatchMapping("/{id}/activate")
+    ProductResponse activate(@PathVariable String id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
+        product.activate();
+        productRepository.save(product);
+        return ProductResponse.from(
+                product,
+                inventoryService.availableStock(product.getId(), product.getStock()),
+                productOptionRepository.findByProductId(id));
     }
 }

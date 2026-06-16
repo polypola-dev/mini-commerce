@@ -1,6 +1,6 @@
 "use client";
 
-import { adminDeleteProduct, adminGetProducts, type Product } from "@/lib/api";
+import { adminActivateProduct, adminDeleteProduct, adminGetProducts, type Product } from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
@@ -68,6 +68,16 @@ export default function AdminProductsPage() {
       await load();
     } catch (e) {
       alert(e instanceof Error ? e.message : "삭제 실패");
+    }
+  }
+
+  async function handleActivate(id: string, name: string) {
+    if (!confirm(`"${name}" 상품을 활성화하시겠습니까?`)) return;
+    try {
+      await adminActivateProduct(id);
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "활성화 실패");
     }
   }
 
@@ -241,12 +251,19 @@ export default function AdminProductsPage() {
                     <td>
                       <div className={styles.rowAct}>
                         <Link href={`/admin/products/${product.id}/edit`} className={styles.btnMini}>수정</Link>
-                        {product.active && (
+                        {product.active ? (
                           <button
                             className={`${styles.btnMini} ${styles.btnMiniDanger}`}
                             onClick={() => handleDelete(product.id, product.name)}
                           >
                             비활성화
+                          </button>
+                        ) : (
+                          <button
+                            className={styles.btnMini}
+                            onClick={() => handleActivate(product.id, product.name)}
+                          >
+                            활성화
                           </button>
                         )}
                       </div>
