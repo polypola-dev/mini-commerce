@@ -1,10 +1,14 @@
 package com.minicommerce.catalog;
 
+import com.minicommerce.global.PageResult;
 import com.minicommerce.inventory.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,13 +41,22 @@ public class ProductAdminController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    List<ProductResponse> listAll() {
-        return productRepository.findAll().stream()
+    PageResult<ProductResponse> listAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Boolean active) {
+        String qParam = (q != null && !q.isBlank()) ? q : null;
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Product> productPage = productRepository.findWithFilters(active, qParam, pageable);
+        List<ProductResponse> content = productPage.getContent().stream()
                 .map(p -> ProductResponse.from(
                         p,
                         inventoryService.availableStock(p.getId(), p.getStock()),
                         productOptionRepository.findByProductId(p.getId())))
                 .toList();
+        return new PageResult<>(content, productPage.getTotalElements(),
+                productPage.getTotalPages(), page, size);
     }
 
     @PostMapping

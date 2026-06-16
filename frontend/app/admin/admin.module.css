@@ -774,3 +774,71 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ===== Pagination ===== */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 18px;
+  border-top: 1px solid #e5e8eb;
+}
+
+.pagerInfo {
+  color: #8b95a1;
+  font-size: 12.5px;
+  margin-right: auto;
+}
+
+.pgBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+}
+
+.pgBtn:hover:not(:disabled) {
+  background: #f6f8fa;
+}
+
+.pgBtnOn {
+  background: #3182f6 !important;
+  color: #fff !important;
+  border-color: #3182f6 !important;
+}
+
+.pgBtnDisabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pageSizeSelect {
+  border: 1px solid #d1d6db;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #191f28;
+  margin-left: 8px;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b95a1' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}

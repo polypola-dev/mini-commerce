@@ -2,12 +2,15 @@ import { adminGetOrders, adminGetProducts } from "@/lib/api";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
-  const [products, orders] = await Promise.all([
-    adminGetProducts().catch(() => []),
-    adminGetOrders().catch(() => []),
+  const [productsPage, ordersPage] = await Promise.all([
+    adminGetProducts({ page: 0, size: 5 }).catch(() => ({ content: [], totalElements: 0, totalPages: 1, page: 0, size: 5 })),
+    adminGetOrders({ page: 0, size: 5 }).catch(() => ({ content: [], totalElements: 0, totalPages: 1, page: 0, size: 5 })),
   ]);
 
-  const activeProducts = products.filter((p) => p.availableStock >= 0).length;
+  const products = productsPage.content;
+  const orders = ordersPage.content;
+
+  const activeProducts = productsPage.totalElements;
   const pendingOrders = orders.filter((o) => o.status === "PENDING_PAYMENT").length;
   const paidOrders = orders.filter((o) => o.status === "PAID").length;
 

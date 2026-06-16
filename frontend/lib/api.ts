@@ -286,6 +286,14 @@ export async function getProductById(productId: string): Promise<Product> {
   return response.json();
 }
 
+export type PageResponse<T> = {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+};
+
 // Admin APIs
 export type AdminProductRequest = {
   name: string;
@@ -295,8 +303,18 @@ export type AdminProductRequest = {
   imageUrl: string;
 };
 
-export async function adminGetProducts(): Promise<Product[]> {
-  const response = await fetch("/api/proxy/admin/products", { cache: "no-store" });
+export async function adminGetProducts(params?: {
+  page?: number;
+  size?: number;
+  q?: string;
+  active?: boolean;
+}): Promise<PageResponse<Product>> {
+  const url = new URL("/api/proxy/admin/products", "http://localhost");
+  if (params?.page !== undefined) url.searchParams.set("page", String(params.page));
+  if (params?.size !== undefined) url.searchParams.set("size", String(params.size));
+  if (params?.q) url.searchParams.set("q", params.q);
+  if (params?.active !== undefined) url.searchParams.set("active", String(params.active));
+  const response = await fetch(`/api/proxy/admin/products?${url.searchParams}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch products");
   return response.json();
 }
@@ -332,8 +350,22 @@ export async function adminDeleteProduct(id: string): Promise<void> {
   if (!response.ok) throw new Error("Failed to delete product");
 }
 
-export async function adminGetOrders(): Promise<OrderResponse[]> {
-  const response = await fetch("/api/proxy/admin/orders", { cache: "no-store" });
+export async function adminGetOrders(params?: {
+  page?: number;
+  size?: number;
+  status?: string;
+  q?: string;
+  sortBy?: string;
+  sortDir?: string;
+}): Promise<PageResponse<OrderResponse>> {
+  const url = new URL("/api/proxy/admin/orders", "http://localhost");
+  if (params?.page !== undefined) url.searchParams.set("page", String(params.page));
+  if (params?.size !== undefined) url.searchParams.set("size", String(params.size));
+  if (params?.status && params.status !== "ALL") url.searchParams.set("status", params.status);
+  if (params?.q) url.searchParams.set("q", params.q);
+  if (params?.sortBy) url.searchParams.set("sortBy", params.sortBy);
+  if (params?.sortDir) url.searchParams.set("sortDir", params.sortDir);
+  const response = await fetch(`/api/proxy/admin/orders?${url.searchParams}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch orders");
   return response.json();
 }

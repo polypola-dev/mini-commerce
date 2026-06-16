@@ -1,7 +1,7 @@
 "use client";
 
 import { adminGetOrders, adminUpdateOrderStatus, type OrderResponse } from "@/lib/api";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
 
 const STATUS_OPTIONS = ["PENDING_PAYMENT", "PAID", "SHIPPED", "DELIVERED", "CANCELED"];
@@ -29,25 +29,80 @@ function fmtDate(iso: string) {
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+function downloadCSV(orders: OrderResponse[]) {
+  const header = ["주문번호", "고객ID", "상품", "금액", "주문일시", "상태"];
+  const rows = orders.map((o) => [
+    o.orderId,
+    o.customerId ?? "",
+    o.lines?.map((l) => l.productName).join(" / ") ?? "",
+    o.totalAmount.toString(),
+    fmtDate(o.createdAt),
+    STATUS_META[o.status]?.label ?? o.status,
+  ]);
+  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = "﻿" + [header, ...rows].map((r) => r.map(esc).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `orders_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 type SortCol = "createdAt" | "status" | "totalAmount" | null;
 type SortDir = "asc" | "desc";
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100];
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [serverTotalPages, setServerTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [inputSearch, setInputSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortCol, setSortCol] = useState<SortCol>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [drawerOrder, setDrawerOrder] = useState<OrderResponse | null>(null);
   const [drawerStatus, setDrawerStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
-  async function load() {
+  async function load({
+    currentPage = page,
+    currentSize = pageSize,
+    currentStatus = statusFilter,
+    currentSearch = appliedSearch,
+    currentSortCol = sortCol,
+    currentSortDir = sortDir,
+  }: {
+    currentPage?: number;
+    currentSize?: number;
+    currentStatus?: string;
+    currentSearch?: string;
+    currentSortCol?: SortCol;
+    currentSortDir?: SortDir;
+  } = {}) {
     setLoading(true);
-    try { setOrders(await adminGetOrders()); }
-    finally { setLoading(false); }
+    try {
+      const result = await adminGetOrders({
+        page: currentPage - 1,
+        size: currentSize,
+        status: currentStatus !== "ALL" ? currentStatus : undefined,
+        q: currentSearch || undefined,
+        sortBy: currentSortCol ?? undefined,
+        sortDir: currentSortDir,
+      });
+      setOrders(result.content);
+      setTotalElements(result.totalElements);
+      setServerTotalPages(result.totalPages);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -73,12 +128,12 @@ export default function AdminOrdersPage() {
   }
 
   function handleSortClick(col: SortCol) {
-    if (sortCol === col) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortCol(col);
-      setSortDir("desc");
-    }
+    const newDir: SortDir = sortCol === col ? (sortDir === "asc" ? "desc" : "asc") : "desc";
+    setSortCol(col);
+    setSortDir(newDir);
+    setPage(1);
+    setSelected(new Set());
+    load({ currentSortCol: col, currentSortDir: newDir, currentPage: 1 });
   }
 
   function openDrawer(order: OrderResponse) {
@@ -86,65 +141,48 @@ export default function AdminOrdersPage() {
     setDrawerStatus(order.status);
   }
 
-  function closeDrawer() {
-    setDrawerOrder(null);
+  function closeDrawer() { setDrawerOrder(null); }
+
+  function applySearch() {
+    setAppliedSearch(inputSearch);
+    setPage(1);
+    setSelected(new Set());
+    load({ currentSearch: inputSearch, currentPage: 1 });
   }
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const result = orders.filter((o) => {
-      const matchStatus = statusFilter === "ALL" || o.status === statusFilter;
-      const matchSearch = !q ||
-        o.orderId.toLowerCase().includes(q) ||
-        (o.customerId?.toLowerCase().includes(q) ?? false) ||
-        o.lines?.some((l) => l.productName.toLowerCase().includes(q));
-      return matchStatus && matchSearch;
-    });
+  function resetSearch() {
+    setInputSearch("");
+    setAppliedSearch("");
+    setPage(1);
+    setSelected(new Set());
+    load({ currentSearch: "", currentPage: 1 });
+  }
 
-    if (!sortCol) return result;
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") applySearch();
+  }
 
-    return [...result].sort((a, b) => {
-      let av: string | number;
-      let bv: string | number;
-      if (sortCol === "createdAt") {
-        av = a.createdAt;
-        bv = b.createdAt;
-      } else if (sortCol === "status") {
-        av = a.status;
-        bv = b.status;
-      } else {
-        av = a.totalAmount;
-        bv = b.totalAmount;
-      }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [orders, search, statusFilter, sortCol, sortDir]);
+  function handleStatusFilterChange(key: string) {
+    setStatusFilter(key);
+    setPage(1);
+    setSelected(new Set());
+    load({ currentStatus: key, currentPage: 1 });
+  }
 
-  const allIds = filtered.map((o) => o.orderId);
+  const allIds = orders.map((o) => o.orderId);
   const allChecked = allIds.length > 0 && allIds.every((id) => selected.has(id));
   const someChecked = allIds.some((id) => selected.has(id)) && !allChecked;
 
   function toggleAll() {
     if (allChecked) {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        allIds.forEach((id) => next.delete(id));
-        return next;
-      });
+      setSelected((prev) => { const next = new Set(prev); allIds.forEach((id) => next.delete(id)); return next; });
     } else {
       setSelected((prev) => new Set([...prev, ...allIds]));
     }
   }
 
   function toggleOne(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
 
   function sortArrow(col: SortCol) {
@@ -153,6 +191,30 @@ export default function AdminOrdersPage() {
   }
 
   const selectedCount = allIds.filter((id) => selected.has(id)).length;
+  const safePage = Math.min(page, serverTotalPages);
+  const startIdx = (safePage - 1) * pageSize;
+
+  function buildPageButtons(): (number | "ellipsis-start" | "ellipsis-end")[] {
+    const delta = 2;
+    const range: number[] = [];
+    for (let i = Math.max(1, safePage - delta); i <= Math.min(serverTotalPages, safePage + delta); i++) {
+      range.push(i);
+    }
+    const result: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+    if (range[0] > 1) { result.push(1); if (range[0] > 2) result.push("ellipsis-start"); }
+    range.forEach((n) => result.push(n));
+    if (range[range.length - 1] < serverTotalPages) {
+      if (range[range.length - 1] < serverTotalPages - 1) result.push("ellipsis-end");
+      result.push(serverTotalPages);
+    }
+    return result;
+  }
+
+  function goToPage(newPage: number) {
+    setPage(newPage);
+    setSelected(new Set());
+    load({ currentPage: newPage });
+  }
 
   return (
     <div className={styles.content}>
@@ -160,6 +222,11 @@ export default function AdminOrdersPage() {
         <div>
           <h1 className={styles.pageTitle}>주문 관리</h1>
           <p className={styles.pageSubtitle}>전체 주문 내역을 조회하고 상태를 변경합니다</p>
+        </div>
+        <div className={styles.pageActions}>
+          <button className={styles.btnGhost} onClick={() => downloadCSV(orders)}>
+            ⬇ CSV 내보내기
+          </button>
         </div>
       </div>
 
@@ -171,10 +238,18 @@ export default function AdminOrdersPage() {
               <span>🔍</span>
               <input
                 className={styles.filterInput}
-                placeholder="주문번호 · 고객ID · 상품명"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                placeholder="주문번호 · 고객ID"
+                value={inputSearch}
+                onChange={(e) => setInputSearch(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
               />
+            </div>
+          </div>
+          <div className={styles.filterField}>
+            <span className={styles.filterLabel}>&nbsp;</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button className={styles.btnPrimary} onClick={applySearch}>조회</button>
+              <button className={styles.btnGhost} onClick={resetSearch}>초기화</button>
             </div>
           </div>
         </div>
@@ -183,26 +258,26 @@ export default function AdminOrdersPage() {
             <button
               key={chip.key}
               className={`${styles.chip}${statusFilter === chip.key ? " " + styles.chipActive : ""}`}
-              onClick={() => setStatusFilter(chip.key)}
+              onClick={() => handleStatusFilterChange(chip.key)}
             >
               {chip.label}
             </button>
           ))}
           <span className={styles.chipCount}>
-            총 <b style={{ color: "#191f28" }}>{filtered.length}</b>건
+            총 <b style={{ color: "#191f28" }}>{totalElements}</b>건
           </span>
         </div>
       </div>
 
       {loading ? (
         <div className={styles.emptyState}>불러오는 중...</div>
-      ) : filtered.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className={styles.emptyState}>주문이 없습니다.</div>
       ) : (
         <div className={styles.tableWrap}>
           <div className={styles.tableTools}>
             <span>
-              <span className={styles.tableToolsCount}>{filtered.length}</span>건 표시 중
+              <span className={styles.tableToolsCount}>{totalElements}</span>건 중 {startIdx + 1}–{startIdx + orders.length} 표시
             </span>
             {selectedCount > 0 && (
               <span className={styles.selectedBadge}>{selectedCount}건 선택됨</span>
@@ -245,7 +320,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((order) => {
+              {orders.map((order) => {
                 const meta = STATUS_META[order.status];
                 return (
                   <tr
@@ -265,24 +340,16 @@ export default function AdminOrdersPage() {
                     <td className={styles.cellMono}>
                       {order.customerId ? (
                         <span>
-                          <span style={{ display: "block", fontWeight: 700 }}>
-                            {order.customerId.slice(0, 8)}
-                          </span>
-                          <span className={styles.pmeta}>
-                            u_{order.customerId.slice(0, 4)}…
-                          </span>
+                          <span style={{ display: "block", fontWeight: 700 }}>{order.customerId.slice(0, 8)}</span>
+                          <span className={styles.pmeta}>u_{order.customerId.slice(0, 4)}…</span>
                         </span>
                       ) : "—"}
                     </td>
                     <td style={{ maxWidth: 220 }}>
                       {order.lines?.map((l) => l.productName).join(", ") || "—"}
                     </td>
-                    <td className={styles.cellNum}>
-                      {order.totalAmount.toLocaleString("ko-KR")}원
-                    </td>
-                    <td style={{ color: "#8b95a1", fontSize: 12.5 }}>
-                      {fmtDate(order.createdAt)}
-                    </td>
+                    <td className={styles.cellNum}>{order.totalAmount.toLocaleString("ko-KR")}원</td>
+                    <td style={{ color: "#8b95a1", fontSize: 12.5 }}>{fmtDate(order.createdAt)}</td>
                     <td>
                       {meta ? (
                         <span className={`${styles.badge} ${meta.badge}`}>
@@ -310,12 +377,64 @@ export default function AdminOrdersPage() {
               })}
             </tbody>
           </table>
+
+          <div className={styles.pager}>
+            <span className={styles.pagerInfo}>
+              {totalElements}건 중 {startIdx + 1}–{startIdx + orders.length} 표시
+            </span>
+
+            <button
+              className={`${styles.pgBtn}${safePage === 1 ? " " + styles.pgBtnDisabled : ""}`}
+              onClick={() => safePage > 1 && goToPage(safePage - 1)}
+              disabled={safePage === 1}
+              aria-label="이전 페이지"
+            >
+              ‹
+            </button>
+
+            {buildPageButtons().map((item, idx) =>
+              item === "ellipsis-start" || item === "ellipsis-end" ? (
+                <button key={`${item}-${idx}`} className={styles.pgBtn} style={{ cursor: "default" }} disabled>…</button>
+              ) : (
+                <button
+                  key={item}
+                  className={`${styles.pgBtn}${item === safePage ? " " + styles.pgBtnOn : ""}`}
+                  onClick={() => goToPage(item)}
+                >
+                  {item}
+                </button>
+              )
+            )}
+
+            <button
+              className={`${styles.pgBtn}${safePage === serverTotalPages ? " " + styles.pgBtnDisabled : ""}`}
+              onClick={() => safePage < serverTotalPages && goToPage(safePage + 1)}
+              disabled={safePage === serverTotalPages}
+              aria-label="다음 페이지"
+            >
+              ›
+            </button>
+
+            <select
+              className={styles.pageSizeSelect}
+              value={pageSize}
+              onChange={(e) => {
+                const newSize = Number(e.target.value);
+                setPageSize(newSize);
+                setPage(1);
+                setSelected(new Set());
+                load({ currentSize: newSize, currentPage: 1 });
+              }}
+            >
+              {PAGE_SIZE_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}개씩</option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
 
-      {drawerOrder && (
-        <div className={styles.drawerMask} onClick={closeDrawer} />
-      )}
+      {drawerOrder && <div className={styles.drawerMask} onClick={closeDrawer} />}
       <div className={`${styles.drawer}${drawerOrder ? " " + styles.drawerOpen : ""}`}>
         {drawerOrder && (
           <>
@@ -323,16 +442,7 @@ export default function AdminOrdersPage() {
               <span style={{ fontWeight: 700, fontSize: 15 }}>주문 상세</span>
               <button
                 onClick={closeDrawer}
-                style={{
-                  marginLeft: "auto",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 18,
-                  color: "#8b95a1",
-                  lineHeight: 1,
-                  padding: "4px 6px",
-                }}
+                style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#8b95a1", lineHeight: 1, padding: "4px 6px" }}
               >
                 ✕
               </button>
@@ -341,16 +451,10 @@ export default function AdminOrdersPage() {
               <dl className={styles.dl}>
                 <dt className={styles.dlTerm}>주문번호</dt>
                 <dd className={`${styles.dlDesc} ${styles.cellMono}`}>{drawerOrder.orderId}</dd>
-
                 <dt className={styles.dlTerm}>주문일시</dt>
-                <dd className={styles.dlDesc}>
-                  {fmtDate(drawerOrder.createdAt)}
-                </dd>
-
+                <dd className={styles.dlDesc}>{fmtDate(drawerOrder.createdAt)}</dd>
                 <dt className={styles.dlTerm}>고객 ID</dt>
-                <dd className={`${styles.dlDesc} ${styles.cellMono}`}>
-                  {drawerOrder.customerId ?? "—"}
-                </dd>
+                <dd className={`${styles.dlDesc} ${styles.cellMono}`}>{drawerOrder.customerId ?? "—"}</dd>
               </dl>
 
               <p className={styles.sectTitle}>주문 상품</p>
@@ -376,7 +480,6 @@ export default function AdminOrdersPage() {
               <dl className={styles.dl}>
                 <dt className={styles.dlTerm}>수령인</dt>
                 <dd className={styles.dlDesc}>{drawerOrder.shippingRecipient ?? "—"}</dd>
-
                 <dt className={styles.dlTerm}>주소</dt>
                 <dd className={styles.dlDesc}>
                   {drawerOrder.shippingAddress

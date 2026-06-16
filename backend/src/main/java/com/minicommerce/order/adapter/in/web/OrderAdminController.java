@@ -1,14 +1,15 @@
 package com.minicommerce.order.adapter.in.web;
 
+import com.minicommerce.global.PageResult;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -24,10 +25,21 @@ public class OrderAdminController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    List<OrderResponse> listAll() {
-        return orderRepository.findAll().stream()
-                .map(OrderResponse::from)
-                .toList();
+    PageResult<OrderResponse> listAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        PageResult<com.minicommerce.order.domain.Order> result =
+                orderRepository.findAllPaged(status, q, page, size, sortBy, sortDir);
+        return new PageResult<>(
+                result.content().stream().map(OrderResponse::from).toList(),
+                result.totalElements(),
+                result.totalPages(),
+                result.page(),
+                result.size());
     }
 
     @PutMapping("/{orderId}/status")
