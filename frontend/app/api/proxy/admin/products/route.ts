@@ -10,12 +10,16 @@ async function getAdminSession() {
   return session;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   if (!BFF_SECRET_KEY) return new NextResponse("Server misconfiguration", { status: 500 });
   const session = await getAdminSession();
   if (!session) return new NextResponse("Unauthorized", { status: 401 });
 
-  const backendResponse = await fetch(`${BACKEND_URL}/api/admin/products`, {
+  const { searchParams } = request.nextUrl;
+  const backendUrl = new URL(`${BACKEND_URL}/api/admin/products`);
+  searchParams.forEach((value, key) => backendUrl.searchParams.set(key, value));
+
+  const backendResponse = await fetch(backendUrl.toString(), {
     headers: {
       "X-Internal-BFF-Key": BFF_SECRET_KEY,
       "Authorization": `Bearer ${session.access_token}`,
