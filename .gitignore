@@ -42,3 +42,4 @@ skills-lock.json
 
 # ===== TypeScript =====
 tsconfig.tsbuildinfo
+backend/bin/
