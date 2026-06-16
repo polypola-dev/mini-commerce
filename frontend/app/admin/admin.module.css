@@ -4,7 +4,7 @@
   grid-template-columns: 232px 1fr;
   min-height: 100vh;
   background: #f2f4f6;
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", Roboto, sans-serif;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
 
 .adminMain {
