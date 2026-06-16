@@ -650,6 +650,262 @@
   cursor: pointer;
 }
 
+/* ===== Product Form ===== */
+.formCard {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,27,55,0.04), 0 4px 16px rgba(0,27,55,0.04);
+  overflow: hidden;
+}
+
+.formCardHead {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e5e8eb;
+  background: #fafbfc;
+}
+
+.formCardTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.formCardBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #4e5968;
+}
+
+.formRequired {
+  color: #f04452;
+  margin-left: 2px;
+}
+
+.formInput {
+  border: 1px solid #d1d6db;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 13.5px;
+  color: #191f28;
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  background: #fff;
+  outline: none;
+  width: 100%;
+}
+
+.formInput:focus {
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px #e8f3ff;
+}
+
+.formInput::placeholder {
+  color: #b0b8c1;
+}
+
+.formTextarea {
+  border: 1px solid #d1d6db;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 13.5px;
+  color: #191f28;
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  width: 100%;
+}
+
+.formTextarea:focus {
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px #e8f3ff;
+}
+
+.formTextarea::placeholder {
+  color: #b0b8c1;
+}
+
+.formHint {
+  font-size: 11.5px;
+  color: #8b95a1;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.formHintError {
+  color: #f04452;
+}
+
+.formError {
+  padding: 11px 14px;
+  background: #ffeceb;
+  border: 1px solid #f7d3d6;
+  border-radius: 10px;
+  color: #f04452;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.formActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ===== Image Preview ===== */
+.imgPreviewBox {
+  border: 2px dashed #d1d6db;
+  border-radius: 10px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafbfc;
+  overflow: hidden;
+}
+
+.imgPreviewBox img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.imgPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #b0b8c1;
+}
+
+.imgPlaceholderIcon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.imgPlaceholderText {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ===== Option toggle ===== */
+.toggleWrap {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleOption {
+  border: 1px solid #d1d6db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: #4e5968;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+
+.toggleOption:hover {
+  background: #f6f8fa;
+}
+
+.toggleOptionOn {
+  background: #e8f3ff;
+  border-color: #3182f6;
+  color: #3182f6;
+}
+
+/* ===== Options table ===== */
+.optionsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.optionsTable th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #8b95a1;
+  padding: 8px 10px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e5e8eb;
+}
+
+.optionsTable td {
+  padding: 6px 6px;
+  border-bottom: 1px solid #f1f3f5;
+  vertical-align: middle;
+}
+
+.optionsTable tr:last-child td {
+  border-bottom: none;
+}
+
+.optionInput {
+  border: 1px solid #d1d6db;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #191f28;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  background: #fff;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.optionInput:focus {
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px #e8f3ff;
+}
+
+.optionInput::placeholder {
+  color: #b0b8c1;
+}
+
+.imgGuide {
+  background: #f8f9fb;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  padding: 10px 13px;
+}
+
+.imgGuideTitle {
+  margin: 0 0 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4e5968;
+}
+
+.imgGuideList {
+  margin: 0;
+  padding: 0 0 0 15px;
+  font-size: 11.5px;
+  color: #8b95a1;
+  line-height: 1.8;
+}
+
 /* ===== Customer meta ===== */
 .pmeta {
   font-size: 11px;
