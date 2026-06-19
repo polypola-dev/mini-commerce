@@ -338,6 +338,35 @@ h1 {
   cursor: not-allowed;
 }
 
+/* 네이버 소셜 로그인 버튼 */
+.naverBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: #03c75a;
+  border: 1px solid #03c75a;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.naverBtn:hover:not(:disabled) {
+  background: #02b350;
+  transform: translateY(-1px);
+}
+
+.naverBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* 구분선 */
 .divider {
   display: flex;

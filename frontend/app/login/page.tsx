@@ -43,6 +43,21 @@ export default function LoginPage() {
     }
   }
 
+  async function handleNaverLogin() {
+    setPending(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "custom:naver",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setError(error.message);
+      setPending(false);
+    }
+  }
+
   return (
     <div className="loginViewport">
       <div className="gradientBlob blob1"></div>
@@ -75,6 +90,13 @@ export default function LoginPage() {
             />
           </svg>
           Google 계정으로 로그인
+        </button>
+
+        <button className="naverBtn" onClick={handleNaverLogin} disabled={pending}>
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="white" d="M13.5 12.76L7.62 4H4v16h6.5v-8.76L16.38 20H20V4h-6.5v8.76z" />
+          </svg>
+          네이버로 로그인
         </button>
 
         <div className="divider">
