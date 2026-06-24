@@ -29,14 +29,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  const isAuthCallback = request.nextUrl.pathname.startsWith("/auth/callback");
+  const pathname = request.nextUrl.pathname;
+  const isLoginPage = pathname.startsWith("/login");
+  const isAuthCallback = pathname.startsWith("/auth/callback");
+  const isPublicPath =
+    pathname === "/" ||
+    pathname.startsWith("/products") ||
+    pathname.startsWith("/search");
 
   if (isAuthCallback) {
     return supabaseResponse;
   }
 
-  if (!user && !isLoginPage) {
+  if (!user && !isLoginPage && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
