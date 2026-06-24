@@ -6,16 +6,14 @@ import { useTransition, useState, useEffect } from "react";
 export default function SearchBar({ initialQuery }: { initialQuery: string }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [value, setValue] = useState(initialQuery);
 
   useEffect(() => {
     setValue(initialQuery);
   }, [initialQuery]);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const q = e.target.value;
-    setValue(q);
+  function push(q: string) {
     startTransition(() => {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
@@ -23,35 +21,36 @@ export default function SearchBar({ initialQuery }: { initialQuery: string }) {
     });
   }
 
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const q = e.target.value;
+    setValue(q);
+    push(q);
+  }
+
   function handleClear() {
     setValue("");
-    startTransition(() => {
-      router.push(pathname);
-    });
+    push("");
   }
 
   return (
-    <div className="searchBar">
-      <div className="searchInputWrap">
-        <svg className="searchIcon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-        <input
-          type="search"
-          className="searchInput"
-          placeholder="상품 이름 또는 설명 검색..."
-          value={value}
-          onChange={handleChange}
-          aria-label="상품 검색"
-        />
-        {value && (
-          <button className="searchClearBtn" onClick={handleClear} aria-label="검색어 초기화">
-            ✕
-          </button>
-        )}
-      </div>
-      {isPending && <span className="searchPending">검색 중...</span>}
+    <div className="mcSearchInputWrap">
+      <svg width="18" height="18" fill="none" stroke="#222" strokeWidth="1.9" strokeLinecap="round" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" />
+        <path d="m17 17-4-4" />
+      </svg>
+      <input
+        type="search"
+        placeholder="상품명, 브랜드 검색"
+        value={value}
+        onChange={handleChange}
+        aria-label="상품 검색"
+        autoFocus
+      />
+      {value && (
+        <button type="button" className="mcSearchClear" onClick={handleClear} aria-label="검색어 초기화">
+          ✕
+        </button>
+      )}
     </div>
   );
 }

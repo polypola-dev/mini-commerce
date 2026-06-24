@@ -14,19 +14,66 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function OrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ completed?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
+  const { completed } = await searchParams;
   let order;
   try {
     order = await getOrderById(id);
   } catch {
     notFound();
+  }
+
+  if (completed === "1") {
+    const count = order.lines?.reduce((a, l) => a + l.quantity, 0) ?? 0;
+    return (
+      <div className="mcCompleteWrap">
+        <div className="mcCompleteCheck">
+          <svg width="42" height="42" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 21 8 8 16-16" />
+          </svg>
+        </div>
+        <div style={{ fontSize: "23px", fontWeight: 800, marginBottom: "8px" }}>주문이 완료되었어요</div>
+        <div style={{ fontSize: "15px", color: "var(--color-muted)", lineHeight: 1.5, marginBottom: "30px" }}>
+          배송 현황은 마이페이지에서 확인하세요.
+        </div>
+
+        <div className="mcOrderSummaryCard">
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "13px" }}>
+            <span style={{ color: "var(--color-muted)" }}>주문번호</span>
+            <span style={{ fontWeight: 700 }}>{order.orderId.slice(0, 8)}…</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "13px" }}>
+            <span style={{ color: "var(--color-muted)" }}>상품 수</span>
+            <span style={{ fontWeight: 600 }}>{count}개</span>
+          </div>
+          <div style={{ height: 1, background: "var(--color-hairline-soft)", margin: "6px 0 14px" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <span style={{ fontSize: "15px", fontWeight: 700 }}>결제 금액</span>
+            <span style={{ fontSize: "19px", fontWeight: 800, color: "var(--color-primary)" }}>
+              {order.totalAmount.toLocaleString("ko-KR")}원
+            </span>
+          </div>
+        </div>
+
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <Link href={`/orders/${order.orderId}`} className="mcBtn mcBtnPrimary" style={{ textDecoration: "none" }}>
+            주문 상세 보기
+          </Link>
+          <Link href="/" className="mcBtn mcBtnSecondary" style={{ textDecoration: "none" }}>
+            쇼핑 계속하기
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

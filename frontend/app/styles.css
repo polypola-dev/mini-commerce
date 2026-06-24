@@ -867,3 +867,837 @@ h1 {
   background: #006b5f;
   color: #fff;
 }
+
+/* ==========================================================================
+   📱 Mobile App Shell (mini-commerce_prototype.dc.html 디자인 반영)
+   ========================================================================== */
+
+:root {
+  --color-primary: #ff385c;
+  --color-primary-active: #e00b41;
+  --color-primary-disabled: #ffd1da;
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-strong: #f2f2f2;
+  --color-hairline: #dddddd;
+  --color-hairline-soft: #ebebeb;
+  --color-border-strong: #c1c1c1;
+  --color-ink: #222222;
+  --color-body: #3f3f3f;
+  --color-muted: #6a6a6a;
+  --color-muted-soft: #929292;
+  --color-on-primary: #ffffff;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-full: 9999px;
+  --shadow-card: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0,
+    rgba(0, 0, 0, 0.1) 0 4px 8px 0;
+}
+
+.mcPage {
+  min-height: 100vh;
+  background: #e9e9ec;
+  display: flex;
+  justify-content: center;
+}
+
+.mcShell {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.mcContent {
+  flex: 1;
+  padding-bottom: 84px;
+}
+
+.mcTopBar {
+  padding: 14px 20px 0;
+}
+
+.mcTopBarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.mcLogo {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.mcLogo span {
+  color: var(--color-primary);
+}
+
+.mcIconBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.mcIconBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcSearchTrigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-hairline);
+  padding: 0 18px;
+  color: var(--color-muted);
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  background: #fff;
+  text-decoration: none;
+}
+
+.mcSearchInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-ink);
+  padding: 0 16px;
+}
+
+.mcSearchInputWrap input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 15px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--color-ink);
+  min-width: 0;
+}
+
+.mcSearchClear {
+  border: none;
+  background: #e9e9e9;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.mcBanner {
+  padding: 18px 20px 4px;
+}
+
+.mcBannerInner {
+  position: relative;
+  height: 152px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.mcBannerInner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mcBannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.05));
+}
+
+.mcBannerText {
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #fff;
+}
+
+.mcChipRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 16px 20px 4px;
+  scrollbar-width: none;
+}
+
+.mcChipRow::-webkit-scrollbar {
+  display: none;
+}
+
+.mcChip {
+  flex: none;
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-hairline);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.mcSectionTitle {
+  padding: 18px 20px 2px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.mcGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 14px;
+  padding: 14px 20px 28px;
+}
+
+.mcCard {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mcCardImageFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-strong);
+}
+
+.mcCardImageFrame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mcCardBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.mcHeartBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.mcCardRating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.mcCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  line-height: 1.35;
+}
+
+.mcCardBrand {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.mcCardPrice {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin-top: 2px;
+}
+
+.mcEmptyState {
+  padding: 90px 40px;
+  text-align: center;
+}
+
+.mcEmptyIcon {
+  font-size: 42px;
+  margin-bottom: 14px;
+}
+
+.mcEmptyTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: 6px;
+}
+
+.mcEmptyDesc {
+  font-size: 14px;
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.mcEmptyCta {
+  display: inline-block;
+  padding: 13px 26px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mcBackBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.mcDetailHero {
+  position: relative;
+}
+
+.mcDetailHeroImg {
+  width: 100%;
+  height: 390px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--color-surface-strong);
+}
+
+.mcDetailHeroBar {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mcInfoBlock {
+  padding: 22px 20px;
+}
+
+.mcInfoTable {
+  margin-top: 18px;
+  border: 1px solid var(--color-hairline-soft);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.mcInfoRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+}
+
+.mcInfoRow:last-child {
+  border-bottom: none;
+}
+
+.mcInfoRow span:first-child {
+  color: var(--color-muted);
+}
+
+.mcInfoRow span:last-child {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.mcDivider8 {
+  height: 8px;
+  background: var(--color-surface-soft);
+}
+
+.mcActionBar {
+  flex: none;
+  border-top: 1px solid var(--color-hairline-soft);
+  padding: 10px 16px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: #fff;
+  position: sticky;
+  bottom: 0;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.mcBtn {
+  width: 100%;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcBtnPrimary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.mcBtnPrimary:disabled {
+  background: var(--color-primary-disabled);
+  cursor: not-allowed;
+}
+
+.mcBtnSecondary {
+  background: #fff;
+  border: 1px solid var(--color-hairline);
+  color: var(--color-ink);
+}
+
+.mcHeartCircleBtn {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-hairline);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcSheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.mcSheet {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 8px 20px 20px;
+  animation: mcSheet 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes mcSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mcFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mcSheetHandle {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: #e0e0e0;
+  margin: 6px auto 16px;
+}
+
+.mcSheetOptionLabel {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.mcSheetOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mcOptionPill {
+  padding: 11px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-hairline);
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.mcOptionPill.selected {
+  border-color: var(--color-primary);
+  background: #fff0f3;
+  color: var(--color-primary);
+}
+
+.mcToast {
+  position: fixed;
+  left: 20px;
+  right: 20px;
+  bottom: 92px;
+  max-width: 440px;
+  margin: 0 auto;
+  z-index: 90;
+  background: #222;
+  color: #fff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: mcFade 220ms ease;
+}
+
+.mcTabBar {
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  height: 64px;
+  border-top: 1px solid var(--color-hairline-soft);
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding-bottom: 4px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  z-index: 50;
+}
+
+.mcTabItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  background: none;
+  border: none;
+}
+
+.mcTabLabel {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.mcTabBadge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcListHeader {
+  padding: 16px 20px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+}
+
+.mcListHeader h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.mcListHeaderCount {
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.mcCartItem {
+  display: flex;
+  gap: 13px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+}
+
+.mcCartItemImg {
+  flex: none;
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.mcQtyControl {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.mcQtyBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  font-size: 17px;
+  color: var(--color-ink);
+}
+
+.mcSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--color-body);
+  margin-bottom: 10px;
+}
+
+.mcSummaryTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 18px;
+}
+
+.mcCheckoutInput {
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: 0 14px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  color: var(--color-ink);
+}
+
+.mcPayRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-hairline-soft);
+}
+
+.mcPayRow:last-child {
+  border-bottom: none;
+}
+
+.mcPayRadio {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.mcPayRadio.selected {
+  border-color: var(--color-primary);
+}
+
+.mcPayRadioDot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+}
+
+.mcCompleteWrap {
+  padding: 60px 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mcCompleteCheck {
+  width: 84px;
+  height: 84px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.mcOrderSummaryCard {
+  width: 100%;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.mcProfileHeader {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+}
+
+.mcAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: #e8d9c5;
+  color: #7a5c34;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex: none;
+}
+
+.mcStatsRow {
+  display: flex;
+  padding: 18px 20px;
+  border-bottom: 8px solid var(--color-surface-soft);
+  text-align: center;
+}
+
+.mcStatItem {
+  flex: 1;
+}
+
+.mcStatItem + .mcStatItem {
+  border-left: 1px solid var(--color-hairline-soft);
+}
+
+.mcStatValue {
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.mcStatLabel {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 3px;
+}
+
+.mcMenuItem {
+  padding: 17px 20px;
+  font-size: 15px;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  text-align: left;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.mcMenuChevron {
+  color: #bbb;
+}
