@@ -1,0 +1,20 @@
+/* Mini-Commerce — Spacing tokens
+ * Base unit 4px (with a 2px micro-step). Editorial bands breathe at 64px;
+ * card grids compress to 16px to keep marketplace density high.
+ */
+:root {
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-base: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  --space-section: 64px;   /* major page-band vertical padding */
+
+  /* ---- Containers ---- */
+  --container-editorial: 1280px;  /* homepage / editorial max width */
+  --container-listing: 1080px;    /* listing detail max width */
+  --container-wide: 1440px;       /* search / listing cap at wide breakpoint */
+}

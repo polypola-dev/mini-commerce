@@ -1,0 +1,129 @@
+/* Mini-Commerce — Typography tokens
+ * Font: PRETENDARD VARIABLE — the single shipped face (Latin + numerals + 한글
+ * in one variable file; see fonts.css). Display weights stay modest (500–700);
+ * the system trusts photography for visual heft. The one loud moment is the
+ * rating display.
+ */
+:root {
+  /* ---- Families ---- */
+  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, system-ui, Roboto, "Helvetica Neue", sans-serif;
+
+  /* ---- Weights ---- */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---- Type scale ----
+   * Each token below ships as size / weight / line-height / tracking.
+   * Use the composite custom props or the individual parts.
+   */
+
+  /* rating-display — 64/700/1.1/-1px — listing detail rating ("4.81") */
+  --type-rating-display-size: 64px;
+  --type-rating-display-weight: 700;
+  --type-rating-display-leading: 1.1;
+  --type-rating-display-tracking: -1px;
+
+  /* display-xl — 28/700/1.43 — homepage h1 */
+  --type-display-xl-size: 28px;
+  --type-display-xl-weight: 700;
+  --type-display-xl-leading: 1.43;
+  --type-display-xl-tracking: 0;
+
+  /* display-lg — 22/500/1.18/-0.44px — listing detail h1 */
+  --type-display-lg-size: 22px;
+  --type-display-lg-weight: 500;
+  --type-display-lg-leading: 1.18;
+  --type-display-lg-tracking: -0.44px;
+
+  /* display-md — 21/700/1.43 — listing section heads */
+  --type-display-md-size: 21px;
+  --type-display-md-weight: 700;
+  --type-display-md-leading: 1.43;
+  --type-display-md-tracking: 0;
+
+  /* display-sm — 20/600/1.20/-0.18px — sub-section titles */
+  --type-display-sm-size: 20px;
+  --type-display-sm-weight: 600;
+  --type-display-sm-leading: 1.20;
+  --type-display-sm-tracking: -0.18px;
+
+  /* title-md — 16/600/1.25 — city link block titles */
+  --type-title-md-size: 16px;
+  --type-title-md-weight: 600;
+  --type-title-md-leading: 1.25;
+  --type-title-md-tracking: 0;
+
+  /* title-sm — 16/500/1.25 — footer column heads */
+  --type-title-sm-size: 16px;
+  --type-title-sm-weight: 500;
+  --type-title-sm-leading: 1.25;
+  --type-title-sm-tracking: 0;
+
+  /* body-md — 16/400/1.5 — default running text */
+  --type-body-md-size: 16px;
+  --type-body-md-weight: 400;
+  --type-body-md-leading: 1.5;
+  --type-body-md-tracking: 0;
+
+  /* body-sm — 14/400/1.43 — card meta, dates, prices */
+  --type-body-sm-size: 14px;
+  --type-body-sm-weight: 400;
+  --type-body-sm-leading: 1.43;
+  --type-body-sm-tracking: 0;
+
+  /* caption — 14/500/1.29 — search field segment labels */
+  --type-caption-size: 14px;
+  --type-caption-weight: 500;
+  --type-caption-leading: 1.29;
+  --type-caption-tracking: 0;
+
+  /* caption-sm — 13/400/1.23 — footer legal line */
+  --type-caption-sm-size: 13px;
+  --type-caption-sm-weight: 400;
+  --type-caption-sm-leading: 1.23;
+  --type-caption-sm-tracking: 0;
+
+  /* badge — 11/600/1.18 — "Guest favorite" badge */
+  --type-badge-size: 11px;
+  --type-badge-weight: 600;
+  --type-badge-leading: 1.18;
+  --type-badge-tracking: 0;
+
+  /* micro-label — 12/700/1.33 — card amenity micro-labels */
+  --type-micro-label-size: 12px;
+  --type-micro-label-weight: 700;
+  --type-micro-label-leading: 1.33;
+  --type-micro-label-tracking: 0;
+
+  /* uppercase-tag — 8/700/1.25/0.32px upper — "NEW" badge */
+  --type-uppercase-tag-size: 8px;
+  --type-uppercase-tag-weight: 700;
+  --type-uppercase-tag-leading: 1.25;
+  --type-uppercase-tag-tracking: 0.32px;
+
+  /* button-md — 16/500/1.25 — primary CTA labels */
+  --type-button-md-size: 16px;
+  --type-button-md-weight: 500;
+  --type-button-md-leading: 1.25;
+  --type-button-md-tracking: 0;
+
+  /* button-sm — 14/500/1.29 — pill button labels */
+  --type-button-sm-size: 14px;
+  --type-button-sm-weight: 500;
+  --type-button-sm-leading: 1.29;
+  --type-button-sm-tracking: 0;
+
+  /* link — 14/400/1.43 — inline body links */
+  --type-link-size: 14px;
+  --type-link-weight: 400;
+  --type-link-leading: 1.43;
+  --type-link-tracking: 0;
+
+  /* nav-link — 16/600/1.25 — top product-nav labels */
+  --type-nav-link-size: 16px;
+  --type-nav-link-weight: 600;
+  --type-nav-link-leading: 1.25;
+  --type-nav-link-tracking: 0;
+}

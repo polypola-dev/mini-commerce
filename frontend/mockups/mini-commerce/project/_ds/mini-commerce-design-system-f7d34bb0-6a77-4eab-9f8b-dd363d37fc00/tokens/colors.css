@@ -1,0 +1,41 @@
+/* Mini-Commerce — Color tokens
+ * A generous, photography-led marketplace palette: pure-white canvas,
+ * near-black ink, a single voltage of "Rausch" coral carrying every
+ * primary action. Sub-brand accents (Luxe / Plus) are scoped to their
+ * own surfaces and never appear in mainline marketing.
+ */
+:root {
+  /* ---- Brand & accent ---- */
+  --color-primary: #ff385c;            /* Rausch — the single brand color */
+  --color-primary-active: #e00b41;     /* press / pointer-down */
+  --color-primary-disabled: #ffd1da;   /* pale tint on disabled CTAs */
+  --color-luxe: #460479;               /* sub-brand: Luxe (scoped) */
+  --color-plus: #92174d;               /* sub-brand: Plus (scoped) */
+
+  /* ---- Surface ---- */
+  --color-canvas: #ffffff;             /* default page floor — no dark mode */
+  --color-surface-soft: #f7f7f7;       /* disabled fields, hover bands */
+  --color-surface-strong: #f2f2f2;     /* circular icon-button surface */
+
+  /* ---- Hairlines & borders ---- */
+  --color-hairline: #dddddd;           /* default 1px border tone */
+  --color-hairline-soft: #ebebeb;      /* lighter editorial divider */
+  --color-border-strong: #c1c1c1;      /* disabled outline / focused input */
+
+  /* ---- Text ---- */
+  --color-ink: #222222;                /* dominant text — never pure black */
+  --color-body: #3f3f3f;               /* secondary running text */
+  --color-muted: #6a6a6a;              /* sub-titles, inactive tabs, "View all" */
+  --color-muted-soft: #929292;         /* disabled link text */
+  --color-star-rating: #222222;        /* stars render in ink, not gold */
+  --color-on-primary: #ffffff;         /* white text on Rausch */
+
+  /* ---- Semantic ---- */
+  --color-error: #c13515;              /* inline form-validation error */
+  --color-error-hover: #b32505;        /* error link hover */
+  --color-legal-link: #428bff;         /* links inside legal copy only */
+
+  /* ---- Scrim ---- */
+  --color-scrim: #000000;              /* modal backdrop base; rendered @50% */
+  --scrim-opacity: 0.5; /* @kind other */
+}

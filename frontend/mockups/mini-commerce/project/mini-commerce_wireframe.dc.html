@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>*{box-sizing:border-box;}html,body{margin:0;padding:0;}</style>
+</helmet>
+<div style="min-width:100%; min-height:100vh; box-sizing:border-box; padding:48px; background:var(--canvas,#e7e5df); width:max-content; font-family:Pretendard,sans-serif; --accent:{{accent}}; --canvas:{{canvas}}; --label:{{label}}; --sub:{{sub}};">
+  <div style="width:max-content; min-width:1340px;">
+
+    <!-- HEADER -->
+    <div style="margin-bottom:8px; display:{{annoBlock}};">
+      <div style="font-family:Pretendard,sans-serif; font-size:12px; letter-spacing:1px; color:var(--sub,#8a8780); margin-bottom:6px;">WIREFRAME · MOBILE · A · v3</div>
+      <div style="font-size:38px; font-weight:700; color:var(--label,#2b2b2b); line-height:1;">미니 커머스 — 오픈마켓</div>
+      <div style="font-size:18px; color:var(--sub,#6f6c66); margin-top:6px;">하단 탭바 + 검색 중심 · 5개 도메인으로 정리한 전체 화면 흐름</div>
+    </div>
+    <div style="display:{{annoFlex}}; gap:16px; align-items:stretch; margin:18px 0 30px;">
+      <div style="flex:1; background:#fff; border:1.5px solid #d6d3cd; border-radius:12px; padding:16px 18px;">
+        <div style="font-size:16px; color:#6f6c66; margin-top:4px; line-height:1.7;">
+          <b>① 인증</b> 로그인 → 가입 → 비번찾기 &nbsp;·&nbsp;
+          <b>② 탐색</b> 홈 → 카테고리 → 검색 → 결과〔없음〕→ 프로모션 &nbsp;·&nbsp;
+          <b>③ 쇼핑</b> 목록〔필터/정렬 시트〕→ 상세〔옵션 시트/딥링크/공유/웹〕→ 장바구니〔빈〕→ 결제〔실패〕→ 완료 &nbsp;·&nbsp;
+          <b>④ 계정</b> 마이 → 주문상세/취소 → 내정보 → 이메일인증 → 배송지 → 찜 → 리뷰 → 쿠폰 → 알림 &nbsp;·&nbsp;
+          <b>⑤ 지원</b> 고객센터 · 네트워크오류 · 404 · 500 · 정기점검
+        </div>
+      </div>
+      <div style="flex:none; width:300px; background:#fff; border:1.5px solid #d6d3cd; border-radius:12px; padding:14px 18px; display:flex; flex-direction:column; justify-content:center; gap:9px;">
+        <div style="font-family:Pretendard,sans-serif; font-size:11px; color:#8a8780; letter-spacing:.5px;">범례</div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:7px;"><div style="width:24px; height:8px; border-radius:5px; background:#d8d6d0;"></div><span style="font-size:13px; color:#6f6c66;">텍스트</span></div>
+          <div style="display:flex; align-items:center; gap:7px;"><div style="width:16px; height:16px; border:1.5px dashed #b9b6b0; border-radius:4px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 4px,#e6e3de 4px,#e6e3de 8px);"></div><span style="font-size:13px; color:#6f6c66;">이미지</span></div>
+          <div style="display:flex; align-items:center; gap:7px;"><div style="width:16px; height:16px; border-radius:5px; background:var(--accent,#3f72b0);"></div><span style="font-size:13px; color:#6f6c66;">CTA</span></div>
+          <div style="display:flex; align-items:center; gap:7px;"><div style="width:16px; height:16px; border-radius:5px; background:#8a8780;"></div><span style="font-size:13px; color:#6f6c66;">상태변형</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ① 인증 & 진입 -->
+    <div style="margin:0 0 14px; display:{{annoFlex}}; align-items:center; gap:12px;">
+      <div style="font-family:Pretendard,sans-serif; font-size:13px; color:#fff; background:#2b2b2b; border-radius:6px; padding:4px 10px;">FLOW ①</div>
+      <div style="font-size:24px; font-weight:700; color:var(--label,#2b2b2b);">인증 &amp; 진입</div>
+      <div style="flex:1; height:1.5px; background:#cbc8c2;"></div>
+    </div>
+    <div style="display:{{annoFlex}}; flex-wrap:wrap; align-items:center; gap:9px; background:#fff; border:1.5px solid #d6d3cd; border-radius:10px; padding:11px 14px; margin:-4px 0 22px;"><span style="font-size:11px; color:#8a8780; letter-spacing:.5px; margin-right:2px;">메인 플로우</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">1</span><span style="font-size:13px; color:var(--label,#2b2b2b);">로그인</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">2</span><span style="font-size:13px; color:var(--label,#2b2b2b);">회원가입</span></span><span style="width:1px; height:16px; background:#dcd9d3; margin:0 4px;"></span><span style="font-size:11px; color:var(--sub,#9a978f); line-height:1.5;">분기 · 비밀번호 찾기 → 재설정</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px; margin-bottom:46px;">
+
+      <!-- 1.1 로그인 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">1</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">1.1</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">로그인</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:16px; display:flex; flex-direction:column; gap:14px; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="flex:none; height:54px; display:flex; align-items:center; justify-content:center; margin-top:20px;"><div style="width:120px; height:38px; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px); display:flex; align-items:center; justify-content:center; font-family:Pretendard,sans-serif; font-size:11px; color:#9a978f;">로고</div></div>
+          <div style="font-size:22px; font-weight:700; color:#2b2b2b; text-align:center; margin-top:6px;">로그인</div>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
+            <div style="border:1.5px solid #cfccc6; border-radius:9px; padding:13px; font-size:14px; color:#9a978f;">이메일 또는 휴대폰</div>
+            <div style="border:1.5px solid #cfccc6; border-radius:9px; padding:13px; font-size:14px; color:#9a978f;">비밀번호</div>
+          </div>
+          <div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:13px; border-radius:10px; font-weight:700; font-size:16px;">로그인</div>
+          <div style="display:flex; justify-content:center; gap:14px; font-size:14px; color:#8a8780;"><span>회원가입</span><span>·</span><span>비밀번호 찾기</span></div>
+          <div style="display:flex; align-items:center; gap:10px; margin:4px 0;"><div style="flex:1; height:1px; background:#e3e0da;"></div><span style="font-size:12px; color:#b7b4ae;">간편 로그인</span><div style="flex:1; height:1px; background:#e3e0da;"></div></div>
+          <div style="display:flex; gap:10px; justify-content:center;"><div style="width:46px; height:46px; border:1.5px solid #cfccc6; border-radius:50%;"></div><div style="width:46px; height:46px; border:1.5px solid #cfccc6; border-radius:50%;"></div><div style="width:46px; height:46px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 1.2 회원가입 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">2</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">1.2</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">회원가입</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; gap:13px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">회원가입</div></div>
+          <div style="display:flex; flex-direction:column; gap:11px; margin-top:4px;">
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">이메일</div><div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">name@email.com</div><div style="border:1.5px solid #2b2b2b; border-radius:9px; padding:11px 12px; font-size:12px; color:#2b2b2b;">중복확인</div></div></div>
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">비밀번호</div><div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;" data-comment-anchor="2ebaab6ae7-div">8자 이상, 영문+숫자+특수문자</div></div>
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">비밀번호 확인</div><div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">다시 입력</div></div>
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">휴대폰 인증</div><div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">010-····-····</div><div style="border:1.5px solid #2b2b2b; border-radius:9px; padding:11px 12px; font-size:12px; color:#2b2b2b;">인증요청</div></div></div>
+          </div>
+          <div style="border-top:1.5px solid #efedea; padding-top:11px; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:16px; height:16px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px; background:var(--accent,#3f72b0); display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px;">✓</div><span style="font-size:12px; color:#3a3a3a;">전체 동의</span></div>
+            <div style="display:flex; align-items:center; gap:8px; padding-left:4px;" data-comment-anchor="d309d6636f-div"><div style="width:14px; height:14px; border:1.5px solid #cfccc6; border-radius:3px;"></div><span style="font-size:11px; color:#6f6c66;">(필수) 이용약관 · 개인정보</span></div>
+            <div style="display:flex; align-items:center; gap:8px; padding-left:4px;"><div style="width:14px; height:14px; border:1.5px solid #cfccc6; border-radius:3px;"></div><span style="font-size:11px; color:#6f6c66;">(선택) 마케팅 수신 동의</span></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">가입하기</div></div>
+        </div>
+      </div>
+
+      <div style="flex-basis:100%; height:0;"></div>
+      <div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin:10px 0 0;"><span style="font-size:12px; font-weight:700; color:#8a8780; letter-spacing:.5px; background:#efedea; border:1.5px dashed #cbc8c2; border-radius:6px; padding:5px 11px;">분기 · 비밀번호 재설정</span><div style="flex:1; height:1.5px; background:#dcd9d3;"></div></div>
+
+      <!-- 1.3 비밀번호 찾기 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">1.3</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">비밀번호 찾기</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>로그인에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">비밀번호 찾기</div></div>
+          <div style="font-size:14px; color:#6f6c66; line-height:1.6; margin-top:4px;">가입한 이메일로 재설정 링크를<br>보내드릴게요.</div>
+          <div style="margin-top:4px;"><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">이메일</div><div style="border:1.5px solid var(--accent,#3f72b0); border-radius:9px; padding:12px; font-size:13px; color:#2b2b2b;">name@email.com|</div></div>
+          <div style="background:#f4f8fd; border:1.5px solid #cfe0f3; border-radius:10px; padding:11px 12px; display:flex; gap:8px; align-items:flex-start;"><div style="width:18px; height:18px; flex:none; border:2px solid var(--accent,#3f72b0); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--accent,#3f72b0); font-weight:700;">i</div><span style="font-size:12px; color:#5a7fad; line-height:1.4;">메일이 오지 않으면 스팸함을 확인해 주세요.</span></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;" data-comment-anchor="7bc325570a-div">재설정 메일 보내기</div></div>
+        </div>
+      </div>
+
+      <!-- 1.4 비밀번호 재설정 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">1.4</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">비밀번호 재설정</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>재설정 메일 링크에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="background:#f4f8fd; border:1.5px solid #cfe0f3; border-radius:9px; padding:7px 10px; display:flex; align-items:center; gap:7px;"><span style="font-size:12px;">🔗</span><span style="font-size:11px; color:#5a7fad; line-height:1.3;">메일의 재설정 링크로 들어온 화면이에요</span></div>
+          <div style="font-size:17px; font-weight:700; color:#2b2b2b;">새 비밀번호 설정</div>
+          <div style="font-size:13px; color:#6f6c66; line-height:1.6;">안전한 새 비밀번호를 입력해 주세요.</div>
+          <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">새 비밀번호</div><div style="border:1.5px solid var(--accent,#3f72b0); border-radius:9px; padding:11px; font-size:13px; color:#2b2b2b;">••••••••|</div></div>
+          <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">새 비밀번호 확인</div><div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">다시 입력</div></div>
+          <div style="display:flex; flex-direction:column; gap:5px;"><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:11px; color:#3f8a5b;">✓</span><span style="font-size:11px; color:#6f6c66;">8자 이상</span></div><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:11px; color:#b7b4ae;">○</span><span style="font-size:11px; color:#9a978f;">영문·숫자 조합</span></div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">비밀번호 변경</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ② 탐색 & 발견 -->
+    <div style="margin:0 0 14px; display:{{annoFlex}}; align-items:center; gap:12px;">
+      <div style="font-family:Pretendard,sans-serif; font-size:13px; color:#fff; background:#2b2b2b; border-radius:6px; padding:4px 10px;">FLOW ②</div>
+      <div style="font-size:24px; font-weight:700; color:var(--label,#2b2b2b);">탐색 &amp; 발견</div>
+      <div style="flex:1; height:1.5px; background:#cbc8c2;"></div>
+    </div>
+    <div style="display:{{annoFlex}}; flex-wrap:wrap; align-items:center; gap:9px; background:#fff; border:1.5px solid #d6d3cd; border-radius:10px; padding:11px 14px; margin:-4px 0 22px;"><span style="font-size:11px; color:#8a8780; letter-spacing:.5px; margin-right:2px;">메인 플로우</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">1</span><span style="font-size:13px; color:var(--label,#2b2b2b);">홈</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">2</span><span style="font-size:13px; color:var(--label,#2b2b2b);">카테고리</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">3</span><span style="font-size:13px; color:var(--label,#2b2b2b);">검색</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">4</span><span style="font-size:13px; color:var(--label,#2b2b2b);">검색 결과</span></span><span style="width:1px; height:16px; background:#dcd9d3; margin:0 4px;"></span><span style="font-size:11px; color:var(--sub,#9a978f); line-height:1.5;">분기 · 검색결과 없음(상태) · 기획전(홈에서)</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px; margin-bottom:46px;">
+
+      <!-- 2.1 홈 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">1</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">2.1</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">홈 · 검색중심</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between;"><div style="width:70px; height:22px; border:1.5px dashed #b9b6b0; border-radius:6px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px); display:flex; align-items:center; justify-content:center; font-family:Pretendard,sans-serif; font-size:9px; color:#9a978f;">로고</div><div style="display:flex; gap:10px;"><div style="width:22px; height:22px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><div style="width:22px; height:22px; border:1.5px solid #b7b4ae; border-radius:5px;"></div></div></div>
+          <div style="border:2px solid var(--accent,#3f72b0); border-radius:24px; padding:12px 16px; display:flex; align-items:center; gap:10px; background:#f4f8fd;"><div style="width:16px; height:16px; border:2px solid var(--accent,#3f72b0); border-radius:50%;"></div><span style="font-size:14px; color:#5a7fad;">찾으시는 상품을 검색하세요</span></div>
+          <div style="display:flex; justify-content:space-between; padding:2px 2px 0;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="width:38px; height:38px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><span style="font-size:11px; color:#6f6c66;">패션</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="width:38px; height:38px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><span style="font-size:11px; color:#6f6c66;">뷰티</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="width:38px; height:38px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><span style="font-size:11px; color:#6f6c66;">디지털</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="width:38px; height:38px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><span style="font-size:11px; color:#6f6c66;">식품</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><div style="width:38px; height:38px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><span style="font-size:11px; color:#6f6c66;">전체</span></div>
+          </div>
+          <div style="flex:none; height:92px; border:1.5px dashed #b9b6b0; border-radius:12px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; font-family:Pretendard,sans-serif; font-size:11px; color:#9a978f;">기획전 배너<div style="display:flex; gap:4px; margin-top:2px;"><div style="width:5px; height:5px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="width:5px; height:5px; border-radius:50%; background:#cfccc6;"></div><div style="width:5px; height:5px; border-radius:50%; background:#cfccc6;"></div></div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><div style="font-size:15px; font-weight:700; color:#2b2b2b;">오늘의 추천</div><span style="font-size:12px; color:#8a8780;">더보기 ›</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div><div style="height:78px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; margin:7px 0 5px; width:85%;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:45%;"></div></div>
+            <div><div style="height:78px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; margin:7px 0 5px; width:70%;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:50%;"></div></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 2.2 카테고리 대분류 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">2</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">2.2</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">카테고리 · 대분류</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:12px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="font-size:17px; font-weight:700; color:#2b2b2b;">카테고리</div>
+          <div style="border:1.5px solid #cfccc6; border-radius:20px; padding:9px 14px; display:flex; align-items:center; gap:9px;"><div style="width:14px; height:14px; border:2px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:13px; color:#9a978f;">상품, 브랜드 검색</span></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:13px 6px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">여성패션</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">남성패션</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">뷰티</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">디지털</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">식품</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">홈/리빙</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">스포츠</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">유아동</span></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:50px; height:50px; border:1.5px dashed #b9b6b0; border-radius:50%; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><span style="font-size:12px; color:#3a3a3a;">전체</span></div>
+          </div>
+          <div style="font-size:13px; font-weight:700; color:#2b2b2b; margin-top:2px;">자주 찾는 카테고리</div>
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">여성 원피스<span style="color:#b7b4ae;">›</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">무선 이어폰<span style="color:#b7b4ae;">›</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; font-size:13px; color:#3a3a3a;">캠핑용품<span style="color:#b7b4ae;">›</span></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 2.3 검색 랭킹 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">3</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">2.3</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">검색 · 랭킹</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:16px 16px 0; display:flex; flex-direction:column; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><div style="font-size:18px; color:#6f6c66;">‹</div><div style="flex:1; border:2px solid var(--accent,#3f72b0); border-radius:20px; padding:9px 14px; font-size:13px; color:#2b2b2b;">원피스|</div><span style="font-size:13px; color:#8a8780;">취소</span></div>
+          <div><div style="font-size:14px; font-weight:700; color:#2b2b2b; margin-bottom:9px;">최근 검색어</div><div style="display:flex; gap:7px; flex-wrap:wrap;"><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">린넨 셔츠 ✕</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">슬랙스 ✕</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">샌들 ✕</div></div></div>
+          <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><div style="font-size:14px; font-weight:700; color:#2b2b2b;">인기 검색어</div><span style="font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;">12:00 기준</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #efedea;"><span style="font-family:Pretendard,sans-serif; font-size:15px; font-weight:700; color:var(--accent,#3f72b0); width:16px;">1</span><div style="height:9px; border-radius:5px; background:#d8d6d0; width:55%;"></div><span style="margin-left:auto; font-size:11px; color:#d05a4a;">▲</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #efedea;"><span style="font-family:Pretendard,sans-serif; font-size:15px; font-weight:700; color:var(--accent,#3f72b0); width:16px;">2</span><div style="height:9px; border-radius:5px; background:#d8d6d0; width:42%;"></div><span style="margin-left:auto; font-size:11px; color:#8a8780;">–</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #efedea;"><span style="font-family:Pretendard,sans-serif; font-size:15px; font-weight:700; color:var(--accent,#3f72b0); width:16px;">3</span><div style="height:9px; border-radius:5px; background:#d8d6d0; width:64%;"></div><span style="margin-left:auto; font-size:11px; color:#3f8a5b;">▼</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid #efedea;"><span style="font-family:Pretendard,sans-serif; font-size:15px; font-weight:700; color:#9a978f; width:16px;">4</span><div style="height:9px; border-radius:5px; background:#d8d6d0; width:48%;"></div><span style="margin-left:auto; font-size:11px; color:#d05a4a;">▲</span></div>
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0;"><span style="font-family:Pretendard,sans-serif; font-size:15px; font-weight:700; color:#9a978f; width:16px;">5</span><div style="height:9px; border-radius:5px; background:#d8d6d0; width:38%;"></div><span style="margin-left:auto; font-size:11px; color:#8a8780;">–</span></div>
+          </div>
+          <div style="height:44px;"></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:50%;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 2.4 검색 결과 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">4</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">2.4</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">검색 결과</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:10px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="flex:1; border:1.5px solid #cfccc6; border-radius:18px; padding:8px 12px; font-size:13px; color:#2b2b2b;">원피스</div><span style="font-size:13px; color:#8a8780;">⌕</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">결과 <b style="color:#2b2b2b;">2,418</b></span><span style="font-size:13px; color:#2b2b2b;">정확도순 ▾</span></div>
+          <div style="display:flex; gap:7px; overflow:hidden;"><div style="flex:none; border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:16px; padding:5px 11px; font-size:12px; color:var(--accent,#3f72b0);">필터 ▾</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 11px; font-size:12px; color:#6f6c66;">무료배송</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 11px; font-size:12px; color:#6f6c66;">4★+</div></div>
+          <sc-for list="{{ grid }}" as="g" hint-placeholder-count="2">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div><div style="height:84px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:85%; margin:7px 0 5px;"></div><div style="display:flex; align-items:center; gap:4px; margin-bottom:5px;"><span style="font-size:10px; color:#e0a93b;">★4.7</span><span style="font-size:10px; color:#b7b4ae;">(820)</span></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:40%;"></div></div>
+              <div><div style="height:84px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin:7px 0 5px;"></div><div style="display:flex; align-items:center; gap:4px; margin-bottom:5px;"><span style="font-size:10px; color:#e0a93b;">★4.5</span><span style="font-size:10px; color:#b7b4ae;">(312)</span></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:45%;"></div></div>
+            </div>
+          </sc-for>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:50%;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex-basis:100%; height:0;"></div>
+      <div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin:10px 0 0;"><span style="font-size:12px; font-weight:700; color:#8a8780; letter-spacing:.5px; background:#efedea; border:1.5px dashed #cbc8c2; border-radius:6px; padding:5px 11px;">분기 · 상태</span><div style="flex:1; height:1.5px; background:#dcd9d3;"></div></div>
+
+      <!-- 2.4e 검색결과 없음 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">2.4e</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">검색결과 없음</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>검색 결과 · 빈 상태</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:13px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="flex:1; border:1.5px solid #cfccc6; border-radius:18px; padding:8px 12px; font-size:13px; color:#2b2b2b;">qwerty asdf</div></div>
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; margin-top:50px;">
+            <div style="width:64px; height:64px; border:2px dashed #cfccc6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; color:#cfccc6;">⌕</div>
+            <div style="font-size:16px; font-weight:700; color:#2b2b2b;">검색 결과가 없어요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center; line-height:1.5;">철자를 확인하거나<br>다른 키워드로 검색해 보세요</div>
+          </div>
+          <div style="margin-top:6px;"><div style="font-size:13px; font-weight:700; color:#2b2b2b; margin-bottom:9px;">이런 검색어는 어때요?</div><div style="display:flex; gap:7px; flex-wrap:wrap;"><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">원피스</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">린넨 셔츠</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:13px; color:#6f6c66;">샌들</div></div></div>
+        </div>
+      </div>
+
+      <!-- 2.5 프로모션 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">2.5</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">프로모션</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>홈에서 진입</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">기획전</div></div>
+          <div style="flex:none; height:120px; border:1.5px dashed #b9b6b0; border-radius:12px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-family:Pretendard,sans-serif; font-size:11px; color:#9a978f;">히어로 배너<span style="font-size:10px;">시즌오프 ~70%</span></div>
+          <div style="display:flex; gap:9px; align-items:center; background:#f4f8fd; border:1.5px solid #cfe0f3; border-radius:10px; padding:10px 12px;"><div style="font-family:Pretendard,sans-serif; font-size:13px; font-weight:700; color:var(--accent,#3f72b0);">02:14:39</div><span style="font-size:13px; color:#5a7fad;">남은 시간 · 쿠폰 받기</span></div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div style="display:flex; gap:11px; align-items:center;"><div style="width:62px; height:62px; flex:none; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:80%; margin-bottom:6px;"></div><div style="height:8px; border-radius:5px; background:#e2dfd9; width:50%; margin-bottom:9px;"></div><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:13px; font-weight:700; color:#d05a4a;">-40%</span><span style="font-size:11px; color:#b7b4ae; text-decoration:line-through;">39,000</span></div></div></div>
+            <div style="display:flex; gap:11px; align-items:center;"><div style="width:62px; height:62px; flex:none; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin-bottom:6px;"></div><div style="height:8px; border-radius:5px; background:#e2dfd9; width:55%; margin-bottom:9px;"></div><div style="display:flex; align-items:center; gap:6px;"><span style="font-size:13px; font-weight:700; color:#d05a4a;">-25%</span><span style="font-size:11px; color:#b7b4ae; text-decoration:line-through;">21,000</span></div></div></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ③ 쇼핑 & 구매 -->
+    <div style="margin:0 0 14px; display:{{annoFlex}}; align-items:center; gap:12px;">
+      <div style="font-family:Pretendard,sans-serif; font-size:13px; color:#fff; background:#2b2b2b; border-radius:6px; padding:4px 10px;">FLOW ③</div>
+      <div style="font-size:24px; font-weight:700; color:var(--label,#2b2b2b);">쇼핑 &amp; 구매</div>
+      <div style="flex:1; height:1.5px; background:#cbc8c2;"></div>
+    </div>
+    <div style="display:{{annoFlex}}; flex-wrap:wrap; align-items:center; gap:9px; background:#fff; border:1.5px solid #d6d3cd; border-radius:10px; padding:11px 14px; margin:-4px 0 22px;"><span style="font-size:11px; color:#8a8780; letter-spacing:.5px; margin-right:2px;">메인 플로우</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">1</span><span style="font-size:13px; color:var(--label,#2b2b2b);">목록</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">2</span><span style="font-size:13px; color:var(--label,#2b2b2b);">상세</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">3</span><span style="font-size:13px; color:var(--label,#2b2b2b);">장바구니</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">4</span><span style="font-size:13px; color:var(--label,#2b2b2b);">결제</span></span><span style="color:#b7b4ae; font-size:14px;">→</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">5</span><span style="font-size:13px; color:var(--label,#2b2b2b);">완료</span></span><span style="width:1px; height:16px; background:#dcd9d3; margin:0 4px;"></span><span style="font-size:11px; color:var(--sub,#9a978f); line-height:1.5;">분기 · 필터/정렬/옵션/공유 시트 · 빈 장바구니 · 결제 실패</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px; margin-bottom:46px;">
+
+      <!-- 3.1 목록 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">1</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">3.1</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);" data-comment-anchor="f0e96277c4-span">목록 · 중분류 + 칩 필터</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:10px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="flex:1; font-size:15px; font-weight:700; color:#2b2b2b;">여성패션</div><div style="width:20px; height:20px; border:1.5px solid #b7b4ae; border-radius:50%;"></div></div>
+          <div style="display:flex; align-items:center; gap:5px; font-size:11px;" data-comment-anchor="55c2bdf2f8-div"><span style="color:#8a8780;">‹ 카테고리</span><span style="color:#cfccc6;">·</span><span style="color:var(--accent,#3f72b0);">여성패션</span><span style="color:#b7b4ae;">›</span><span style="color:#9a978f;">전체</span></div>
+          <div style="display:flex; gap:7px; overflow:hidden; border-bottom:1.5px solid #efedea; padding-bottom:9px;"><div style="flex:none; background:#2b2b2b; color:#fff; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:700;">전체</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">상의</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">원피스</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">팬츠</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">신발</div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">전체 1,240</span><span style="font-size:13px; color:#2b2b2b;">추천순 ▾</span></div>
+          <div style="display:flex; gap:7px; overflow:hidden;"><div style="flex:none; border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:16px; padding:5px 11px; font-size:12px; color:var(--accent,#3f72b0);">필터 ▾</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 11px; font-size:12px; color:#6f6c66;">가격</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 11px; font-size:12px; color:#6f6c66;">색상</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 11px; font-size:12px; color:#6f6c66;">배송</div></div>
+          <sc-for list="{{ grid }}" as="g" hint-placeholder-count="2">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div><div style="height:84px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:85%; margin:7px 0 5px;"></div><div style="height:8px; border-radius:5px; background:#e2dfd9; width:55%; margin-bottom:6px;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:40%;"></div></div>
+              <div><div style="height:84px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin:7px 0 5px;"></div><div style="height:8px; border-radius:5px; background:#e2dfd9; width:50%; margin-bottom:6px;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:45%;"></div></div>
+            </div>
+          </sc-for>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 3.2 상품 상세 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">2</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">3.2</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">상품 상세</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:0; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+          <div style="position:absolute; top:14px; left:14px; right:14px; display:flex; justify-content:space-between; z-index:2;"><span style="font-size:18px; color:#2b2b2b;">‹</span><div style="display:flex; gap:10px; align-items:center;"><div style="width:20px; height:20px; border:1.5px solid #6f6c66; border-radius:50%; background:#fff;"></div><div style="width:26px; height:26px; border:1.5px solid var(--accent,#3f72b0); border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--accent,#3f72b0);">↑</div><div style="width:20px; height:20px; border:1.5px solid #6f6c66; border-radius:4px; background:#fff;"></div></div></div>
+          <div style="position:absolute; top:44px; right:40px; z-index:3; background:#2b2b2b; color:#fff; font-size:10px; border-radius:6px; padding:3px 7px;">공유 버튼 → 시트 ↑</div>
+          <div style="flex:none; height:190px; border-bottom:1.5px dashed #d8d6d0; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 9px,#e6e3de 9px,#e6e3de 18px); display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px;"><div style="display:flex; gap:5px;"><div style="width:6px; height:6px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div></div></div>
+          <div style="flex:none; padding:8px 14px; display:flex; gap:7px;" data-comment-anchor="2fa44ab3cf-div"><div style="width:40px; height:40px; border:1.5px solid var(--accent,#3f72b0); border-radius:7px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><div style="width:40px; height:40px; border:1.5px dashed #b9b6b0; border-radius:7px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><div style="width:40px; height:40px; border:1.5px dashed #b9b6b0; border-radius:7px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div><div style="width:40px; height:40px; border:1.5px dashed #b9b6b0; border-radius:7px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 5px,#e6e3de 5px,#e6e3de 10px);"></div></div>
+          <div style="padding:4px 14px 0; display:flex; flex-direction:column; gap:9px; overflow:hidden;">
+            <div style="height:8px; border-radius:5px; background:#e2dfd9; width:35%;"></div>
+            <div style="height:11px; border-radius:5px; background:#d8d6d0; width:90%;"></div>
+            <div style="display:flex; align-items:baseline; gap:8px; margin-top:2px;" data-comment-anchor="c47338d93a-div"><span style="font-size:15px; font-weight:700; color:#d05a4a;">32%</span><span style="font-size:20px; font-weight:700; color:#2b2b2b;">28,900</span></div>
+            <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:13px; color:#e0a93b;">★★★★☆</span><span style="font-size:12px; color:#8a8780;">4.6 · 리뷰 1,204</span></div>
+            <div style="border-top:1px solid #efedea; padding:10px 0 4px; display:flex; flex-direction:column; gap:8px;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">옵션 · 색상</span><span style="font-size:13px; color:#2b2b2b;">선택 ▾</span></div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">옵션 · 사이즈</span><span style="font-size:13px; color:#2b2b2b;">선택 ▾</span></div></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 12px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; gap:9px; align-items:center;">
+            <div style="width:46px; height:46px; flex:none; border:1.5px solid #cfccc6; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#b7b4ae;">♡</div>
+            <div style="flex:1; border:1.5px solid #2b2b2b; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700; color:#2b2b2b;">장바구니</div>
+            <div style="flex:1; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700;">구매하기</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 3.3 장바구니 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">3</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">3.3</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">장바구니</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">장바구니</div></div>
+          <div style="display:flex; align-items:center; gap:8px; padding-bottom:8px; border-bottom:1.5px solid #efedea;"><div style="width:17px; height:17px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px; background:var(--accent,#3f72b0);"></div><span style="font-size:13px; color:#2b2b2b;">전체선택 (3)</span><span style="margin-left:auto; font-size:12px; color:#8a8780;">선택삭제</span></div>
+          <sc-for list="{{ cartItems }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex; gap:10px; align-items:flex-start; padding-bottom:11px; border-bottom:1px solid #f1efea;">
+              <div style="width:16px; height:16px; flex:none; margin-top:2px; border:1.5px solid var(--accent,#3f72b0); border-radius:4px; background:var(--accent,#3f72b0);"></div>
+              <div style="width:58px; height:58px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div>
+              <div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:85%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:50%; margin-bottom:9px;"></div><div style="display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; border:1.5px solid #cfccc6; border-radius:7px;"><span style="padding:2px 8px; font-size:13px; color:#6f6c66;">−</span><span style="padding:2px 8px; font-size:12px; color:#2b2b2b; border-left:1px solid #e3e0da; border-right:1px solid #e3e0da;">1</span><span style="padding:2px 8px; font-size:13px; color:#6f6c66;">+</span></div><span style="font-size:14px; font-weight:700; color:#2b2b2b;">28,900</span></div></div>
+            </div>
+          </sc-for>
+          <div style="padding:12px 0; border-top:1.5px solid #efedea; display:flex; justify-content:space-between; align-items:center; margin-bottom:62px;"><span style="font-size:14px; color:#6f6c66;">총 결제금액</span><span style="font-size:19px; font-weight:700; color:#2b2b2b;">86,700</span></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">주문하기 (3)</div></div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 3.4 결제 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">4</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">3.4</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">주문 · 결제</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:9px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">주문/결제</div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:11px 12px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><span style="font-size:13px; font-weight:700; color:#2b2b2b;">배송지</span><span style="font-size:12px; color:var(--accent,#3f72b0);">변경</span></div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:55%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:85%;"></div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:11px 12px;"><div style="font-size:13px; font-weight:700; color:#2b2b2b; margin-bottom:9px;">주문상품</div><div style="display:flex; gap:9px; align-items:center;"><div style="width:42px; height:42px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:40%;"></div></div><span style="font-size:12px; color:#8a8780;">외 2건</span></div></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border:1.5px solid #e3e0da; border-radius:10px; padding:10px 12px;"><span style="font-size:13px; color:#6f6c66;">쿠폰</span><span style="font-size:13px; color:var(--accent,#3f72b0); font-weight:600;">10% 할인쿠폰 적용됨 ▾</span></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px;"><div><div style="font-size:13px; color:#6f6c66;">포인트</div><div style="font-size:10px; color:#aaa; margin-top:2px;">보유 3,250P</div></div><div style="display:flex; align-items:center; gap:6px;"><div style="border:1.5px solid #cfccc6; border-radius:7px; padding:5px 8px; font-size:13px; color:#2b2b2b; width:72px; text-align:right; background:#fafaf9;">3,250</div><span style="font-size:12px; color:#8a8780;">P</span><div style="font-size:11px; color:var(--accent,#3f72b0); font-weight:700;">전액</div></div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:11px 12px;"><div style="font-size:13px; font-weight:700; color:#2b2b2b; margin-bottom:9px;">결제수단</div><div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:8px; padding:9px 0; text-align:center; font-size:12px; color:var(--accent,#3f72b0);">간편결제</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; padding:9px 0; text-align:center; font-size:12px; color:#6f6c66;">카드</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; padding:9px 0; text-align:center; font-size:12px; color:#6f6c66;">계좌</div></div></div>
+          <div style="background:#f7f9fc; border:1.5px solid #cfe0f3; border-radius:10px; padding:11px 12px; display:flex; flex-direction:column; gap:6px;"><div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8780;"><span>상품금액</span><span>89,700</span></div><div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8780;"><span>할인</span><span style="color:#d05a4a;">−3,000</span></div><div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700; color:#2b2b2b; border-top:1px solid #dde7f2; padding-top:7px;"><span>총 결제금액</span><span>86,700</span></div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">86,700원 결제하기</div></div>
+        </div>
+      </div>
+
+      <div style="flex:none; width:30px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--accent,#3f72b0); font-size:26px; font-weight:700;" aria-hidden="true">→</div>
+
+      <!-- 3.5 주문완료 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">5</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">3.5</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">주문 완료</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; align-items:center; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="margin-top:32px; width:72px; height:72px; border-radius:50%; border:3px solid #2f9e69; display:flex; align-items:center; justify-content:center;"><div style="font-size:32px; color:#2f9e69;">✓</div></div>
+          <div style="font-size:22px; font-weight:700; color:#2b2b2b; text-align:center;">주문이 완료됐어요!</div>
+          <div style="font-size:14px; color:#6f6c66; text-align:center; line-height:1.6;">결제가 정상적으로 처리됐어요.<br>주문번호를 저장해두세요.</div>
+          <div style="width:100%; border:1.5px solid #e3e0da; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#8a8780;">주문번호</span><span style="font-family:Pretendard,sans-serif; color:#2b2b2b; font-weight:700;">240623-002841</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#8a8780;">결제금액</span><span style="color:#2b2b2b; font-weight:700;">86,700원</span></div>
+            <div style="height:1px; background:#f1efea;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#8a8780;">예상 도착</span><span style="color:#2f9e69; font-weight:700;">내일(화) 도착 예정</span></div>
+          </div>
+          <div style="width:100%; background:#f4f8fd; border:1.5px solid #cfe0f3; border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; flex:none; border-radius:8px; background:var(--accent,#3f72b0); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;">🎁</div>
+            <span style="font-size:12px; color:#5a7fad; line-height:1.4;">첫 구매 축하 쿠폰 1장이 지급됐어요</span>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">주문내역 보기</div>
+            <div style="border:1.5px solid #2b2b2b; text-align:center; padding:12px; border-radius:10px; font-size:14px; color:#2b2b2b;">쇼핑 계속하기</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex-basis:100%; height:0;"></div>
+      <div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin:10px 0 0;"><span style="font-size:12px; font-weight:700; color:#8a8780; letter-spacing:.5px; background:#efedea; border:1.5px dashed #cbc8c2; border-radius:6px; padding:5px 11px;">분기 · 상태 · 시트</span><div style="flex:1; height:1.5px; background:#dcd9d3;"></div></div>
+
+      <!-- 3.1f 필터 시트 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.1f</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">필터 시트</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>목록 · 필터에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); overflow:hidden; position:relative; display:flex; flex-direction:column;">
+          <div style="flex:none; padding:14px 14px 0; opacity:.35; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="flex:1; font-size:15px; font-weight:700; color:#2b2b2b;">여성패션</div></div>
+            <div style="display:flex; gap:7px;"><div style="flex:none; background:#2b2b2b; border-radius:16px; padding:5px 13px; width:40px; height:24px;"></div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; width:40px; height:24px;"></div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; width:48px; height:24px;"></div></div>
+            <div style="height:84px; border:1.5px dashed #d8d6d0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(43,43,43,.32);"></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; top:80px; background:#fff; border-top:2px solid #2b2b2b; border-radius:20px 20px 0 0; padding:13px 16px 0; display:flex; flex-direction:column; gap:14px;">
+            <div style="width:40px; height:4px; border-radius:3px; background:#d8d6d0; align-self:center;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:16px; font-weight:700; color:#2b2b2b;">필터</span><span style="font-size:12px; color:#8a8780;">초기화 ↺</span></div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <span style="font-size:13px; font-weight:700; color:#3a3a3a;">가격대</span>
+              <div style="height:3px; background:#e3e0da; border-radius:3px; position:relative; margin:6px 4px 2px;"><div style="position:absolute; left:18%; right:30%; top:0; height:3px; background:var(--accent,#3f72b0); border-radius:3px;"></div><div style="position:absolute; left:18%; top:-5px; width:13px; height:13px; margin-left:-6px; background:#fff; border:2px solid var(--accent,#3f72b0); border-radius:50%;"></div><div style="position:absolute; right:30%; top:-5px; width:13px; height:13px; margin-right:-6px; background:#fff; border:2px solid var(--accent,#3f72b0); border-radius:50%;"></div></div>
+              <div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; padding:8px; font-size:12px; color:#2b2b2b;">10,000</div><span style="align-self:center; color:#b7b4ae;">~</span><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; padding:8px; font-size:12px; color:#2b2b2b;">50,000</div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px; border-top:1px solid #f1efea; padding-top:12px;">
+              <span style="font-size:13px; font-weight:700; color:#3a3a3a;">색상</span>
+              <div style="display:flex; gap:11px;"><div style="width:26px; height:26px; border-radius:50%; background:#2b2b2b; outline:2px solid var(--accent,#3f72b0); outline-offset:2px;"></div><div style="width:26px; height:26px; border-radius:50%; background:#fff; border:1.5px solid #cfccc6;"></div><div style="width:26px; height:26px; border-radius:50%; background:#b04a3a;"></div><div style="width:26px; height:26px; border-radius:50%; background:#3f72b0;"></div><div style="width:26px; height:26px; border-radius:50%; background:#cfb98a;"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px; border-top:1px solid #f1efea; padding-top:12px;">
+              <span style="font-size:13px; font-weight:700; color:#3a3a3a;">배송 · 혜택</span>
+              <div style="display:flex; flex-wrap:wrap; gap:7px;"><div style="border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:16px; padding:5px 12px; font-size:12px; color:var(--accent,#3f72b0);">✓ 무료배송</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:12px; color:#6f6c66;">내일도착</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 12px; font-size:12px; color:#6f6c66;">★ 4.0 이상</div></div>
+            </div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; gap:9px;"><div style="flex:none; width:88px; border:1.5px solid #2b2b2b; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; color:#2b2b2b;">초기화</div><div style="flex:1; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700;">결과 1,240개 보기</div></div>
+        </div>
+      </div>
+
+      <!-- 3.1s 정렬 시트 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.1s</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">정렬 시트</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>목록 · 정렬에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); overflow:hidden; position:relative; display:flex; flex-direction:column;">
+          <div style="flex:none; padding:14px 14px 0; opacity:.35; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="flex:1; font-size:15px; font-weight:700; color:#2b2b2b;">여성패션</div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">전체 1,240</span><span style="font-size:13px; color:#2b2b2b;">추천순 ▾</span></div>
+            <div style="height:120px; border:1.5px dashed #d8d6d0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(43,43,43,.32);"></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; background:#fff; border-top:2px solid #2b2b2b; border-radius:20px 20px 0 0; padding:14px 0 8px; display:flex; flex-direction:column;">
+            <div style="width:40px; height:4px; border-radius:3px; background:#d8d6d0; align-self:center; margin-bottom:12px;"></div>
+            <div style="font-size:16px; font-weight:700; color:#2b2b2b; padding:0 18px 8px;">정렬</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px; background:#f4f8fd;"><span style="font-size:14px; font-weight:700; color:var(--accent,#3f72b0);">추천순</span><span style="font-size:15px; color:var(--accent,#3f72b0);">✓</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px;"><span style="font-size:14px; color:#3a3a3a;">낮은 가격순</span><div style="width:16px; height:16px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px;"><span style="font-size:14px; color:#3a3a3a;">높은 가격순</span><div style="width:16px; height:16px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px;"><span style="font-size:14px; color:#3a3a3a;">판매량순</span><div style="width:16px; height:16px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px;"><span style="font-size:14px; color:#3a3a3a;">리뷰 많은순</span><div style="width:16px; height:16px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:13px 18px;"><span style="font-size:14px; color:#3a3a3a;">신상품순</span><div style="width:16px; height:16px; border:1.5px solid #cfccc6; border-radius:50%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2a 딥링크 진입 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.2a</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);" data-comment-anchor="645d17bab9-span">공유 진입 · 상품 상세</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>공유 링크 진입</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:0; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+          <div style="position:absolute; top:14px; left:14px; right:14px; display:flex; justify-content:space-between; z-index:2;">
+            <div style="display:flex; align-items:center; gap:5px; background:#fff; border:1.5px solid #2b2b2b; border-radius:16px; padding:4px 10px 4px 8px;"><div style="width:14px; height:13px; border:1.5px solid #2b2b2b; border-radius:2px; border-top:none; position:relative;"><div style="position:absolute; left:-2.5px; top:-6px; width:0; height:0; border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:6px solid #2b2b2b;"></div></div><span style="font-size:12px; font-weight:700; color:#2b2b2b;">홈</span></div>
+            <div style="display:flex; gap:12px;"><div style="width:20px; height:20px; border:1.5px solid #6f6c66; border-radius:50%; background:#fff;"></div><div style="width:20px; height:20px; border:1.5px solid #6f6c66; border-radius:4px; background:#fff;"></div></div>
+          </div>
+          <div style="position:absolute; top:54px; left:10px; right:10px; z-index:2; background:#fef6ec; border:1.5px solid #f0d9b5; border-radius:9px; padding:7px 10px; display:flex; align-items:center; gap:7px;"><span style="font-size:12px;">🔗</span><span style="font-size:11px; color:#9c7a3c; line-height:1.3;">공유 링크로 들어왔어요 · 뒤로가기는 홈으로 이동합니다</span></div>
+          <div style="flex:none; height:190px; border-bottom:1.5px dashed #d8d6d0; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 9px,#e6e3de 9px,#e6e3de 18px); display:flex; align-items:flex-end; justify-content:center; padding-bottom:12px;"><div style="display:flex; gap:5px;"><div style="width:6px; height:6px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div></div></div>
+          <div style="padding:10px 14px 0; display:flex; flex-direction:column; gap:9px; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--accent,#3f72b0);"><span>여성패션</span><span style="color:#b7b4ae;">›</span><span>원피스</span><span style="margin-left:auto; color:#8a8780;">카테고리 전체보기 ›</span></div>
+            <div style="height:11px; border-radius:5px; background:#d8d6d0; width:90%;"></div>
+            <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-size:15px; font-weight:700; color:#d05a4a;">32%</span><span style="font-size:20px; font-weight:700; color:#2b2b2b;">28,900</span></div>
+            <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:13px; color:#e0a93b;">★★★★☆</span><span style="font-size:12px; color:#8a8780;">4.6 · 리뷰 1,204</span></div>
+            <div style="border-top:1px solid #efedea; padding:8px 0 4px; display:flex; flex-direction:column; gap:7px;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#6f6c66;">옵션 · 색상</span><span style="font-size:13px; color:#2b2b2b;">선택 ▾</span></div></div>
+            <div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#3a3a3a;">이 가게의 다른 상품 보기</span><span style="font-size:13px; color:var(--accent,#3f72b0);">›</span></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 12px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; gap:9px; align-items:center;">
+            <div style="width:46px; height:46px; flex:none; border:1.5px solid #cfccc6; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#b7b4ae;">♡</div>
+            <div style="flex:1; border:1.5px solid #2b2b2b; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700; color:#2b2b2b;">장바구니</div>
+            <div style="flex:1; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700;">구매하기</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2b 공유 시트 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.2b</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">공유 시트</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>상세 · 공유에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); overflow:hidden; position:relative; display:flex; flex-direction:column;">
+          <div style="flex:none; padding:14px 14px 0; opacity:.4; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:18px; color:#2b2b2b;">‹</span><div style="display:flex; gap:10px;"><div style="width:20px; height:20px; border:1.5px solid #6f6c66; border-radius:50%;"></div><div style="width:20px; height:20px; border:2px solid var(--accent,#3f72b0); border-radius:4px;"></div></div></div>
+            <div style="height:150px; border:1.5px dashed #d8d6d0; border-radius:10px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 9px,#e6e3de 9px,#e6e3de 18px);"></div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(43,43,43,.32);"></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; background:#fff; border-top:2px solid #2b2b2b; border-radius:20px 20px 0 0; padding:14px 16px 18px; display:flex; flex-direction:column; gap:14px;">
+            <div style="width:40px; height:4px; border-radius:3px; background:#d8d6d0; align-self:center;"></div>
+            <div style="font-size:16px; font-weight:700; color:#2b2b2b;">공유하기</div>
+            <div style="display:flex; gap:14px;">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:52px; height:52px; border-radius:50%; background:#fae100; display:flex; align-items:center; justify-content:center; font-size:22px;">💬</div><span style="font-size:12px; color:#3a3a3a;">카카오톡</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:52px; height:52px; border-radius:50%; border:1.5px solid #cfccc6; display:flex; align-items:center; justify-content:center; font-size:20px; color:#6f6c66;">🔗</div><span style="font-size:12px; color:#3a3a3a;">링크 복사</span></div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:7px;"><div style="width:52px; height:52px; border-radius:50%; border:1.5px solid #cfccc6; display:flex; align-items:center; justify-content:center; font-size:20px; color:#6f6c66;">⋯</div><span style="font-size:12px; color:#3a3a3a;">더보기</span></div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; border:1.5px solid #cfccc6; border-radius:9px; padding:9px 11px;"><span style="flex:1; font-family:Pretendard,sans-serif; font-size:12px; color:#6f6c66;">shop.co/p/aX9k2</span><span style="font-size:12px; font-weight:700; color:var(--accent,#3f72b0);">복사</span></div>
+            <div style="border:1.5px solid #2b2b2b; border-radius:10px; text-align:center; padding:12px; font-size:14px; color:#2b2b2b;">닫기</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2c 모바일웹 진입 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.2c</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">모바일웹 진입</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>모바일웹 진입</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:0; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+          <div style="flex:none; background:#ededea; border-bottom:1px solid #dcd9d3; padding:7px 12px; display:flex; align-items:center; gap:8px;"><div style="width:13px; height:13px; border:1.5px solid #9a978f; border-radius:3px;"></div><div style="flex:1; background:#fff; border-radius:13px; padding:5px 11px; font-size:11px; color:#9a978f; display:flex; align-items:center; gap:5px;"><span style="font-size:9px;">🔒</span>m.shop.com/p/839201</div><div style="width:13px; height:13px; border:1.5px solid #9a978f; border-radius:50%;"></div></div>
+          <div style="flex:none; height:150px; border-bottom:1.5px dashed #d8d6d0; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 9px,#e6e3de 9px,#e6e3de 18px); position:relative; display:flex; align-items:flex-end; justify-content:center; padding-bottom:10px;">
+            <div style="position:absolute; top:10px; left:10px; display:flex; align-items:center; gap:5px; background:#fff; border:1.5px solid #2b2b2b; border-radius:16px; padding:4px 10px 4px 8px;"><div style="width:14px; height:13px; border:1.5px solid #2b2b2b; border-radius:2px; border-top:none; position:relative;"><div style="position:absolute; left:-2.5px; top:-6px; width:0; height:0; border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:6px solid #2b2b2b;"></div></div><span style="font-size:12px; font-weight:700; color:#2b2b2b;">홈</span></div>
+            <div style="position:absolute; top:10px; right:10px; width:24px; height:24px; border:1.5px solid #6f6c66; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--accent,#3f72b0);">↑</div>
+            <div style="display:flex; gap:5px;"><div style="width:6px; height:6px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div><div style="width:6px; height:6px; border-radius:50%; background:#cfccc6;"></div></div>
+          </div>
+          <div style="padding:11px 14px 0; display:flex; flex-direction:column; gap:9px; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--accent,#3f72b0);"><span>여성패션</span><span style="color:#b7b4ae;">›</span><span>원피스</span></div>
+            <div style="height:11px; border-radius:5px; background:#d8d6d0; width:88%;"></div>
+            <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-size:15px; font-weight:700; color:#d05a4a;">32%</span><span style="font-size:20px; font-weight:700; color:#2b2b2b;">28,900</span></div>
+            <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:13px; color:#e0a93b;">★★★★☆</span><span style="font-size:12px; color:#8a8780;">4.6 · 리뷰 1,204</span></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 12px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; gap:9px; align-items:center; z-index:1;">
+            <div style="width:46px; height:46px; flex:none; border:1.5px solid #cfccc6; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#b7b4ae;">♡</div>
+            <div style="flex:1; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px 0; border-radius:10px; font-size:14px; font-weight:700;">구매하기</div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(43,43,43,.42); z-index:2; display:flex; align-items:center; justify-content:center; padding:24px;">
+            <div style="background:#fff; border:2px solid #2b2b2b; border-radius:16px; padding:18px 16px; display:flex; flex-direction:column; align-items:center; gap:11px; width:100%;">
+              <div style="width:48px; height:48px; border:1.5px solid #cfe0f3; border-radius:12px; background:repeating-linear-gradient(45deg,#eaf1fa,#eaf1fa 5px,#dbe8f6 5px,#dbe8f6 10px);"></div>
+              <div style="font-size:16px; font-weight:700; color:#2b2b2b; text-align:center;">앱에서 더 편하게</div>
+              <div style="font-size:12px; color:#6f6c66; text-align:center; line-height:1.4;">쿠폰·간편결제·빠른 배송 알림은<br>앱에서만 누릴 수 있어요</div>
+              <div style="width:100%; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:12px; border-radius:10px; font-size:14px; font-weight:700;">앱에서 열기</div>
+              <div style="font-size:13px; color:#8a8780;">나중에 볼게요</div>
+              <div style="font-size:10px; color:#b7b4ae; text-align:center;">· 닫으면 7일간 다시 뜨지 않아요</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.2o 옵션 선택 시트 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">3.2o</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">옵션 선택 시트</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>상세 · 옵션 선택</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); overflow:hidden; position:relative; display:flex; flex-direction:column;">
+          <div style="flex:none; opacity:.35; display:flex; flex-direction:column;">
+            <div style="height:150px; border-bottom:1.5px dashed #d8d6d0; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 9px,#e6e3de 9px,#e6e3de 18px);"></div>
+            <div style="padding:10px 14px; display:flex; flex-direction:column; gap:8px;"><div style="height:11px; border-radius:5px; background:#d8d6d0; width:90%;"></div><div style="height:14px; border-radius:5px; background:#bfbcb5; width:40%;"></div></div>
+          </div>
+          <div style="position:absolute; inset:0; background:rgba(43,43,43,.32);"></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; top:64px; background:#fff; border-top:2px solid #2b2b2b; border-radius:20px 20px 0 0; padding:13px 16px 0; display:flex; flex-direction:column; gap:13px;">
+            <div style="width:40px; height:4px; border-radius:3px; background:#d8d6d0; align-self:center;"></div>
+            <div style="display:flex; gap:10px; align-items:center; padding-bottom:12px; border-bottom:1px solid #f1efea;"><div style="width:44px; height:44px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 6px,#e6e3de 6px,#e6e3de 12px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:80%; margin-bottom:6px;"></div><div style="display:flex; align-items:baseline; gap:6px;"><span style="font-size:13px; font-weight:700; color:#d05a4a;">32%</span><span style="font-size:15px; font-weight:700; color:#2b2b2b;">28,900</span></div></div></div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="font-size:13px; font-weight:700; color:#3a3a3a;">색상</span>
+              <div style="display:flex; flex-wrap:wrap; gap:7px;"><div style="border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:8px; padding:7px 13px; font-size:12px; color:var(--accent,#3f72b0); font-weight:700;">블랙</div><div style="border:1.5px solid #cfccc6; border-radius:8px; padding:7px 13px; font-size:12px; color:#3a3a3a;">아이보리</div><div style="border:1.5px solid #cfccc6; border-radius:8px; padding:7px 13px; font-size:12px; color:#3a3a3a;">브라운</div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <span style="font-size:13px; font-weight:700; color:#3a3a3a;">사이즈</span>
+              <div style="display:flex; flex-wrap:wrap; gap:7px;"><div style="border:1.5px solid #cfccc6; border-radius:8px; padding:7px 14px; font-size:12px; color:#3a3a3a;">S</div><div style="border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:8px; padding:7px 14px; font-size:12px; color:var(--accent,#3f72b0); font-weight:700;">M</div><div style="border:1.5px solid #cfccc6; border-radius:8px; padding:7px 14px; font-size:12px; color:#3a3a3a;">L</div><div style="border:1.5px solid #e3e0da; border-radius:8px; padding:7px 14px; font-size:12px; color:#cfccc6; text-decoration:line-through;">XL</div></div>
+            </div>
+            <div style="background:#faf9f7; border:1.5px solid #e3e0da; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#6f6c66;">블랙 / M</span><div style="display:flex; align-items:center; border:1.5px solid #cfccc6; border-radius:7px; background:#fff;"><span style="padding:4px 10px; font-size:14px; color:#6f6c66;">−</span><span style="padding:4px 10px; font-size:13px; color:#2b2b2b; border-left:1px solid #e3e0da; border-right:1px solid #e3e0da;">1</span><span style="padding:4px 10px; font-size:14px; color:#6f6c66;">+</span></div></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:9px 14px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; flex-direction:column; gap:9px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-size:13px; color:#6f6c66;">총 1개</span><span style="font-size:18px; font-weight:700; color:#2b2b2b;">28,900원</span></div>
+            <div style="display:flex; gap:9px;"><div style="flex:1; border:1.5px solid #2b2b2b; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700; color:#2b2b2b;">장바구니</div><div style="flex:1; background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:13px 0; border-radius:10px; font-size:14px; font-weight:700;">바로 구매</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3.3e 빈 장바구니 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">3.3e</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">빈 장바구니</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>장바구니 · 빈 상태</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">장바구니</div></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; margin-bottom:60px;">
+            <div style="width:70px; height:70px; border:2px dashed #cfccc6; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:30px; color:#cfccc6;">🛒</div>
+            <div style="font-size:16px; font-weight:700; color:#2b2b2b;" data-comment-anchor="e7fe7939f3-div">담은 상품이 없어요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center;">마음에 드는 상품을 담아보세요</div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">추천 상품 보러가기</div></div>
+        </div>
+      </div>
+
+      <!-- 3.4e 결제 실패 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#b04a3a; border-radius:5px; padding:2px 7px;">3.4e</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">결제 실패</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>결제 · 실패 상태</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; align-items:center; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="margin-top:34px; width:72px; height:72px; border-radius:50%; border:3px solid #d05a4a; display:flex; align-items:center; justify-content:center; font-size:34px; color:#d05a4a;">!</div>
+          <div style="font-size:21px; font-weight:700; color:#2b2b2b; text-align:center;">결제에 실패했어요</div>
+          <div style="font-size:14px; color:#6f6c66; text-align:center; line-height:1.6;">카드 한도 또는 정보를 확인한 뒤<br>다시 시도해 주세요.</div>
+          <div style="width:100%; background:#fdf4f2; border:1.5px solid #f0c9c2; border-radius:10px; padding:11px 12px;"><div style="font-size:11px; color:#b04a3a;">오류코드 PG-402 · 승인 거절</div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; flex-direction:column; gap:8px;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">다시 시도</div><div style="border:1.5px solid #2b2b2b; text-align:center; padding:12px; border-radius:10px; font-size:14px; color:#2b2b2b;">결제수단 변경</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ④ 계정 & 주문관리 -->
+    <div style="margin:0 0 14px; display:{{annoFlex}}; align-items:center; gap:12px;">
+      <div style="font-family:Pretendard,sans-serif; font-size:13px; color:#fff; background:#2b2b2b; border-radius:6px; padding:4px 10px;">FLOW ④</div>
+      <div style="font-size:24px; font-weight:700; color:var(--label,#2b2b2b);">계정 &amp; 주문관리</div>
+      <div style="flex:1; height:1.5px; background:#cbc8c2;"></div>
+    </div>
+    <div style="display:{{annoFlex}}; flex-wrap:wrap; align-items:center; gap:9px; background:#fff; border:1.5px solid #d6d3cd; border-radius:10px; padding:11px 14px; margin:-4px 0 22px;"><span style="font-size:11px; color:#8a8780; letter-spacing:.5px; margin-right:2px;">허브 화면</span><span style="display:flex; align-items:center; gap:6px;"><span style="flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">1</span><span style="font-size:13px; color:var(--label,#2b2b2b);">마이</span></span><span style="width:1px; height:16px; background:#dcd9d3; margin:0 4px;"></span><span style="font-size:11px; color:var(--sub,#9a978f); line-height:1.5;">마이에서 진입 · 주문상세 · 내정보 · 배송지 · 찜 · 리뷰 · 쿠폰/포인트 · 알림</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px; margin-bottom:46px;">
+
+      <!-- 4.1 마이 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><div style="flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent,#3f72b0); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;">1</div><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.1</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">마이 · 주문내역</span></div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:12px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:11px;"><div style="width:44px; height:44px; flex:none; border:1.5px solid #cfccc6; border-radius:50%;"></div><div style="flex:1;"><div style="height:9px; border-radius:5px; background:#d8d6d0; width:50%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:35%;"></div></div><span style="font-size:13px; color:#6f6c66;">설정 ›</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between;"><div style="display:flex; align-items:baseline; gap:7px;"><div style="font-size:14px; font-weight:700; color:#2b2b2b;">주문/배송내역</div><span style="font-size:10px; color:#b7b4ae;">옆으로 밀어보세요</span></div><a href="#order-list" style="font-size:12px; color:var(--accent,#3f72b0); text-decoration:none;">전체보기 ›</a></div>
+          <div style="position:relative; margin:0 -14px;">
+            <div style="display:flex; gap:10px; overflow-x:auto; padding:2px 14px 4px;">
+              <sc-for list="{{ orders }}" as="o" hint-placeholder-count="3">
+                <div style="flex:none; width:124px; border:1.5px solid #e3e0da; border-radius:11px; padding:9px; display:flex; flex-direction:column; gap:8px;"><div style="width:100%; height:92px; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="font-size:11px; color:var(--accent,#3f72b0);">배송중</div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:90%;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:55%;"></div><div style="border:1.5px solid #cfccc6; border-radius:7px; padding:6px 0; font-size:11px; color:#6f6c66; text-align:center;">재구매</div></div>
+              </sc-for>
+            </div>
+            <div style="position:absolute; top:0; right:0; bottom:0; width:30px; background:linear-gradient(90deg,rgba(255,255,255,0),#fff); pointer-events:none;"></div>
+            <div style="position:absolute; right:6px; top:42px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 5px rgba(0,0,0,.16); display:flex; align-items:center; justify-content:center; font-size:13px; color:#6f6c66;">›</div>
+          </div>
+          <div style="display:flex; justify-content:center; gap:4px; margin-top:-4px;"><div style="width:18px; height:3px; border-radius:2px; background:var(--accent,#3f72b0);"></div><div style="width:8px; height:3px; border-radius:2px; background:#dcd9d3;"></div><div style="width:8px; height:3px; border-radius:2px; background:#dcd9d3;"></div></div>
+          <div style="display:flex; flex-direction:column; margin-bottom:62px;"><div style="display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">찜한 상품<span style="color:#b7b4ae;">›</span></div><div style="display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">쿠폰 · 포인트<span style="color:#b7b4ae;">›</span></div><div style="display:flex; justify-content:space-between; padding:11px 0; font-size:13px; color:#3a3a3a;">고객센터<span style="color:#b7b4ae;">›</span></div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; height:52px; background:#fff; border-top:1.5px solid #e3e0da; display:flex;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">홈</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">카테고리</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:10px; color:#8a8780;">검색</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid #b7b4ae; border-radius:4px;"></div><span style="font-size:10px; color:#8a8780;">장바구니</span></div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;"><div style="width:15px; height:15px; border:1.5px solid var(--accent,#3f72b0); border-radius:50%;"></div><span style="font-size:10px; color:var(--accent,#3f72b0); font-weight:700;">마이</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex-basis:100%; height:0;"></div>
+      <div style="flex-basis:100%; display:flex; align-items:center; gap:10px; margin:10px 0 0;"><span style="font-size:12px; font-weight:700; color:#8a8780; letter-spacing:.5px; background:#efedea; border:1.5px dashed #cbc8c2; border-radius:6px; padding:5px 11px;">마이 허브에서 진입하는 화면</span><div style="flex:1; height:1.5px; background:#dcd9d3;"></div></div>
+
+      <!-- 4.1a 주문/배송내역 -->
+      <div id="order-list" style="flex:none; width:300px; scroll-margin-top:24px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">4.1a</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">주문/배송내역</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>마이 · 전체보기에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">주문/배송내역</div></div>
+          <div style="display:flex; gap:7px;"><div style="border:1.5px solid var(--accent,#3f72b0); background:#f4f8fd; border-radius:16px; padding:5px 13px; font-size:12px; color:var(--accent,#3f72b0); font-weight:700;">전체</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#6f6c66;">진행중</div><div style="border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#6f6c66;">취소·반품</div></div>
+          <div style="display:flex; flex-direction:column; gap:11px; overflow-y:auto; margin:0 -14px; padding:2px 14px 16px;">
+            <sc-for list="{{ orderHistory }}" as="g" hint-placeholder-count="3">
+              <div style="border:1.5px solid #e3e0da; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-family:Pretendard,sans-serif; font-size:11px; color:#8a8780;">{{ g.date }}</span><span style="font-size:13px; font-weight:700; color:var(--accent,#3f72b0);">{{ g.status }}</span></div>
+                <div style="display:flex; gap:10px; align-items:center;"><div style="width:52px; height:52px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="font-size:13px; color:#3a3a3a; margin-bottom:5px;">{{ g.name }}</div><div style="font-size:11px; color:#8a8780;">{{ g.meta }}</div></div></div>
+                <div style="display:flex; gap:7px;"><div style="flex:1; border:1.5px solid #2b2b2b; border-radius:8px; text-align:center; padding:8px 0; font-size:12px; color:#2b2b2b;">{{ g.primary }}</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; text-align:center; padding:8px 0; font-size:12px; color:#6f6c66;">주문상세</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4.2 주문상세 취소/환불 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.2</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">주문상세 · 취소/환불</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>주문내역에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">주문 상세</div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:12px;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><span style="font-size:13px; font-weight:700; color:var(--accent,#3f72b0);">배송중</span><span style="font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;">주문 #240617-038</span></div><div style="display:flex; align-items:center;"><div style="width:11px; height:11px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="flex:1; height:2px; background:var(--accent,#3f72b0);"></div><div style="width:11px; height:11px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="flex:1; height:2px; background:var(--accent,#3f72b0);"></div><div style="width:11px; height:11px; border-radius:50%; background:var(--accent,#3f72b0);"></div><div style="flex:1; height:2px; background:#e3e0da;"></div><div style="width:11px; height:11px; border-radius:50%; background:#e3e0da;"></div></div><div style="display:flex; justify-content:space-between; margin-top:6px; font-size:10px; color:#8a8780;"><span>결제</span><span>준비</span><span>배송중</span><span>완료</span></div></div>
+          <div style="display:flex; gap:10px; align-items:center; padding-bottom:11px; border-bottom:1px solid #f1efea;"><div style="width:54px; height:54px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:85%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:45%; margin-bottom:7px;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:40%;"></div></div></div>
+          <div style="border:1.5px solid #f0c9c2; background:#fdf4f2; border-radius:10px; padding:11px 12px; display:flex; flex-direction:column; gap:9px;"><span style="font-size:13px; font-weight:700; color:#b04a3a;">취소 · 교환 · 반품</span><div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #d05a4a; border-radius:8px; text-align:center; padding:9px 0; font-size:12px; color:#d05a4a; font-weight:700;">주문취소</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; text-align:center; padding:9px 0; font-size:12px; color:#6f6c66;">교환신청</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:8px; text-align:center; padding:9px 0; font-size:12px; color:#6f6c66;">반품신청</div></div><span style="font-size:10px; color:#9c7a3c;">· 배송중에는 반품으로 접수돼요 (환불 영업일 3일)</span></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:11px 12px; display:flex; flex-direction:column; gap:6px;"><div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8780;"><span>결제금액</span><span>28,900</span></div><div style="display:flex; justify-content:space-between; font-size:12px; color:#8a8780;"><span>반품 배송비</span><span style="color:#d05a4a;">+3,000</span></div><div style="display:flex; justify-content:space-between; font-size:14px; font-weight:700; color:#2b2b2b; border-top:1px solid #efedea; padding-top:7px;"><span>예상 환불액</span><span>25,900</span></div></div>
+          <div style="display:flex; gap:8px; margin-top:auto; margin-bottom:14px;"><div style="flex:1; border:1.5px solid #2b2b2b; border-radius:10px; text-align:center; padding:12px 0; font-size:13px; color:#2b2b2b;">배송조회</div><div style="flex:1; border:1.5px solid #cfccc6; border-radius:10px; text-align:center; padding:12px 0; font-size:13px; color:#6f6c66;">문의하기</div></div>
+        </div>
+      </div>
+
+      <!-- 4.3 내정보수정 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.3</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">내 정보 수정</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>설정에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:13px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">내 정보 수정</div></div>
+          <div style="display:flex; align-items:center; gap:12px; padding:4px 0;"><div style="width:60px; height:60px; flex:none; border:1.5px solid #cfccc6; border-radius:50%; position:relative;"><div style="position:absolute; right:-2px; bottom:-2px; width:22px; height:22px; background:var(--accent,#3f72b0); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">✎</div></div><div style="font-size:13px; color:var(--accent,#3f72b0);">사진 변경</div></div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">닉네임 <span style="color:#b7b4ae;">· 언제든 변경 가능</span></div><div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#2b2b2b;">길동이</div></div>
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">이메일 <span style="color:#b7b4ae;">· 인증 필요</span></div><div style="display:flex; justify-content:space-between; align-items:center; border:1.5px solid #e3e0da; background:#f7f5f2; border-radius:9px; padding:11px;" data-comment-anchor="b6110377e0-div"><span style="font-size:13px; color:#9a978f;">user@email.com</span><span style="font-size:12px; color:var(--accent,#3f72b0); font-weight:700;">변경 ›</span></div></div>
+            <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">비밀번호</div><div style="border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">변경하기 ›</div></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:11px; border-top:1.5px solid #efedea; padding-top:11px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#3a3a3a;">혜택 · 마케팅 알림</span><div style="width:40px; height:23px; background:var(--accent,#3f72b0); border-radius:12px; position:relative;"><div style="position:absolute; right:2px; top:2px; width:19px; height:19px; background:#fff; border-radius:50%;"></div></div></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px; color:#3a3a3a;">야간 푸시 수신</span><div style="width:40px; height:23px; background:#d8d6d0; border-radius:12px; position:relative;"><div style="position:absolute; left:2px; top:2px; width:19px; height:19px; background:#fff; border-radius:50%;"></div></div></div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">저장하기</div></div>
+        </div>
+      </div>
+
+      <!-- 4.4 본인인증 이메일 변경 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">4.4</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">본인인증 · 이메일 변경</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>내 정보에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">이메일 변경</div></div>
+          <div style="background:#f4f8fd; border:1.5px solid #cfe0f3; border-radius:10px; padding:12px 13px; display:flex; gap:9px; align-items:flex-start;"><div style="width:18px; height:18px; flex:none; border:2px solid var(--accent,#3f72b0); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--accent,#3f72b0); font-weight:700;">i</div><span style="font-size:13px; color:#5a7fad; line-height:1.4;">이메일은 계정 식별 정보예요. 보안을 위해 본인인증 후 변경할 수 있어요.</span></div>
+          <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">현재 이메일</div><div style="border:1.5px solid #e3e0da; background:#f7f5f2; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">user@email.com</div></div>
+          <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">새 이메일</div><div style="border:1.5px solid var(--accent,#3f72b0); border-radius:9px; padding:11px; font-size:13px; color:#2b2b2b;">new@email.com|</div></div>
+          <div><div style="font-size:12px; color:#8a8780; margin-bottom:5px;">인증코드</div><div style="display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">6자리 입력</div><div style="border:1.5px solid #2b2b2b; border-radius:9px; padding:11px 13px; font-size:12px; color:#2b2b2b; display:flex; align-items:center; gap:5px;">전송 <span style="font-family:Pretendard,sans-serif; font-size:11px; color:#d05a4a;">02:58</span></div></div></div>
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:15px; height:15px; border:1.5px solid #3f8a5b; border-radius:4px; background:#3f8a5b; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px;">✓</div><span style="font-size:12px; color:#3f8a5b;">인증코드가 일치합니다</span></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">인증하고 변경</div></div>
+        </div>
+      </div>
+
+      <!-- 4.5 배송지 관리 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.5</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">배송지 관리</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>설정 · 결제에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">배송지 관리</div></div>
+          <div style="border:1.5px solid var(--accent,#3f72b0); border-radius:10px; padding:12px;"><div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;"><span style="font-size:12px; font-weight:700; color:#fff; background:var(--accent,#3f72b0); border-radius:5px; padding:2px 7px;">기본</span><span style="font-size:13px; font-weight:700; color:#2b2b2b;">우리집</span><span style="margin-left:auto; font-size:12px; color:#8a8780;">수정</span></div><div style="height:7px; border-radius:4px; background:#d8d6d0; width:60%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:85%;"></div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:12px;"><div style="display:flex; align-items:center; gap:7px; margin-bottom:8px;"><span style="font-size:13px; font-weight:700; color:#2b2b2b;">회사</span><span style="margin-left:auto; font-size:12px; color:#8a8780;">수정</span></div><div style="height:7px; border-radius:4px; background:#d8d6d0; width:55%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:80%;"></div><div style="margin-top:8px; font-size:11px; color:var(--accent,#3f72b0);">기본 배송지로 설정</div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="border:1.5px solid var(--accent,#3f72b0); color:var(--accent,#3f72b0); text-align:center; padding:13px; border-radius:10px; font-size:14px; font-weight:700;">+ 새 배송지 추가</div></div>
+        </div>
+      </div>
+
+      <!-- 4.6 찜한 상품 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.6</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">찜한 상품</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>마이에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">찜한 상품</div><span style="margin-left:auto; font-size:12px; color:#8a8780;">편집</span></div>
+          <div style="display:flex; gap:7px; overflow:hidden;"><div style="flex:none; background:#2b2b2b; color:#fff; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:700;">전체 12</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">패션</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">뷰티</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">디지털</div></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 10px;">
+            <div style="position:relative;"><div style="height:96px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="position:absolute; top:6px; right:6px; width:24px; height:24px; background:#fff; border:1.5px solid #d05a4a; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; color:#d05a4a;">♥</div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:85%; margin:7px 0 5px;"></div><div style="height:10px; border-radius:5px; background:#bfbcb5; width:45%; margin-bottom:6px;"></div><div style="border:1.5px solid var(--accent,#3f72b0); border-radius:7px; text-align:center; padding:6px 0; font-size:11px; color:var(--accent,#3f72b0); font-weight:700;">담기</div></div>
+            <div style="position:relative;"><div style="height:96px; border:1.5px dashed #b9b6b0; border-radius:9px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="position:absolute; top:6px; right:6px; width:24px; height:24px; background:#fff; border:1.5px solid #d05a4a; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; color:#d05a4a;">♥</div><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin:7px 0 5px;"></div><div style="display:flex; align-items:center; gap:5px; margin-bottom:6px;"><span style="font-size:11px; color:#d05a4a; font-weight:700;">▼20%</span><div style="height:10px; border-radius:5px; background:#bfbcb5; width:40%;"></div></div><div style="border:1.5px solid var(--accent,#3f72b0); border-radius:7px; text-align:center; padding:6px 0; font-size:11px; color:var(--accent,#3f72b0); font-weight:700;">담기</div></div>
+          </div>
+          <div style="background:#fef6ec; border:1.5px solid #f0d9b5; border-radius:9px; padding:9px 11px; display:flex; align-items:center; gap:7px;"><span style="font-size:12px;">🔔</span><span style="font-size:11px; color:#9c7a3c;">찜한 상품이 할인되면 알려드려요</span></div>
+        </div>
+      </div>
+
+      <!-- 4.7 리뷰 작성 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.7</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">리뷰 작성</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>주문상세에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:13px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">리뷰 작성</div></div>
+          <div style="display:flex; gap:10px; align-items:center; padding-bottom:11px; border-bottom:1px solid #f1efea;"><div style="width:50px; height:50px; flex:none; border:1.5px dashed #b9b6b0; border-radius:8px; background:repeating-linear-gradient(45deg,#f1efec,#f1efec 7px,#e6e3de 7px,#e6e3de 14px);"></div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:80%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:40%;"></div></div></div>
+          <div style="text-align:center;"><div style="font-size:13px; color:#6f6c66; margin-bottom:8px;">상품은 만족하셨나요?</div><div style="font-size:30px; letter-spacing:4px; color:#e0a93b;">★★★★<span style="color:#e3e0da;">★</span></div></div>
+          <div style="border:1.5px solid #cfccc6; border-radius:10px; padding:12px; height:96px; font-size:13px; color:#9a978f;">자세한 후기를 남겨주세요 (최소 10자)</div>
+          <div style="display:flex; gap:9px;"><div style="width:58px; height:58px; border:1.5px dashed #b9b6b0; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:20px; color:#b7b4ae;">＋</div><div style="width:58px; height:58px; border:1.5px dashed #d8d6d0; border-radius:9px;"></div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">등록하고 포인트 받기</div></div>
+        </div>
+      </div>
+
+      <!-- 4.8 쿠폰·포인트 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.8</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">쿠폰 · 포인트</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>마이에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">쿠폰 · 포인트</div></div>
+          <div style="display:flex; gap:18px; border-bottom:1.5px solid #efedea; font-size:14px;"><span style="font-weight:700; color:#2b2b2b; border-bottom:2px solid #2b2b2b; padding-bottom:8px;">쿠폰 4</span><span style="color:#8a8780; padding-bottom:8px;">포인트</span></div>
+          <!-- [쿠폰 탭] 보유 쿠폰 목록 -->
+          <div style="border:1.5px dashed var(--accent,#3f72b0); border-radius:10px; padding:12px; display:flex; align-items:center; gap:12px; background:#f4f8fd;"><div style="flex:none; width:48px; text-align:center;"><div style="font-size:20px; font-weight:700; color:var(--accent,#3f72b0);">10%</div><div style="font-size:9px; color:#7fa8d8;">할인</div></div><div style="flex:1; border-left:1.5px dashed #cfe0f3; padding-left:12px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:80%; margin-bottom:5px;"></div><div style="font-size:10px; color:#8a8780;">~6/30 · 3만원 이상</div></div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:12px; display:flex; align-items:center; gap:12px;"><div style="flex:none; width:48px; text-align:center;"><div style="font-size:18px; font-weight:700; color:#6f6c66;">3,000<span style="font-size:10px;">원</span></div><div style="font-size:9px; color:#aaa;">할인</div></div><div style="flex:1; border-left:1.5px solid #e3e0da; padding-left:12px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin-bottom:5px;"></div><div style="font-size:10px; color:#8a8780;">~7/15 · 첫 구매</div></div></div>
+          <div style="border:1.5px solid #e3e0da; border-radius:10px; padding:12px; display:flex; align-items:center; gap:12px;"><div style="flex:none; width:48px; text-align:center;"><div style="font-size:18px; font-weight:700; color:#6f6c66;">5%</div><div style="font-size:9px; color:#aaa;">할인</div></div><div style="flex:1; border-left:1.5px solid #e3e0da; padding-left:12px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:65%; margin-bottom:5px;"></div><div style="font-size:10px; color:#aaa;">~8/31 · 조건 없음</div></div></div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; gap:8px;"><div style="flex:1; border:1.5px solid #cfccc6; border-radius:9px; padding:11px; font-size:13px; color:#9a978f;">쿠폰 코드 입력</div><div style="background:#2b2b2b; color:#fff; border-radius:9px; padding:11px 14px; font-size:13px; font-weight:700;">등록</div></div>
+        </div>
+      </div>
+
+      <!-- 4.8b 포인트 탭 (조회 전용) -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">4.8b</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">포인트 탭</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>쿠폰 탭 전환</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">쿠폰 · 포인트</div></div>
+          <div style="display:flex; gap:18px; border-bottom:1.5px solid #efedea; font-size:14px;"><span style="color:#8a8780; padding-bottom:8px;">쿠폰 4</span><span style="font-weight:700; color:#2b2b2b; border-bottom:2px solid #2b2b2b; padding-bottom:8px;">포인트</span></div>
+          <!-- 사용 가능 포인트 (조회만) -->
+          <div style="background:var(--accent,#3f72b0); border-radius:12px; padding:14px 16px;"><div style="font-size:11px; color:#cfe0f3; margin-bottom:4px;">사용 가능 포인트</div><div style="font-size:24px; font-weight:700; color:#fff;">3,250<span style="font-size:13px; font-weight:400; margin-left:2px;">P</span></div></div>
+          <!-- 적립/사용 내역 -->
+          <div style="font-size:13px; font-weight:700; color:#2b2b2b;">적립 · 사용 내역</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1efea;"><div style="flex:1; padding-right:10px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:65%; margin-bottom:6px;"></div><div style="font-size:10px; color:#aaa;">6/20 · 구매 적립</div></div><span style="font-size:14px; font-weight:700; color:var(--accent,#3f72b0);">+250P</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1efea;"><div style="flex:1; padding-right:10px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:55%; margin-bottom:6px;"></div><div style="font-size:10px; color:#aaa;">6/14 · 주문 사용</div></div><span style="font-size:14px; font-weight:700; color:#d05a4a;">−1,000P</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1efea;"><div style="flex:1; padding-right:10px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin-bottom:6px;"></div><div style="font-size:10px; color:#aaa;">6/05 · 리뷰 적립</div></div><span style="font-size:14px; font-weight:700; color:var(--accent,#3f72b0);">+500P</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0;"><div style="flex:1; padding-right:10px;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:60%; margin-bottom:6px;"></div><div style="font-size:10px; color:#aaa;">5/28 · 가입 적립</div></div><span style="font-size:14px; font-weight:700; color:var(--accent,#3f72b0);">+3,000P</span></div>
+        </div>
+      </div>
+
+      <!-- 4.9 알림 목록 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">4.9</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">알림 목록</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>마이 · 상단에서</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:10px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">알림</div><span style="margin-left:auto; font-size:12px; color:#8a8780;">모두 읽음</span></div>
+          <div style="display:flex; gap:7px; overflow:hidden;"><div style="flex:none; background:#2b2b2b; color:#fff; border-radius:16px; padding:5px 13px; font-size:12px; font-weight:700;">전체</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">주문/배송</div><div style="flex:none; border:1.5px solid #cfccc6; border-radius:16px; padding:5px 13px; font-size:12px; color:#3a3a3a;">혜택</div></div>
+          <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px solid #f1efea; background:#f4f8fd; margin:0 -14px; padding-left:14px; padding-right:14px;"><div style="width:34px; height:34px; flex:none; border-radius:9px; background:var(--accent,#3f72b0); display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px;">🚚</div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:75%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:45%;"></div></div><span style="font-size:9px; color:#b7b4ae;">방금</span></div>
+          <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px solid #f1efea;"><div style="width:34px; height:34px; flex:none; border-radius:9px; background:#e9b949; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px;">🎁</div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:65%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:50%;"></div></div><span style="font-size:9px; color:#b7b4ae;">2시간</span></div>
+          <div style="display:flex; gap:10px; padding:10px 0;"><div style="width:34px; height:34px; flex:none; border-radius:9px; background:#cfccc6; display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px;">★</div><div style="flex:1;"><div style="height:8px; border-radius:5px; background:#d8d6d0; width:70%; margin-bottom:6px;"></div><div style="height:7px; border-radius:4px; background:#e2dfd9; width:40%;"></div></div><span style="font-size:9px; color:#b7b4ae;">어제</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ⑤ 지원 & 시스템 -->
+    <div style="margin:0 0 14px; display:{{annoFlex}}; align-items:center; gap:12px;">
+      <div style="font-family:Pretendard,sans-serif; font-size:13px; color:#fff; background:#2b2b2b; border-radius:6px; padding:4px 10px;">FLOW ⑤</div>
+      <div style="font-size:24px; font-weight:700; color:var(--label,#2b2b2b);">지원 &amp; 시스템</div>
+      <div style="flex:1; height:1.5px; background:#cbc8c2;"></div>
+    </div>
+    <div style="display:{{annoFlex}}; flex-wrap:wrap; align-items:center; gap:9px; background:#fff; border:1.5px solid #d6d3cd; border-radius:10px; padding:11px 14px; margin:-4px 0 22px;"><span style="font-size:11px; color:#8a8780; letter-spacing:.5px; margin-right:2px;">독립 화면</span><span style="width:1px; height:16px; background:#dcd9d3; margin:0 4px;"></span><span style="font-size:11px; color:var(--sub,#9a978f); line-height:1.5;">플로우 없이 전역에서 진입 · 고객센터 · 네트워크 오류 · 404 · 500 · 정기 점검</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:28px; margin-bottom:20px;">
+
+      <!-- 5.1 고객센터 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#2b2b2b; border-radius:5px; padding:2px 7px;">5.1</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">고객센터</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>마이 · 전역</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 14px 0; display:flex; flex-direction:column; gap:11px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:16px; color:#6f6c66;">‹</span><div style="font-size:17px; font-weight:700; color:#2b2b2b;">고객센터</div></div>
+          <div style="border:1.5px solid #cfccc6; border-radius:20px; padding:10px 14px; display:flex; align-items:center; gap:9px;"><div style="width:14px; height:14px; border:2px solid #b7b4ae; border-radius:50%;"></div><span style="font-size:13px; color:#9a978f;">무엇을 도와드릴까요?</span></div>
+          <div style="display:flex; gap:10px;"><div style="flex:1; border:1.5px solid #e3e0da; border-radius:11px; padding:14px 0; display:flex; flex-direction:column; align-items:center; gap:8px;"><div style="width:26px; height:26px; border-radius:8px; background:var(--accent,#3f72b0); display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px;">💬</div><span style="font-size:11px; color:#3a3a3a;">1:1 채팅상담</span></div><div style="flex:1; border:1.5px solid #e3e0da; border-radius:11px; padding:14px 0; display:flex; flex-direction:column; align-items:center; gap:8px;"><div style="width:26px; height:26px; border-radius:8px; border:1.5px solid #b7b4ae; display:flex; align-items:center; justify-content:center; font-size:13px; color:#6f6c66;">📞</div><span style="font-size:11px; color:#3a3a3a;">전화문의</span></div></div>
+          <div style="font-size:13px; font-weight:700; color:#2b2b2b; margin-top:2px;">자주 묻는 질문</div>
+          <div style="display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">배송은 얼마나 걸리나요?<span style="color:#b7b4ae;">＋</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">교환·반품 절차가 궁금해요<span style="color:#b7b4ae;">＋</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #f1efea; font-size:13px; color:#3a3a3a;">쿠폰은 어떻게 쓰나요?<span style="color:#b7b4ae;">＋</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:11px 0; font-size:13px; color:#3a3a3a;">결제 수단을 바꾸고 싶어요<span style="color:#b7b4ae;">＋</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5.2 네트워크 오류 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">5.2</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">네트워크 오류</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>전역 · 네트워크</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; align-items:center; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>✕ ● ▮</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+            <div style="width:70px; height:70px; border:2px dashed #cfccc6; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; color:#9a978f;">📡</div>
+            <div style="font-size:17px; font-weight:700; color:#2b2b2b;">연결이 불안정해요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center; line-height:1.5;">인터넷 연결을 확인한 뒤<br>다시 시도해 주세요</div>
+            <div style="border:1.5px solid var(--accent,#3f72b0); color:var(--accent,#3f72b0); border-radius:10px; padding:11px 22px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:7px;"><span>↻</span>다시 시도</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5.3 404 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">5.3</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">404 · 페이지 없음</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>잘못된 경로</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; align-items:center; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px; width:100%;"><span style="font-size:16px; color:#6f6c66;">‹</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; margin-bottom:60px;">
+            <div style="font-family:Pretendard,sans-serif; font-size:56px; font-weight:700; color:#e3e0da;">404</div>
+            <div style="font-size:17px; font-weight:700; color:#2b2b2b;">페이지를 찾을 수 없어요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center; line-height:1.5;">주소가 변경되었거나<br>삭제된 페이지예요</div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700;">홈으로 가기</div></div>
+        </div>
+      </div>
+
+      <!-- 5.4 서버 오류 500 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#b04a3a; border-radius:5px; padding:2px 7px;">5.4</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">서버 오류 · 500</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>서버 응답 오류</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; align-items:center; gap:13px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="display:flex; align-items:center; gap:10px; width:100%;"><span style="font-size:16px; color:#6f6c66;">‹</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; margin-bottom:60px;">
+            <div style="font-family:Pretendard,sans-serif; font-size:56px; font-weight:700; color:#e3e0da;">500</div>
+            <div style="font-size:17px; font-weight:700; color:#2b2b2b;">일시적인 오류가 발생했어요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center; line-height:1.5;">서버에 문제가 생겼어요.<br>잠시 후 다시 시도해 주세요</div>
+            <div style="border:1.5px solid #f0c9c2; background:#fdf4f2; border-radius:9px; padding:7px 12px; font-size:11px; color:#b04a3a;">오류코드 500 · 잠시 후 자동 복구</div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px 14px; background:#fff; border-top:1.5px solid #e3e0da; display:flex; flex-direction:column; gap:8px;"><div style="background:var(--accent,#3f72b0); color:#fff; text-align:center; padding:14px; border-radius:10px; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:7px;"><span>↻</span>다시 시도</div><div style="border:1.5px solid #2b2b2b; text-align:center; padding:12px; border-radius:10px; font-size:14px; color:#2b2b2b;">홈으로 가기</div></div>
+        </div>
+      </div>
+
+      <!-- 5.5 정기 점검 안내 -->
+      <div style="flex:none; width:300px;">
+        <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:10px;"><span style="font-family:Pretendard,sans-serif; font-size:12px; color:#fff; background:#8a8780; border-radius:5px; padding:2px 7px;">5.5</span><span style="font-size:18px; font-weight:700; color:var(--label,#2b2b2b);">정기 점검 안내</span></div>
+        <div style="display:flex; align-items:center; gap:5px; margin:-4px 0 8px; font-size:11px; color:var(--sub,#9a978f);"><span style="color:var(--accent,#3f72b0); font-size:13px;">↳</span>전역 · 점검 시간</div>
+        <div style="width:300px; height:600px; background:#fff; border:2px solid #2b2b2b; border-radius:24px; box-shadow:0 6px 20px rgba(0,0,0,.10); padding:14px 16px 0; display:flex; flex-direction:column; align-items:center; gap:14px; overflow:hidden; position:relative;">
+          <div style="display:flex; justify-content:space-between; width:100%; font-family:Pretendard,sans-serif; font-size:10px; color:#aaa;"><span>9:41</span><span>● ● ▮</span></div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+            <div style="width:70px; height:70px; border:2px dashed #cfccc6; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:30px; color:#9a978f;">🛠</div>
+            <div style="font-size:17px; font-weight:700; color:#2b2b2b; text-align:center;">서비스 점검 중이에요</div>
+            <div style="font-size:13px; color:#8a8780; text-align:center; line-height:1.5;">더 나은 서비스를 위해<br>시스템을 점검하고 있어요</div>
+            <div style="width:100%; border:1.5px solid #e3e0da; border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:7px;"><div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#8a8780;">점검 시간</span><span style="color:#2b2b2b; font-weight:700;">6/25 02:00~06:00</span></div><div style="display:flex; justify-content:space-between; font-size:12px;"><span style="color:#8a8780;">완료 예정</span><span style="color:#2f9e69; font-weight:700;">오전 6시</span></div></div>
+            <div style="font-size:11px; color:#9a978f; text-align:center; line-height:1.4;">점검 중에는 일부 서비스 이용이<br>제한될 수 있어요</div>
+          </div>
+          <div style="position:absolute; left:0; right:0; bottom:0; padding:10px 16px; background:#fff; border-top:1.5px solid #e3e0da;"><div style="border:1.5px solid #2b2b2b; text-align:center; padding:13px; border-radius:10px; font-size:14px; color:#2b2b2b;">공지사항 보기</div></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1436,&quot;height&quot;:900},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3f72b0&quot;,&quot;options&quot;:[&quot;#3f72b0&quot;,&quot;#d96a4a&quot;,&quot;#2f9e69&quot;,&quot;#6b54c9&quot;,&quot;#1f1f1f&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;mood&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Paper&quot;,&quot;options&quot;:[&quot;Paper&quot;,&quot;Dark&quot;,&quot;Mono&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;annotations&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#3f72b0';
+    const moods = {
+      Paper: { canvas: '#e7e5df', label: '#2b2b2b', sub: '#6f6c66' },
+      Dark:  { canvas: '#2b3038', label: '#eef0f2', sub: '#aeb4bd' },
+      Mono:  { canvas: '#efeeec', label: '#1c1c1c', sub: '#77736c' },
+    };
+    const m = moods[this.props.mood] ?? moods.Paper;
+    const anno = this.props.annotations ?? true;
+    return {
+      grid: [1, 2],
+      cartItems: [1, 2, 3],
+      orders: [1, 2, 3],
+      orderHistory: [
+        { date: '2026.06.17', status: '배송중', name: '무선 블루투스 이어버드 (화이트)', meta: '28,900원 · 1개', primary: '배송조회' },
+        { date: '2026.06.11', status: '배송완료', name: '스테인리스 텀블러 500ml', meta: '19,500원 · 2개', primary: '재구매' },
+        { date: '2026.05.29', status: '취소완료', name: '면 반팔 티셔츠 (블랙)', meta: '12,000원 · 1개', primary: '재구매' },
+      ],
+      accent,
+      canvas: m.canvas,
+      label: m.label,
+      sub: m.sub,
+      annoBlock: anno ? 'block' : 'none',
+      annoFlex: anno ? 'flex' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>

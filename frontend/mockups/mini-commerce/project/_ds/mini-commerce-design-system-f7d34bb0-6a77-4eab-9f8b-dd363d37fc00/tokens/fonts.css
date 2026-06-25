@@ -1,0 +1,20 @@
+/* Mini-Commerce — Webfonts
+ *
+ * Single shipped face: PRETENDARD VARIABLE. One variable file covers Latin,
+ * numerals, and 한글, so the whole system loads exactly one font family —
+ * a deliberate performance and consistency choice.
+ *
+ * Declared as an explicit @font-face (rather than a remote @import) so the
+ * family is self-described in this stylesheet. Swap the src to a local
+ * project path if you want the binary bundled for offline use.
+ *
+ * Note: the brand's originally-specified face was "Mini Cereal VF" / "Circular";
+ * the team chose to standardise on Pretendard.
+ */
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
+}

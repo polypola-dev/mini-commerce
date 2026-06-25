@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/tokens/colors.css">
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/tokens/typography.css">
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/tokens/radius.css">
+<link rel="stylesheet" href="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/styles.css">
+<script src="_ds/mini-commerce-design-system-f7d34bb0-6a77-4eab-9f8b-dd363d37fc00/_ds_bundle.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#e9e9ec;}
+  .mc-scroll::-webkit-scrollbar{display:none;}
+  .mc-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+  @keyframes mcSheet{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  @keyframes mcFade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</helmet>
+<div style="width:390px; height:844px; margin:0 auto; background:var(--color-canvas,#fff); font-family:var(--font-sans); color:var(--color-ink,#222); display:flex; flex-direction:column; position:relative; overflow:hidden;">
+
+  <!-- STATUS BAR -->
+  <div style="height:48px; flex:none; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 6px; font-size:14px; font-weight:600; z-index:30;">
+    <span>9:41</span>
+    <span style="display:flex; align-items:center; gap:7px;">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="#222"><rect x="0" y="7" width="3" height="4" rx="1"></rect><rect x="4.5" y="5" width="3" height="6" rx="1"></rect><rect x="9" y="2.5" width="3" height="8.5" rx="1"></rect><rect x="13.5" y="0" width="3" height="11" rx="1"></rect></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="#222"><path d="M8 2.2c2 0 3.8.8 5.1 2l1.2-1.3A9 9 0 0 0 8 .3 9 9 0 0 0 1.7 2.9L2.9 4.2A7.2 7.2 0 0 1 8 2.2Z"></path><path d="M8 5.6c1.1 0 2.1.4 2.8 1.2l1.2-1.3A6 6 0 0 0 8 3.7a6 6 0 0 0-4 1.8l1.2 1.3A3.9 3.9 0 0 1 8 5.6Z"></path><circle cx="8" cy="9.2" r="1.6"></circle></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#222" stroke-opacity="0.4"></rect><rect x="2" y="2" width="17" height="8" rx="1.5" fill="#222"></rect><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="#222" fill-opacity="0.4"></rect></svg>
+    </span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="mc-scroll" ref="{{ scrollRef }}" style="flex:1; overflow-y:auto; overflow-x:hidden; position:relative;">
+
+    <!-- ============ HOME ============ -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ yes }}">
+    <div>
+      <div style="padding:14px 20px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <div style="display:flex; align-items:baseline; font-size:21px; font-weight:800; letter-spacing:-0.6px;">
+            <span style="color:var(--color-primary);">mini</span><span style="color:#222;">commerce</span>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button onClick="{{ onOpenNotifications }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative;">
+              <svg width="23" height="23" fill="none" stroke="#222" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+              <span style="position:absolute; top:7px; right:9px; width:7px; height:7px; border-radius:9999px; background:var(--color-primary);"></span>
+            </button>
+            <button onClick="{{ onTabCart }}" style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative;">
+              <svg width="23" height="23" fill="none" stroke="#222" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 2H2"></path><circle cx="9" cy="20" r="1.4"></circle><circle cx="18" cy="20" r="1.4"></circle></svg>
+              <sc-if value="{{ hasCartBadge }}" hint-placeholder-val="{{ no }}"><span style="position:absolute; top:4px; right:4px; min-width:17px; height:17px; padding:0 4px; border-radius:9999px; background:var(--color-primary); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;">{{ cartCount }}</span></sc-if>
+            </button>
+          </div>
+        </div>
+        <div onClick="{{ onOpenSearch }}" style="display:flex; align-items:center; gap:10px; height:48px; border-radius:9999px; border:1px solid var(--color-hairline); padding:0 18px; color:var(--color-muted); font-size:15px; cursor:pointer; box-shadow:var(--shadow-card);">
+          <svg width="18" height="18" fill="none" stroke="#6a6a6a" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"></circle><path d="m17 17-4-4"></path></svg>
+          <span>찾는 상품을 검색해보세요</span>
+        </div>
+      </div>
+
+      <div style="padding:18px 20px 4px;">
+        <div onClick="{{ onOpenPromotion }}" style="position:relative; height:152px; border-radius:16px; overflow:hidden; cursor:pointer;">
+          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80&auto=format&fit=crop" alt="기획전" style="width:100%; height:100%; object-fit:cover; display:block;">
+          <div style="position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.05));"></div>
+          <div style="position:absolute; left:20px; top:0; bottom:0; display:flex; flex-direction:column; justify-content:center; color:#fff;">
+            <div style="font-size:12px; font-weight:600; opacity:0.9; margin-bottom:6px;">THIS WEEK</div>
+            <div style="font-size:22px; font-weight:800; line-height:1.25;">이번 주 특가전<br>인기 상품 최대 30%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mc-scroll" style="display:flex; gap:8px; overflow-x:auto; padding:16px 20px 4px;">
+        <div onClick="{{ onOpenCategory }}" style="flex:none; display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:9999px; background:#222; color:#fff; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;">
+          <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="5" height="5" rx="1"></rect><rect x="8" y="1" width="5" height="5" rx="1"></rect><rect x="1" y="8" width="5" height="5" rx="1"></rect><rect x="8" y="8" width="5" height="5" rx="1"></rect></svg>
+          카테고리
+        </div>
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="5">
+          <div onClick="{{ c.onTap }}" style="flex:none; padding:9px 16px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:14px; font-weight:500; color:#222; background:#fff; cursor:pointer; white-space:nowrap;">{{ c.label }}</div>
+        </sc-for>
+      </div>
+
+      <div style="padding:18px 20px 2px; font-size:18px; font-weight:700;">지금 인기 있는 상품</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 14px; padding:14px 20px 28px;">
+        <sc-for list="{{ homeProducts }}" as="p" hint-placeholder-count="4">
+          <div onClick="{{ p.onOpen }}" style="cursor:pointer; display:flex; flex-direction:column; gap:8px;">
+            <div style="position:relative; width:100%; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:var(--color-surface-strong);">
+              <div role="img" aria-label="{{ p.name }}" style="width:100%; height:100%; background-image:url('{{ p.photo }}'); background-size:cover; background-position:center;"></div>
+              <sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ no }}">
+                <div style="position:absolute; top:10px; left:10px;">
+                  <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Badge" variant="favorite" hint-size="auto,22px">{{ p.badge }}</x-import>
+                </div>
+              </sc-if>
+              <button onClick="{{ p.onSave }}" aria-label="찜" style="position:absolute; top:8px; right:8px; width:34px; height:34px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">
+                <svg width="23" height="23" viewBox="0 0 32 32"><path d="M16 28S4 20.5 4 12.5C4 8.36 7.36 5 11.5 5c2.54 0 4.78 1.27 6.5 3.2C19.72 6.27 21.96 5 24.5 5 28.64 5 32 8.36 32 12.5 32 20.5 16 28 16 28Z" transform="translate(-1 0)" fill="{{ p.heartFill }}" stroke="{{ p.heartStroke }}" stroke-width="2.4"></path></svg>
+              </button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <div style="display:flex; align-items:center; gap:4px; font-size:12px;">
+                <svg width="12" height="12" viewBox="0 0 16 16" style="margin-top:-1px;"><path d="M8 1.2l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.3 4.1 13.3l.8-4.4L1.7 5.8l4.4-.6L8 1.2Z" fill="#222"></path></svg>
+                <span style="font-weight:600; color:#222;">{{ p.ratingText }}</span><span style="color:var(--color-muted-soft);">({{ p.reviewsText }})</span>
+              </div>
+              <div style="font-size:13px; font-weight:600; color:#222; line-height:1.35;">{{ p.name }}</div>
+              <div style="font-size:11px; color:var(--color-muted);">{{ p.brand }}</div>
+              <div style="font-size:16px; font-weight:800; color:#222; margin-top:2px;">{{ p.priceText }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SEARCH ============ -->
+    <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px;">
+        <div style="display:flex; align-items:center; gap:8px; height:48px; border-radius:9999px; border:1.5px solid #222; padding:0 16px;">
+          <svg width="18" height="18" fill="none" stroke="#222" stroke-width="1.9" stroke-linecap="round"><circle cx="8" cy="8" r="6"></circle><path d="m17 17-4-4"></path></svg>
+          <input value="{{ query }}" onChange="{{ onQueryInput }}" onKeyDown="{{ onSearchKey }}" placeholder="상품명, 브랜드 검색" style="border:none; outline:none; flex:1; font-size:15px; font-family:inherit; background:transparent; color:#222; min-width:0;">
+          <sc-if value="{{ hasQueryText }}" hint-placeholder-val="{{ no }}"><button onClick="{{ onClearQuery }}" style="border:none; background:#e9e9e9; width:20px; height:20px; border-radius:9999px; color:#6a6a6a; cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; padding:0;">✕</button></sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ showPopular }}" hint-placeholder-val="{{ yes }}">
+        <div style="padding:4px 20px 0;">
+          <div style="font-size:15px; font-weight:700; margin-bottom:12px;">인기 검색어</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ popularKeywords }}" as="k" hint-placeholder-count="5">
+              <div onClick="{{ k.onTap }}" style="padding:9px 15px; border-radius:9999px; background:var(--color-surface-soft); font-size:14px; color:#222; cursor:pointer;">{{ k.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding:24px 20px 2px; font-size:15px; font-weight:700;">이런 상품은 어때요</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 14px; padding:14px 20px 28px;">
+          <sc-for list="{{ homeProducts }}" as="p" hint-placeholder-count="4">
+            <div onClick="{{ p.onOpen }}" style="cursor:pointer; display:flex; flex-direction:column; gap:8px;">
+              <div style="position:relative; width:100%; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:var(--color-surface-strong);">
+                <div role="img" aria-label="{{ p.name }}" style="width:100%; height:100%; background-image:url('{{ p.photo }}'); background-size:cover; background-position:center;"></div>
+                <button onClick="{{ p.onSave }}" aria-label="찜" style="position:absolute; top:8px; right:8px; width:34px; height:34px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">
+                  <svg width="23" height="23" viewBox="0 0 32 32"><path d="M16 28S4 20.5 4 12.5C4 8.36 7.36 5 11.5 5c2.54 0 4.78 1.27 6.5 3.2C19.72 6.27 21.96 5 24.5 5 28.64 5 32 8.36 32 12.5 32 20.5 16 28 16 28Z" transform="translate(-1 0)" fill="{{ p.heartFill }}" stroke="{{ p.heartStroke }}" stroke-width="2.4"></path></svg>
+                </button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <div style="font-size:13px; font-weight:600; color:#222; line-height:1.35;">{{ p.name }}</div>
+                <div style="font-size:16px; font-weight:800; color:#222; margin-top:2px;">{{ p.priceText }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ no }}">
+        <div style="padding:4px 20px 8px; display:flex; align-items:baseline; gap:8px;">
+          <span style="font-size:16px; font-weight:700;">{{ resultTitle }}</span><span style="font-size:13px; color:var(--color-muted-soft);">{{ resultCountText }}</span>
+        </div>
+        <div class="mc-scroll" style="display:flex; gap:8px; overflow-x:auto; padding:0 20px 4px;">
+          <div onClick="{{ onOpenFilter }}" style="flex:none; display:flex; align-items:center; gap:5px; padding:7px 14px; border-radius:9999px; border:1px solid var(--color-primary); background:#fff0f3; color:var(--color-primary); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 3h11M3 6.5h7M5 10h3"></path></svg>필터
+          </div>
+          <div onClick="{{ onOpenSort }}" style="flex:none; padding:7px 14px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body); cursor:pointer; white-space:nowrap;">{{ sortBy }} ▾</div>
+          <div style="flex:none; padding:7px 14px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body); white-space:nowrap;">무료배송</div>
+          <div style="flex:none; padding:7px 14px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body); white-space:nowrap;">4★ 이상</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 14px; padding:6px 20px 28px;">
+          <sc-for list="{{ resultProducts }}" as="p" hint-placeholder-count="4">
+            <div onClick="{{ p.onOpen }}" style="cursor:pointer; display:flex; flex-direction:column; gap:8px;">
+              <div style="position:relative; width:100%; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:var(--color-surface-strong);">
+                <div role="img" aria-label="{{ p.name }}" style="width:100%; height:100%; background-image:url('{{ p.photo }}'); background-size:cover; background-position:center;"></div>
+                <sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ no }}"><div style="position:absolute; top:10px; left:10px;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Badge" variant="favorite" hint-size="auto,22px">{{ p.badge }}</x-import></div></sc-if>
+                <button onClick="{{ p.onSave }}" aria-label="찜" style="position:absolute; top:8px; right:8px; width:34px; height:34px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">
+                  <svg width="23" height="23" viewBox="0 0 32 32"><path d="M16 28S4 20.5 4 12.5C4 8.36 7.36 5 11.5 5c2.54 0 4.78 1.27 6.5 3.2C19.72 6.27 21.96 5 24.5 5 28.64 5 32 8.36 32 12.5 32 20.5 16 28 16 28Z" transform="translate(-1 0)" fill="{{ p.heartFill }}" stroke="{{ p.heartStroke }}" stroke-width="2.4"></path></svg>
+                </button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <div style="display:flex; align-items:center; gap:4px; font-size:12px;">
+                  <svg width="12" height="12" viewBox="0 0 16 16" style="margin-top:-1px;"><path d="M8 1.2l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.3 4.1 13.3l.8-4.4L1.7 5.8l4.4-.6L8 1.2Z" fill="#222"></path></svg>
+                  <span style="font-weight:600; color:#222;">{{ p.ratingText }}</span><span style="color:var(--color-muted-soft);">({{ p.reviewsText }})</span>
+                </div>
+                <div style="font-size:13px; font-weight:600; color:#222; line-height:1.35;">{{ p.name }}</div>
+                <div style="font-size:11px; color:var(--color-muted);">{{ p.brand }}</div>
+                <div style="font-size:16px; font-weight:800; color:#222; margin-top:2px;">{{ p.priceText }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ no }}">
+        <div style="padding:80px 40px; text-align:center; color:var(--color-muted);">
+          <div style="font-size:40px; margin-bottom:14px;">🔍</div>
+          <div style="font-size:16px; font-weight:600; color:#222; margin-bottom:6px;">검색 결과가 없어요</div>
+          <div style="font-size:14px; line-height:1.5;">‘{{ appliedQuery }}’에 대한 상품을 찾지 못했어요.<br>다른 검색어로 다시 시도해보세요.</div>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ DETAIL ============ -->
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ no }}">
+    <div style="padding-bottom:24px;">
+      <div style="position:relative;">
+        <div role="img" aria-label="{{ product.name }}" style="width:100%; height:390px; background-image:url('{{ product.photo }}'); background-size:cover; background-position:center;"></div>
+        <div style="position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; align-items:flex-start;">
+          <button onClick="{{ onBackFromDetail }}" aria-label="뒤로" style="width:38px; height:38px; border-radius:9999px; border:none; background:rgba(255,255,255,0.92); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-card);">
+            <svg width="20" height="20" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 5-7 7 7 7"></path></svg>
+          </button>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ onOpenShareSheet }}" aria-label="공유" style="width:38px; height:38px; border-radius:9999px; border:none; background:rgba(255,255,255,0.92); cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-card);">
+              <svg width="19" height="19" fill="none" stroke="#222" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="5" r="2.4"></circle><circle cx="5" cy="10" r="2.4"></circle><circle cx="14" cy="15" r="2.4"></circle><path d="m7.1 8.8 4.8-2.6M7.1 11.2l4.8 2.6"></path></svg>
+            </button>
+            <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.IconButton" variant="heart" size="{{ heart38 }}" saved="{{ detailSaved }}" onClick="{{ onDetailSave }}" label="찜" style="background:rgba(255,255,255,0.92); box-shadow:var(--shadow-card);" hint-size="38px,38px"></x-import>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px 20px 0;">
+        <div style="font-size:13px; color:var(--color-muted); font-weight:600; margin-bottom:6px;">{{ product.brand }}</div>
+        <div style="font-size:21px; font-weight:700; line-height:1.3; margin-bottom:10px;">{{ product.name }}</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.StarRating" value="{{ product.rating }}" show-count="{{ no }}" hint-size="auto,18px"></x-import>
+          <span style="font-size:13px; color:var(--color-muted);">리뷰 {{ product.reviewsText }}개</span>
+        </div>
+        <div style="font-size:26px; font-weight:800; color:#222;">{{ product.priceText }}</div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px; color:var(--color-body);">
+          <svg width="16" height="16" fill="none" stroke="#222" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h9v8H2z"></path><path d="M11 7h3l2 2.5V13h-5z"></path><circle cx="5" cy="14" r="1.4"></circle><circle cx="12.5" cy="14" r="1.4"></circle></svg>
+          <span>{{ product.shipText }}</span>
+        </div>
+      </div>
+
+      <div style="height:8px; background:var(--color-surface-soft); margin-top:22px;"></div>
+
+      <div style="padding:22px 20px;">
+        <div style="font-size:17px; font-weight:700; margin-bottom:12px;">상품 정보</div>
+        <div style="font-size:15px; line-height:1.65; color:var(--color-body);">{{ product.desc }}</div>
+        <div style="margin-top:18px; border:1px solid var(--color-hairline-soft); border-radius:12px; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; padding:13px 16px; font-size:14px; border-bottom:1px solid var(--color-hairline-soft);"><span style="color:var(--color-muted);">카테고리</span><span style="color:#222; font-weight:500;">{{ product.cat }}</span></div>
+          <div style="display:flex; justify-content:space-between; padding:13px 16px; font-size:14px; border-bottom:1px solid var(--color-hairline-soft);"><span style="color:var(--color-muted);">옵션</span><span style="color:#222; font-weight:500;">{{ product.optionSummary }}</span></div>
+          <div style="display:flex; justify-content:space-between; padding:13px 16px; font-size:14px;"><span style="color:var(--color-muted);">배송</span><span style="color:#222; font-weight:500;">평균 1~3일 이내 도착</span></div>
+        </div>
+      </div>
+
+      <div style="height:8px; background:var(--color-surface-soft);"></div>
+
+      <div style="padding:22px 20px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <div style="font-size:17px; font-weight:700;">리뷰 {{ product.reviewsText }}</div>
+          <div style="display:flex; align-items:center; gap:5px; font-size:15px; font-weight:700;">
+            <svg width="15" height="15" viewBox="0 0 16 16"><path d="M8 1.2l1.9 4 4.4.6-3.2 3.1.8 4.4L8 11.3 4.1 13.3l.8-4.4L1.7 5.8l4.4-.6L8 1.2Z" fill="#222"></path></svg>
+            {{ product.ratingText }}
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; gap:12px;">
+            <div style="flex:none; width:38px; height:38px; border-radius:9999px; background:#e8d9c5; color:#7a5c34; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;">민</div>
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><span style="font-size:14px; font-weight:600;">민****</span><span style="font-size:12px; color:#222;">★ 5.0</span></div>
+              <div style="font-size:14px; line-height:1.55; color:var(--color-body);">배송도 빠르고 품질이 기대 이상이에요. 사진이랑 똑같고 재구매 의사 있습니다 👍</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:none; width:38px; height:38px; border-radius:9999px; background:#d5e3e8; color:#34616f; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;">지</div>
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;"><span style="font-size:14px; font-weight:600;">지****</span><span style="font-size:12px; color:#222;">★ 4.0</span></div>
+              <div style="font-size:14px; line-height:1.55; color:var(--color-body);">전체적으로 만족스럽습니다. 옵션 선택만 잘 하면 가성비 좋아요.</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px; text-align:center; padding:13px; border:1px solid #222; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">리뷰 전체보기</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ CART ============ -->
+    <sc-if value="{{ isCart }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:16px 20px 10px; display:flex; align-items:baseline; gap:8px; border-bottom:1px solid var(--color-hairline-soft);">
+        <span style="font-size:20px; font-weight:700;">장바구니</span><span style="font-size:14px; color:var(--color-muted);">{{ cartCount }}개</span>
+      </div>
+
+      <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ no }}">
+        <div style="padding:90px 40px; text-align:center;">
+          <div style="font-size:42px; margin-bottom:14px;">🛒</div>
+          <div style="font-size:16px; font-weight:600; color:#222; margin-bottom:6px;">장바구니가 비어 있어요</div>
+          <div style="font-size:14px; color:var(--color-muted); line-height:1.5; margin-bottom:22px;">마음에 드는 상품을 담아보세요.</div>
+          <div onClick="{{ onGoShop }}" style="display:inline-block; padding:13px 26px; background:var(--color-primary); color:#fff; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer;">쇼핑하러 가기</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ no }}">
+        <div>
+          <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="2">
+            <div style="display:flex; gap:13px; padding:18px 20px; border-bottom:1px solid var(--color-hairline-soft);">
+              <div role="img" aria-label="{{ it.name }}" style="flex:none; width:88px; height:88px; border-radius:12px; background-color:#f2f2f2; background-image:url('{{ it.photo }}'); background-size:cover; background-position:center;"></div>
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; justify-content:space-between; gap:8px;">
+                  <div style="font-size:14px; font-weight:600; line-height:1.4;">{{ it.name }}</div>
+                  <button onClick="{{ it.onRemove }}" aria-label="삭제" style="flex:none; border:none; background:transparent; cursor:pointer; color:#bbb; padding:0; font-size:16px;">✕</button>
+                </div>
+                <div style="font-size:12px; color:var(--color-muted); margin:4px 0 10px;">옵션 · {{ it.optionText }}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <div style="display:flex; align-items:center; border:1px solid var(--color-hairline); border-radius:8px; overflow:hidden;">
+                    <button onClick="{{ it.onDec }}" style="width:32px; height:32px; border:none; background:#fff; cursor:pointer; font-size:17px; color:#222;">−</button>
+                    <span style="width:34px; text-align:center; font-size:14px; font-weight:600;">{{ it.qty }}</span>
+                    <button onClick="{{ it.onInc }}" style="width:32px; height:32px; border:none; background:#fff; cursor:pointer; font-size:17px; color:#222;">+</button>
+                  </div>
+                  <div style="font-size:16px; font-weight:800;">{{ it.lineText }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+
+          <div style="padding:20px;">
+            <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--color-body); margin-bottom:10px;"><span>상품 금액</span><span>{{ subtotalText }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--color-body); margin-bottom:10px;"><span>배송비</span><span>{{ shippingText }}</span></div>
+            <div style="height:1px; background:var(--color-hairline); margin:14px 0;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px;"><span style="font-size:16px; font-weight:700;">결제 예상 금액</span><span style="font-size:20px; font-weight:800; color:var(--color-primary);">{{ totalText }}</span></div>
+            <div style="width:100%;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onGoCheckout }}" hint-size="100%,48px">{{ checkoutBtnText }}</x-import></div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ CHECKOUT ============ -->
+    <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ no }}">
+    <div style="padding-bottom:16px;">
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBackFromCheckout }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;">
+          <svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg>
+        </button>
+        <span style="font-size:18px; font-weight:700;">주문 / 결제</span>
+      </div>
+
+      <div style="padding:20px;">
+        <div style="font-size:16px; font-weight:700; margin-bottom:14px;">배송지</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <input value="{{ addrName }}" onChange="{{ onAddrName }}" placeholder="받는 분" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+          <input value="{{ addrPhone }}" onChange="{{ onAddrPhone }}" placeholder="연락처" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+          <input value="{{ addr1 }}" onChange="{{ onAddr1 }}" placeholder="주소" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+          <input value="{{ addr2 }}" onChange="{{ onAddr2 }}" placeholder="상세 주소" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+      </div>
+
+      <div style="height:8px; background:var(--color-surface-soft);"></div>
+
+      <div style="padding:20px;">
+        <div style="font-size:16px; font-weight:700; margin-bottom:14px;">결제 수단</div>
+        <div style="display:flex; flex-direction:column; gap:0; border:1px solid var(--color-hairline); border-radius:12px; overflow:hidden;">
+          <div onClick="{{ onPayCard }}" style="display:flex; align-items:center; gap:12px; padding:15px 16px; cursor:pointer; border-bottom:1px solid var(--color-hairline-soft);">
+            <span style="width:20px; height:20px; border-radius:9999px; border:2px solid {{ payCardColor }}; display:flex; align-items:center; justify-content:center;"><span style="width:10px; height:10px; border-radius:9999px; background:{{ payCardDot }};"></span></span>
+            <span style="font-size:15px; font-weight:500;">신용 / 체크카드</span>
+          </div>
+          <div onClick="{{ onPayEasy }}" style="display:flex; align-items:center; gap:12px; padding:15px 16px; cursor:pointer; border-bottom:1px solid var(--color-hairline-soft);">
+            <span style="width:20px; height:20px; border-radius:9999px; border:2px solid {{ payEasyColor }}; display:flex; align-items:center; justify-content:center;"><span style="width:10px; height:10px; border-radius:9999px; background:{{ payEasyDot }};"></span></span>
+            <span style="font-size:15px; font-weight:500;">간편결제 (Mini Pay)</span>
+          </div>
+          <div onClick="{{ onPayBank }}" style="display:flex; align-items:center; gap:12px; padding:15px 16px; cursor:pointer;">
+            <span style="width:20px; height:20px; border-radius:9999px; border:2px solid {{ payBankColor }}; display:flex; align-items:center; justify-content:center;"><span style="width:10px; height:10px; border-radius:9999px; background:{{ payBankDot }};"></span></span>
+            <span style="font-size:15px; font-weight:500;">무통장 입금</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:8px; background:var(--color-surface-soft);"></div>
+
+      <div style="padding:20px;">
+        <div style="font-size:16px; font-weight:700; margin-bottom:14px;">주문 상품 {{ cartCount }}개</div>
+        <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="2">
+          <div style="display:flex; gap:12px; margin-bottom:14px;">
+            <div role="img" aria-label="{{ it.name }}" style="flex:none; width:56px; height:56px; border-radius:10px; background-color:#f2f2f2; background-image:url('{{ it.photo }}'); background-size:cover; background-position:center;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:14px; font-weight:600; line-height:1.4;">{{ it.name }}</div>
+              <div style="font-size:12px; color:var(--color-muted); margin-top:3px;">{{ it.optionText }} · {{ it.qty }}개</div>
+            </div>
+            <div style="font-size:14px; font-weight:700;">{{ it.lineText }}</div>
+          </div>
+        </sc-for>
+        <div style="height:1px; background:var(--color-hairline); margin:8px 0 16px;"></div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--color-body); margin-bottom:10px;"><span>상품 금액</span><span>{{ subtotalText }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--color-body);"><span>배송비</span><span>{{ shippingText }}</span></div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ COMPLETE ============ -->
+    <sc-if value="{{ isComplete }}" hint-placeholder-val="{{ no }}">
+    <div style="padding:60px 28px; text-align:center; display:flex; flex-direction:column; align-items:center;">
+      <div style="width:84px; height:84px; border-radius:9999px; background:var(--color-primary); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
+        <svg width="42" height="42" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 21 8 8 16-16"></path></svg>
+      </div>
+      <div style="font-size:23px; font-weight:800; margin-bottom:8px;">주문이 완료되었어요</div>
+      <div style="font-size:15px; color:var(--color-muted); line-height:1.5; margin-bottom:30px;">{{ order.eta }}<br>배송 현황은 마이페이지에서 확인하세요.</div>
+
+      <div style="width:100%; border:1px solid var(--color-hairline); border-radius:14px; padding:20px; margin-bottom:30px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:13px;"><span style="color:var(--color-muted);">주문번호</span><span style="font-weight:700;">{{ order.no }}</span></div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:13px;"><span style="color:var(--color-muted);">상품 수</span><span style="font-weight:600;">{{ order.count }}개</span></div>
+        <div style="height:1px; background:var(--color-hairline-soft); margin:6px 0 14px;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-size:15px; font-weight:700;">결제 금액</span><span style="font-size:19px; font-weight:800; color:var(--color-primary);">{{ order.total }}</span></div>
+      </div>
+
+      <div style="width:100%; display:flex; flex-direction:column; gap:10px;">
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onGoOrders }}" hint-size="100%,48px">주문 상세 보기</x-import>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="secondary" full-width="{{ yes }}" onClick="{{ onContinue }}" hint-size="100%,48px">쇼핑 계속하기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ WISHLIST ============ -->
+    <sc-if value="{{ isWishlist }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:16px 20px 10px; display:flex; align-items:baseline; gap:8px; border-bottom:1px solid var(--color-hairline-soft);">
+        <span style="font-size:20px; font-weight:700;">찜한 상품</span><span style="font-size:14px; color:var(--color-muted);">{{ wishCount }}개</span>
+      </div>
+      <sc-if value="{{ wishEmpty }}" hint-placeholder-val="{{ no }}">
+        <div style="padding:90px 40px; text-align:center;">
+          <div style="font-size:42px; margin-bottom:14px;">🤍</div>
+          <div style="font-size:16px; font-weight:600; color:#222; margin-bottom:6px;">아직 찜한 상품이 없어요</div>
+          <div style="font-size:14px; color:var(--color-muted); line-height:1.5; margin-bottom:22px;">상품의 하트를 눌러 저장해보세요.</div>
+          <div onClick="{{ onGoShop }}" style="display:inline-block; padding:13px 26px; background:var(--color-primary); color:#fff; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer;">상품 보러 가기</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ hasWish }}" hint-placeholder-val="{{ no }}">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px 14px; padding:18px 20px 28px;">
+          <sc-for list="{{ wishProducts }}" as="p" hint-placeholder-count="2">
+            <div onClick="{{ p.onOpen }}" style="cursor:pointer; display:flex; flex-direction:column; gap:8px;">
+              <div style="position:relative; width:100%; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:var(--color-surface-strong);">
+                <div role="img" aria-label="{{ p.name }}" style="width:100%; height:100%; background-image:url('{{ p.photo }}'); background-size:cover; background-position:center;"></div>
+                <button onClick="{{ p.onSave }}" aria-label="찜" style="position:absolute; top:8px; right:8px; width:34px; height:34px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">
+                  <svg width="23" height="23" viewBox="0 0 32 32"><path d="M16 28S4 20.5 4 12.5C4 8.36 7.36 5 11.5 5c2.54 0 4.78 1.27 6.5 3.2C19.72 6.27 21.96 5 24.5 5 28.64 5 32 8.36 32 12.5 32 20.5 16 28 16 28Z" transform="translate(-1 0)" fill="{{ p.heartFill }}" stroke="{{ p.heartStroke }}" stroke-width="2.4"></path></svg>
+                </button>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <div style="font-size:13px; font-weight:600; color:#222; line-height:1.35;">{{ p.name }}</div>
+                <div style="font-size:11px; color:var(--color-muted);">{{ p.brand }}</div>
+                <div style="font-size:16px; font-weight:800; color:#222; margin-top:2px;">{{ p.priceText }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ MY ============ -->
+    <sc-if value="{{ isMy }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:24px 20px; display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--color-hairline-soft);">
+        <div onClick="{{ onOpenProfile }}" style="display:flex; align-items:center; gap:14px; flex:1; min-width:0; cursor:pointer;">
+          <div style="width:56px; height:56px; border-radius:9999px; background:#e8d9c5; color:#7a5c34; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700;">김</div>
+          <div>
+            <div style="font-size:18px; font-weight:700;">김민수님</div>
+            <div style="font-size:13px; color:var(--color-muted); margin-top:3px;">minsu@email.com</div>
+          </div>
+          <span style="margin-left:auto; color:#bbb; font-size:18px;">›</span>
+        </div>
+        <button onClick="{{ onOpenNotifications }}" aria-label="알림" style="flex:none; width:40px; height:40px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative;">
+          <svg width="23" height="23" fill="none" stroke="#222" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+          <span style="position:absolute; top:7px; right:9px; width:7px; height:7px; border-radius:9999px; background:var(--color-primary);"></span>
+        </button>
+      </div>
+      <div style="display:flex; padding:18px 20px; border-bottom:8px solid var(--color-surface-soft); text-align:center;">
+        <div style="flex:1;"><div style="font-size:19px; font-weight:800;">{{ cartCount }}</div><div style="font-size:12px; color:var(--color-muted); margin-top:3px;">장바구니</div></div>
+        <div style="flex:1; border-left:1px solid var(--color-hairline-soft); border-right:1px solid var(--color-hairline-soft);"><div style="font-size:19px; font-weight:800;">{{ wishCount }}</div><div style="font-size:12px; color:var(--color-muted); margin-top:3px;">찜</div></div>
+        <div style="flex:1;"><div style="font-size:19px; font-weight:800;">3</div><div style="font-size:12px; color:var(--color-muted); margin-top:3px;">쿠폰</div></div>
+      </div>
+      <div>
+        <div onClick="{{ onOpenOrders }}" style="padding:17px 20px; font-size:15px; border-bottom:1px solid var(--color-hairline-soft); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">주문 내역<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onOpenAddress }}" style="padding:17px 20px; font-size:15px; border-bottom:1px solid var(--color-hairline-soft); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">배송지 관리<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onOpenCoupons }}" style="padding:17px 20px; font-size:15px; border-bottom:1px solid var(--color-hairline-soft); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">쿠폰 / 적립금<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onOpenCS }}" style="padding:17px 20px; font-size:15px; border-bottom:1px solid var(--color-hairline-soft); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">고객센터<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onLogout }}" style="padding:17px 20px; font-size:15px; color:var(--color-muted); display:flex; justify-content:space-between; align-items:center; cursor:pointer;">로그아웃</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ LOGIN ============ -->
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ no }}">
+    <div style="min-height:100%; display:flex; flex-direction:column; padding:0 28px 28px;">
+      <div style="flex:none; height:52px;"></div>
+      <div style="display:flex; align-items:baseline; justify-content:center; font-size:30px; font-weight:800; letter-spacing:-0.8px; margin-bottom:44px;">
+        <span style="color:var(--color-primary);">mini</span><span style="color:#222;">commerce</span>
+      </div>
+      <div style="font-size:22px; font-weight:700; margin-bottom:20px;">로그인</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <input placeholder="이메일 또는 휴대폰 번호" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        <input type="password" placeholder="비밀번호" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+      </div>
+      <div style="margin-top:14px;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onLoginSubmit }}" hint-size="100%,48px">로그인</x-import></div>
+      <div style="display:flex; justify-content:center; gap:16px; margin-top:18px; font-size:14px; color:var(--color-body);">
+        <span onClick="{{ onGoSignup }}" style="cursor:pointer;">회원가입</span>
+        <span style="color:var(--color-hairline);">·</span>
+        <span onClick="{{ onGoForgot }}" style="cursor:pointer;">비밀번호 찾기</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; margin:30px 0 20px;">
+        <div style="flex:1; height:1px; background:var(--color-hairline-soft);"></div>
+        <span style="font-size:12px; color:var(--color-muted-soft);">간편 로그인</span>
+        <div style="flex:1; height:1px; background:var(--color-hairline-soft);"></div>
+      </div>
+      <div style="display:flex; gap:14px; justify-content:center;">
+        <div style="width:50px; height:50px; border-radius:9999px; background:#fee500; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#3a1d1d;">K</div>
+        <div style="width:50px; height:50px; border-radius:9999px; background:#03c75a; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#fff;">N</div>
+        <div style="width:50px; height:50px; border-radius:9999px; border:1px solid var(--color-hairline); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:#222;">G</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SIGNUP ============ -->
+    <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">회원가입</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">이메일</div>
+          <div style="display:flex; gap:8px;">
+            <input placeholder="name@email.com" style="flex:1; min-width:0; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+            <button style="flex:none; padding:0 14px; border:1px solid #222; border-radius:8px; background:#fff; font-size:13px; font-weight:600; color:#222; cursor:pointer;">중복확인</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">비밀번호</div>
+          <input type="password" placeholder="8자 이상, 영문+숫자+특수문자" style="width:100%; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">비밀번호 확인</div>
+          <input type="password" placeholder="다시 입력" style="width:100%; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">휴대폰 인증</div>
+          <div style="display:flex; gap:8px;">
+            <input placeholder="010-0000-0000" style="flex:1; min-width:0; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+            <button style="flex:none; padding:0 14px; border:1px solid #222; border-radius:8px; background:#fff; font-size:13px; font-weight:600; color:#222; cursor:pointer;">인증요청</button>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--color-hairline-soft); padding-top:16px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:9px;"><span style="width:20px; height:20px; border-radius:5px; background:var(--color-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">✓</span><span style="font-size:14px; font-weight:600;">전체 동의</span></div>
+          <div style="display:flex; align-items:center; gap:9px; padding-left:4px;"><span style="width:18px; height:18px; border-radius:4px; border:1.5px solid var(--color-hairline);"></span><span style="font-size:13px; color:var(--color-body);">(필수) 이용약관 · 개인정보 처리방침</span></div>
+          <div style="display:flex; align-items:center; gap:9px; padding-left:4px;"><span style="width:18px; height:18px; border-radius:4px; border:1.5px solid var(--color-hairline);"></span><span style="font-size:13px; color:var(--color-body);">(선택) 마케팅 수신 동의</span></div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onSignupSubmit }}" hint-size="100%,48px">가입하기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ FORGOT ============ -->
+    <sc-if value="{{ isForgot }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">비밀번호 찾기</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <div style="font-size:15px; color:var(--color-body); line-height:1.6;">가입하신 이메일로 재설정 링크를 보내드릴게요.</div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">이메일</div>
+          <input placeholder="name@email.com" style="width:100%; height:52px; border:1.5px solid #222; border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start; background:var(--color-surface-soft); border-radius:12px; padding:13px 14px;">
+          <span style="flex:none; width:20px; height:20px; border-radius:9999px; border:2px solid var(--color-muted); color:var(--color-muted); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">i</span>
+          <span style="font-size:13px; color:var(--color-body); line-height:1.5;">메일이 오지 않으면 스팸함을 확인해 주세요.</span>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onSendReset }}" hint-size="100%,48px">재설정 메일 보내기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ RESET ============ -->
+    <sc-if value="{{ isReset }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">새 비밀번호 설정</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <div style="font-size:15px; color:var(--color-body); line-height:1.6;">안전한 새 비밀번호를 입력해 주세요.</div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">새 비밀번호</div>
+          <input type="password" placeholder="새 비밀번호" style="width:100%; height:52px; border:1.5px solid #222; border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">새 비밀번호 확인</div>
+          <input type="password" placeholder="다시 입력" style="width:100%; height:52px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px;">
+          <div style="display:flex; align-items:center; gap:7px;"><span style="color:#1f8a5b; font-size:13px;">✓</span><span style="font-size:13px; color:var(--color-body);">8자 이상</span></div>
+          <div style="display:flex; align-items:center; gap:7px;"><span style="color:var(--color-muted-soft); font-size:13px;">○</span><span style="font-size:13px; color:var(--color-muted);">영문·숫자 조합</span></div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onResetDone }}" hint-size="100%,48px">비밀번호 변경</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ CATEGORY ============ -->
+    <sc-if value="{{ isCategory }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 10px; display:flex; align-items:center; gap:12px;">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:20px; font-weight:700;">카테고리</span>
+      </div>
+      <div style="padding:4px 20px 0;">
+        <div onClick="{{ onOpenSearch }}" style="display:flex; align-items:center; gap:10px; height:46px; border-radius:9999px; border:1px solid var(--color-hairline); padding:0 18px; color:var(--color-muted); font-size:14px; cursor:pointer;">
+          <svg width="17" height="17" fill="none" stroke="#6a6a6a" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"></circle><path d="m17 17-4-4"></path></svg>
+          <span>상품, 브랜드 검색</span>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px 8px; padding:22px 20px 8px;">
+        <sc-for list="{{ categoryTiles }}" as="t" hint-placeholder-count="9">
+          <div onClick="{{ onOpenSearch }}" style="cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:9px;">
+            <div role="img" aria-label="{{ t.label }}" style="width:64px; height:64px; border-radius:9999px; background-color:var(--color-surface-strong); background-image:url('{{ t.photo }}'); background-size:cover; background-position:center;"></div>
+            <span style="font-size:13px; color:#222;">{{ t.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 20px 6px; font-size:15px; font-weight:700;">자주 찾는 카테고리</div>
+      <div style="padding:0 20px 28px;">
+        <div onClick="{{ onOpenSearch }}" style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--color-hairline-soft); font-size:14px; cursor:pointer;">여성 원피스<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onOpenSearch }}" style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--color-hairline-soft); font-size:14px; cursor:pointer;">무선 이어폰<span style="color:#bbb;">›</span></div>
+        <div onClick="{{ onOpenSearch }}" style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; font-size:14px; cursor:pointer;">캠핑용품<span style="color:#bbb;">›</span></div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ PROMOTION ============ -->
+    <sc-if value="{{ isPromotion }}" hint-placeholder-val="{{ no }}">
+    <div style="padding-bottom:28px;">
+      <div style="padding:14px 20px 10px; display:flex; align-items:center; gap:12px;">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:20px; font-weight:700;">기획전</span>
+      </div>
+      <div style="padding:4px 20px 0;">
+        <div style="position:relative; height:170px; border-radius:16px; overflow:hidden;">
+          <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80&auto=format&fit=crop" alt="시즌오프" style="width:100%; height:100%; object-fit:cover; display:block;">
+          <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.55));"></div>
+          <div style="position:absolute; left:20px; bottom:18px; color:#fff;">
+            <div style="font-size:12px; font-weight:600; opacity:0.9; margin-bottom:5px;">SEASON OFF</div>
+            <div style="font-size:24px; font-weight:800;">시즌오프 최대 70%</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin:16px 20px 0; display:flex; align-items:center; gap:10px; background:#fff0f3; border-radius:12px; padding:13px 16px;">
+        <span style="font-size:16px; font-weight:800; color:var(--color-primary); letter-spacing:0.5px;">02:14:39</span>
+        <span style="font-size:14px; color:var(--color-body);">남은 시간 · 지금 쿠폰 받기</span>
+      </div>
+      <div style="padding:18px 20px 0; display:flex; flex-direction:column; gap:18px;">
+        <sc-for list="{{ promoProducts }}" as="p" hint-placeholder-count="4">
+          <div onClick="{{ p.onOpen }}" style="display:flex; gap:14px; align-items:center; cursor:pointer;">
+            <div role="img" aria-label="{{ p.name }}" style="flex:none; width:84px; height:84px; border-radius:12px; background-color:var(--color-surface-strong); background-image:url('{{ p.photo }}'); background-size:cover; background-position:center;"></div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:14px; font-weight:600; line-height:1.4; margin-bottom:6px;">{{ p.name }}</div>
+              <div style="font-size:11px; color:var(--color-muted); margin-bottom:8px;">{{ p.brand }}</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:15px; font-weight:800; color:var(--color-primary);">{{ p.discountText }}</span>
+                <span style="font-size:15px; font-weight:800; color:#222;">{{ p.priceText }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ ORDER LIST ============ -->
+    <sc-if value="{{ isOrderList }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">주문 / 배송 내역</span>
+      </div>
+      <div class="mc-scroll" style="display:flex; gap:8px; overflow-x:auto; padding:14px 20px 6px;">
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; background:#222; color:#fff; font-size:13px; font-weight:600;">전체</div>
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">진행중</div>
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">취소·반품</div>
+      </div>
+      <div style="padding:8px 20px 28px; display:flex; flex-direction:column; gap:14px;">
+        <sc-for list="{{ orders }}" as="o" hint-placeholder-count="3">
+          <div style="border:1px solid var(--color-hairline); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:13px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; color:var(--color-muted);">{{ o.date }}</span>
+              <span style="font-size:13px; font-weight:700; color:{{ o.statusColor }};">{{ o.status }}</span>
+            </div>
+            <div onClick="{{ o.onOpen }}" style="display:flex; gap:12px; align-items:center; cursor:pointer;">
+              <div role="img" aria-label="{{ o.name }}" style="flex:none; width:58px; height:58px; border-radius:10px; background-color:var(--color-surface-strong); background-image:url('{{ o.photo }}'); background-size:cover; background-position:center;"></div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:14px; font-weight:600; line-height:1.4; margin-bottom:4px;">{{ o.name }}</div>
+                <div style="font-size:12px; color:var(--color-muted);">{{ o.meta }}</div>
+              </div>
+              <span style="color:#bbb;">›</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; border:1px solid #222; border-radius:8px; text-align:center; padding:10px 0; font-size:13px; font-weight:600; color:#222; cursor:pointer;">{{ o.primary }}</div>
+              <div onClick="{{ o.onOpen }}" style="flex:1; border:1px solid var(--color-hairline); border-radius:8px; text-align:center; padding:10px 0; font-size:13px; color:var(--color-body); cursor:pointer;">주문 상세</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ ORDER DETAIL ============ -->
+    <sc-if value="{{ isOrderDetail }}" hint-placeholder-val="{{ no }}">
+    <div style="padding-bottom:24px;">
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">주문 상세</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="border:1px solid var(--color-hairline); border-radius:14px; padding:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <span style="font-size:14px; font-weight:700; color:{{ currentOrder.statusColor }};">{{ currentOrder.status }}</span>
+            <span style="font-size:12px; color:var(--color-muted-soft);">주문 #{{ currentOrder.no }}</span>
+          </div>
+          <div style="display:flex; align-items:center;">
+            <div style="width:12px; height:12px; border-radius:9999px; background:var(--color-primary);"></div>
+            <div style="flex:1; height:2px; background:var(--color-primary);"></div>
+            <div style="width:12px; height:12px; border-radius:9999px; background:var(--color-primary);"></div>
+            <div style="flex:1; height:2px; background:var(--color-primary);"></div>
+            <div style="width:12px; height:12px; border-radius:9999px; background:var(--color-primary);"></div>
+            <div style="flex:1; height:2px; background:var(--color-hairline);"></div>
+            <div style="width:12px; height:12px; border-radius:9999px; background:var(--color-hairline);"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--color-muted);"><span>결제</span><span>준비</span><span>배송중</span><span>완료</span></div>
+        </div>
+      </div>
+      <div style="padding:0 20px;">
+        <div style="display:flex; gap:12px; align-items:center; padding-bottom:18px; border-bottom:1px solid var(--color-hairline-soft);">
+          <div role="img" aria-label="{{ currentOrder.name }}" style="flex:none; width:60px; height:60px; border-radius:10px; background-color:var(--color-surface-strong); background-image:url('{{ currentOrder.photo }}'); background-size:cover; background-position:center;"></div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:14px; font-weight:600; line-height:1.4; margin-bottom:4px;">{{ currentOrder.name }}</div>
+            <div style="font-size:12px; color:var(--color-muted); margin-bottom:6px;">{{ currentOrder.optionText }} · {{ currentOrder.qty }}개</div>
+            <div style="font-size:15px; font-weight:800;">{{ currentOrder.priceText }}</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:18px 20px 0;">
+        <div style="border:1px solid #f0c9c2; background:#fdf4f2; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:11px;">
+          <span style="font-size:14px; font-weight:700; color:var(--color-error,#c13515);">취소 · 교환 · 반품</span>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; border:1px solid var(--color-error,#c13515); border-radius:8px; text-align:center; padding:10px 0; font-size:12px; color:var(--color-error,#c13515); font-weight:700; cursor:pointer;">주문취소</div>
+            <div style="flex:1; border:1px solid var(--color-hairline); border-radius:8px; text-align:center; padding:10px 0; font-size:12px; color:var(--color-body); cursor:pointer;">교환신청</div>
+            <div style="flex:1; border:1px solid var(--color-hairline); border-radius:8px; text-align:center; padding:10px 0; font-size:12px; color:var(--color-body); cursor:pointer;">반품신청</div>
+          </div>
+          <span style="font-size:11px; color:#9c7a3c;">배송 중에는 반품으로 접수돼요 (환불 영업일 3일)</span>
+        </div>
+      </div>
+      <div style="padding:14px 20px 0;">
+        <div style="border:1px solid var(--color-hairline); border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:9px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--color-body);"><span>결제금액</span><span>{{ currentOrder.priceText }}</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--color-body);"><span>반품 배송비</span><span style="color:var(--color-error,#c13515);">+3,000원</span></div>
+          <div style="height:1px; background:var(--color-hairline-soft); margin:4px 0;"></div>
+          <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700;"><span>예상 환불액</span><span>{{ currentOrder.refundText }}</span></div>
+        </div>
+      </div>
+      <div style="padding:18px 20px 0; display:flex; gap:10px;">
+        <div onClick="{{ onTrack }}" style="flex:1; border:1px solid #222; border-radius:10px; text-align:center; padding:13px 0; font-size:14px; font-weight:600; color:#222; cursor:pointer;">배송조회</div>
+        <sc-if value="{{ currentOrder.delivered }}" hint-placeholder-val="{{ no }}">
+          <div onClick="{{ onWriteReview }}" style="flex:1; border:1px solid var(--color-primary); border-radius:10px; text-align:center; padding:13px 0; font-size:14px; font-weight:600; color:var(--color-primary); cursor:pointer;">리뷰 작성</div>
+        </sc-if>
+        <sc-if value="{{ currentOrder.delivered }}" hint-placeholder-val="{{ yes }}">
+          <div onClick="{{ onOpenCS }}" style="flex:1; border:1px solid var(--color-hairline); border-radius:10px; text-align:center; padding:13px 0; font-size:14px; color:var(--color-body); cursor:pointer;">문의하기</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ EDIT PROFILE ============ -->
+    <sc-if value="{{ isEditProfile }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">내 정보 수정</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="position:relative; width:64px; height:64px;">
+            <div style="width:64px; height:64px; border-radius:9999px; background:#e8d9c5; color:#7a5c34; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;">김</div>
+            <div style="position:absolute; right:-2px; bottom:-2px; width:24px; height:24px; background:var(--color-primary); border-radius:9999px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; border:2px solid #fff;">✎</div>
+          </div>
+          <span style="font-size:14px; color:var(--color-primary); font-weight:600;">사진 변경</span>
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">닉네임</div>
+          <input value="김민수" style="width:100%; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">이메일 · 인증 필요</div>
+          <div onClick="{{ onOpenEmailChange }}" style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--color-hairline); background:var(--color-surface-soft); border-radius:8px; padding:14px; cursor:pointer;">
+            <span style="font-size:15px; color:var(--color-muted);">minsu@email.com</span>
+            <span style="font-size:13px; color:var(--color-primary); font-weight:600;">변경 ›</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">비밀번호</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--color-hairline); border-radius:8px; padding:14px; cursor:pointer;">
+            <span style="font-size:15px; color:var(--color-muted);">변경하기</span><span style="color:#bbb;">›</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--color-hairline-soft); padding-top:18px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:14px; color:#222;">혜택 · 마케팅 알림</span>
+            <span style="width:44px; height:26px; background:var(--color-primary); border-radius:9999px; position:relative; display:inline-block;"><span style="position:absolute; right:2px; top:2px; width:22px; height:22px; background:#fff; border-radius:9999px;"></span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:14px; color:#222;">야간 푸시 수신</span>
+            <span style="width:44px; height:26px; background:var(--color-border-strong,#ccc); border-radius:9999px; position:relative; display:inline-block;"><span style="position:absolute; left:2px; top:2px; width:22px; height:22px; background:#fff; border-radius:9999px;"></span></span>
+          </div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onSaveProfile }}" hint-size="100%,48px">저장하기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ EMAIL CHANGE ============ -->
+    <sc-if value="{{ isEmailChange }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">이메일 변경</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; gap:10px; align-items:flex-start; background:var(--color-surface-soft); border-radius:12px; padding:14px;">
+          <span style="flex:none; width:20px; height:20px; border-radius:9999px; border:2px solid var(--color-muted); color:var(--color-muted); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">i</span>
+          <span style="font-size:13px; color:var(--color-body); line-height:1.5;">이메일은 계정 식별 정보예요. 보안을 위해 본인인증 후 변경할 수 있어요.</span>
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">현재 이메일</div>
+          <div style="border:1px solid var(--color-hairline); background:var(--color-surface-soft); border-radius:8px; padding:14px; font-size:15px; color:var(--color-muted);">minsu@email.com</div>
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">새 이메일</div>
+          <input placeholder="new@email.com" style="width:100%; height:50px; border:1.5px solid #222; border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+        </div>
+        <div>
+          <div style="font-size:13px; color:var(--color-muted); margin-bottom:6px;">인증코드</div>
+          <div style="display:flex; gap:8px;">
+            <input placeholder="6자리 입력" style="flex:1; min-width:0; height:50px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:15px; font-family:inherit; outline:none; color:#222;">
+            <button style="flex:none; padding:0 14px; border:1px solid #222; border-radius:8px; background:#fff; font-size:13px; font-weight:600; color:#222; cursor:pointer; display:flex; align-items:center; gap:6px;">전송 <span style="font-size:12px; color:var(--color-error,#c13515);">02:58</span></button>
+          </div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onConfirmEmail }}" hint-size="100%,48px">인증하고 변경</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ ADDRESS MANAGE ============ -->
+    <sc-if value="{{ isAddressManage }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">배송지 관리</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+        <div style="border:1.5px solid var(--color-primary); border-radius:14px; padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <span style="font-size:11px; font-weight:700; color:#fff; background:var(--color-primary); border-radius:5px; padding:3px 8px;">기본</span>
+            <span style="font-size:14px; font-weight:700;">우리집</span>
+            <span style="margin-left:auto; font-size:13px; color:var(--color-muted);">수정</span>
+          </div>
+          <div style="font-size:13px; color:var(--color-body); margin-bottom:4px;">김민수 · 010-2345-6789</div>
+          <div style="font-size:13px; color:var(--color-muted); line-height:1.5;">서울 강남구 테헤란로 142, 8층 미니커머스</div>
+        </div>
+        <div style="border:1px solid var(--color-hairline); border-radius:14px; padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <span style="font-size:14px; font-weight:700;">회사</span>
+            <span style="margin-left:auto; font-size:13px; color:var(--color-muted);">수정</span>
+          </div>
+          <div style="font-size:13px; color:var(--color-body); margin-bottom:4px;">김민수 · 010-2345-6789</div>
+          <div style="font-size:13px; color:var(--color-muted); line-height:1.5; margin-bottom:10px;">서울 송파구 올림픽로 300, 25층</div>
+          <div style="font-size:13px; color:var(--color-primary); font-weight:600;">기본 배송지로 설정</div>
+        </div>
+        <div onClick="{{ onAddAddress }}" style="border:1.5px solid var(--color-primary); color:var(--color-primary); text-align:center; padding:14px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; margin-top:6px;">+ 새 배송지 추가</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ REVIEW WRITE ============ -->
+    <sc-if value="{{ isReviewWrite }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">리뷰 작성</span>
+      </div>
+      <div style="padding:20px; display:flex; flex-direction:column; gap:20px;">
+        <div style="display:flex; gap:12px; align-items:center; padding-bottom:18px; border-bottom:1px solid var(--color-hairline-soft);">
+          <div role="img" aria-label="{{ currentOrder.name }}" style="flex:none; width:54px; height:54px; border-radius:10px; background-color:var(--color-surface-strong); background-image:url('{{ currentOrder.photo }}'); background-size:cover; background-position:center;"></div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:14px; font-weight:600; line-height:1.4; margin-bottom:4px;">{{ currentOrder.name }}</div>
+            <div style="font-size:12px; color:var(--color-muted);">{{ currentOrder.optionText }}</div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:14px; color:var(--color-body); margin-bottom:10px;">상품은 만족하셨나요?</div>
+          <div style="font-size:34px; letter-spacing:6px; color:#222;">★★★★<span style="color:var(--color-hairline);">★</span></div>
+        </div>
+        <textarea placeholder="자세한 후기를 남겨주세요 (최소 10자)" style="width:100%; min-height:110px; border:1px solid var(--color-hairline); border-radius:10px; padding:14px; font-size:14px; font-family:inherit; outline:none; color:#222; resize:none;"></textarea>
+        <div style="display:flex; gap:10px;">
+          <div style="width:62px; height:62px; border:1px dashed var(--color-border-strong,#ccc); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--color-muted-soft);">＋</div>
+          <div style="width:62px; height:62px; border:1px solid var(--color-hairline-soft); border-radius:10px;"></div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onSubmitReview }}" hint-size="100%,48px">등록하고 포인트 받기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ COUPON / POINT ============ -->
+    <sc-if value="{{ isCouponPoint }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">쿠폰 · 포인트</span>
+      </div>
+      <div style="display:flex; gap:24px; padding:0 20px; border-bottom:1px solid var(--color-hairline-soft);">
+        <div onClick="{{ onCpCoupon }}" style="padding:14px 0; font-size:15px; font-weight:{{ cpCouponWeight }}; color:{{ cpCouponColor }}; border-bottom:2px solid {{ cpCouponBorder }}; cursor:pointer;">쿠폰 4</div>
+        <div onClick="{{ onCpPoint }}" style="padding:14px 0; font-size:15px; font-weight:{{ cpPointWeight }}; color:{{ cpPointColor }}; border-bottom:2px solid {{ cpPointBorder }}; cursor:pointer;">포인트</div>
+      </div>
+
+      <sc-if value="{{ cpCouponActive }}" hint-placeholder-val="{{ yes }}">
+        <div style="padding:18px 20px 100px; display:flex; flex-direction:column; gap:12px;">
+          <sc-for list="{{ coupons }}" as="c" hint-placeholder-count="4">
+            <div style="border:1.5px {{ c.borderStyle }} {{ c.borderColor }}; background:{{ c.cardBg }}; border-radius:12px; padding:16px; display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:64px; text-align:center;">
+                <div style="font-size:20px; font-weight:800; color:{{ c.amtColor }};">{{ c.kind }}</div>
+                <div style="font-size:10px; color:var(--color-muted-soft);">{{ c.sub }}</div>
+              </div>
+              <div style="flex:1; min-width:0; border-left:1.5px {{ c.borderStyle }} {{ c.borderColor }}; padding-left:16px;">
+                <div style="font-size:14px; font-weight:600; margin-bottom:5px;">{{ c.name }}</div>
+                <div style="font-size:11px; color:var(--color-muted);">{{ c.cond }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="position:absolute; left:0; right:0; bottom:0; padding:12px 16px 16px; background:#fff; border-top:1px solid var(--color-hairline-soft); display:flex; gap:8px;">
+          <input placeholder="쿠폰 코드 입력" style="flex:1; min-width:0; height:48px; border:1px solid var(--color-hairline); border-radius:8px; padding:0 14px; font-size:14px; font-family:inherit; outline:none; color:#222;">
+          <button onClick="{{ onRegisterCoupon }}" style="flex:none; padding:0 18px; background:#222; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">등록</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ cpPointActive }}" hint-placeholder-val="{{ no }}">
+        <div style="padding:18px 20px 28px;">
+          <div style="background:var(--color-primary); border-radius:14px; padding:18px 18px;">
+            <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-bottom:6px;">사용 가능 포인트</div>
+            <div style="font-size:28px; font-weight:800; color:#fff;">3,250<span style="font-size:15px; font-weight:500; margin-left:3px;">P</span></div>
+          </div>
+          <div style="font-size:14px; font-weight:700; margin:22px 0 6px;">적립 · 사용 내역</div>
+          <sc-for list="{{ points }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--color-hairline-soft);">
+              <div style="flex:1; min-width:0; padding-right:10px;">
+                <div style="font-size:14px; color:#222; margin-bottom:4px;">{{ p.label }}</div>
+                <div style="font-size:11px; color:var(--color-muted-soft);">{{ p.date }}</div>
+              </div>
+              <span style="font-size:15px; font-weight:700; color:{{ p.amtColor }};">{{ p.amt }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ NOTIFICATIONS ============ -->
+    <sc-if value="{{ isNotifications }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">알림</span>
+        <span onClick="{{ onReadAll }}" style="margin-left:auto; font-size:13px; color:var(--color-muted); cursor:pointer;">모두 읽음</span>
+      </div>
+      <div class="mc-scroll" style="display:flex; gap:8px; overflow-x:auto; padding:14px 20px 8px;">
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; background:#222; color:#fff; font-size:13px; font-weight:600;">전체</div>
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">주문/배송</div>
+        <div style="flex:none; padding:8px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">혜택</div>
+      </div>
+      <div style="padding:4px 0 28px;">
+        <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="3">
+          <div style="display:flex; gap:12px; align-items:center; padding:14px 20px; background:{{ n.rowBg }}; border-bottom:1px solid var(--color-hairline-soft);">
+            <div style="flex:none; width:40px; height:40px; border-radius:11px; background:{{ n.bg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px;">{{ n.icon }}</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:14px; font-weight:600; line-height:1.4; margin-bottom:3px;">{{ n.title }}</div>
+              <div style="font-size:12px; color:var(--color-muted);">{{ n.sub }}</div>
+            </div>
+            <span style="font-size:11px; color:var(--color-muted-soft); align-self:flex-start; margin-top:2px;">{{ n.time }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ CUSTOMER SERVICE ============ -->
+    <sc-if value="{{ isCustomerService }}" hint-placeholder-val="{{ no }}">
+    <div>
+      <div style="padding:14px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--color-hairline-soft);">
+        <button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button>
+        <span style="font-size:18px; font-weight:700;">고객센터</span>
+      </div>
+      <div style="padding:16px 20px 0;">
+        <div style="display:flex; align-items:center; gap:10px; height:46px; border-radius:9999px; border:1px solid var(--color-hairline); padding:0 18px; color:var(--color-muted); font-size:14px;">
+          <svg width="17" height="17" fill="none" stroke="#6a6a6a" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6"></circle><path d="m17 17-4-4"></path></svg>
+          <span>무엇을 도와드릴까요?</span>
+        </div>
+      </div>
+      <div style="padding:16px 20px 0; display:flex; gap:12px;">
+        <div style="flex:1; border:1px solid var(--color-hairline); border-radius:14px; padding:18px 0; display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:10px; background:var(--color-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;">💬</div>
+          <span style="font-size:13px; color:#222;">1:1 채팅상담</span>
+        </div>
+        <div style="flex:1; border:1px solid var(--color-hairline); border-radius:14px; padding:18px 0; display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="width:34px; height:34px; border-radius:10px; border:1.5px solid var(--color-border-strong,#ccc); display:flex; align-items:center; justify-content:center; font-size:15px;">📞</div>
+          <span style="font-size:13px; color:#222;">전화문의</span>
+        </div>
+      </div>
+      <div style="padding:24px 20px 6px; font-size:15px; font-weight:700;">자주 묻는 질문</div>
+      <div style="padding:0 20px 28px;">
+        <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid var(--color-hairline-soft); font-size:14px; color:#222; cursor:pointer;">{{ f }}<span style="color:var(--color-muted-soft); font-size:18px;">＋</span></div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ NETWORK ERROR ============ -->
+    <sc-if value="{{ isNetworkError }}" hint-placeholder-val="{{ no }}">
+    <div style="min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 36px; gap:16px; text-align:center;">
+      <div style="width:76px; height:76px; border-radius:9999px; background:var(--color-surface-soft); display:flex; align-items:center; justify-content:center; font-size:30px;">📡</div>
+      <div style="font-size:18px; font-weight:700;">연결이 불안정해요</div>
+      <div style="font-size:14px; color:var(--color-muted); line-height:1.6;">인터넷 연결을 확인한 뒤<br>다시 시도해 주세요</div>
+      <div onClick="{{ onRetry }}" style="margin-top:8px; border:1.5px solid var(--color-primary); color:var(--color-primary); border-radius:10px; padding:12px 26px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px;"><span>↻</span>다시 시도</div>
+    </div>
+    </sc-if>
+
+    <!-- ============ 404 ============ -->
+    <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ no }}">
+    <div style="min-height:100%; display:flex; flex-direction:column;">
+      <div style="padding:14px 20px;"><button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:0 36px 60px;">
+        <div style="font-size:64px; font-weight:800; color:var(--color-hairline);">404</div>
+        <div style="font-size:18px; font-weight:700;">페이지를 찾을 수 없어요</div>
+        <div style="font-size:14px; color:var(--color-muted); line-height:1.6;">주소가 변경되었거나<br>삭제된 페이지예요</div>
+      </div>
+      <div style="padding:0 20px 24px;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onGoHome }}" hint-size="100%,48px">홈으로 가기</x-import></div>
+    </div>
+    </sc-if>
+
+    <!-- ============ 500 ============ -->
+    <sc-if value="{{ isServerError }}" hint-placeholder-val="{{ no }}">
+    <div style="min-height:100%; display:flex; flex-direction:column;">
+      <div style="padding:14px 20px;"><button onClick="{{ onBack }}" aria-label="뒤로" style="border:none; background:transparent; cursor:pointer; padding:0; display:flex;"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-7 7 7 7"></path></svg></button></div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:0 36px 40px;">
+        <div style="font-size:64px; font-weight:800; color:var(--color-hairline);">500</div>
+        <div style="font-size:18px; font-weight:700;">일시적인 오류가 발생했어요</div>
+        <div style="font-size:14px; color:var(--color-muted); line-height:1.6;">서버에 문제가 생겼어요.<br>잠시 후 다시 시도해 주세요</div>
+        <div style="border:1px solid #f0c9c2; background:#fdf4f2; border-radius:8px; padding:8px 14px; font-size:12px; color:var(--color-error,#c13515);">오류코드 500 · 잠시 후 자동 복구</div>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:10px;">
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onRetry }}" hint-size="100%,48px">다시 시도</x-import>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="secondary" full-width="{{ yes }}" onClick="{{ onGoHome }}" hint-size="100%,48px">홈으로 가기</x-import>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ MAINTENANCE ============ -->
+    <sc-if value="{{ isMaintenance }}" hint-placeholder-val="{{ no }}">
+    <div style="min-height:100%; display:flex; flex-direction:column;">
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:40px 30px;">
+        <div style="width:76px; height:76px; border-radius:18px; background:var(--color-surface-soft); display:flex; align-items:center; justify-content:center; font-size:32px;">🛠</div>
+        <div style="font-size:18px; font-weight:700;">서비스 점검 중이에요</div>
+        <div style="font-size:14px; color:var(--color-muted); line-height:1.6;">더 나은 서비스를 위해<br>시스템을 점검하고 있어요</div>
+        <div style="width:100%; border:1px solid var(--color-hairline); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:9px; margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--color-muted);">점검 시간</span><span style="font-weight:700;">6/25 02:00~06:00</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--color-muted);">완료 예정</span><span style="font-weight:700; color:#1f8a5b;">오전 6시</span></div>
+        </div>
+        <div style="font-size:12px; color:var(--color-muted-soft); line-height:1.5;">점검 중에는 일부 서비스 이용이<br>제한될 수 있어요</div>
+      </div>
+      <div style="padding:0 20px 24px;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="secondary" full-width="{{ yes }}" onClick="{{ onGoHome }}" hint-size="100%,48px">공지사항 보기</x-import></div>
+    </div>
+    </sc-if>
+
+  </div>
+
+  <!-- ===== DETAIL ACTION BAR ===== -->
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ no }}">
+    <div style="flex:none; border-top:1px solid var(--color-hairline-soft); padding:10px 16px 14px; display:flex; gap:10px; align-items:center; background:#fff;">
+      <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.IconButton" variant="heart" size="{{ heart46 }}" saved="{{ detailSaved }}" onClick="{{ onDetailSave }}" label="찜" style="border:1px solid var(--color-hairline);" hint-size="46px,46px"></x-import>
+      <div style="flex:1;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="secondary" full-width="{{ yes }}" onClick="{{ onOpenCartSheet }}" hint-size="100%,48px">장바구니</x-import></div>
+      <div style="flex:1;"><x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onOpenBuySheet }}" hint-size="100%,48px">바로 구매</x-import></div>
+    </div>
+  </sc-if>
+
+  <!-- ===== CHECKOUT ACTION BAR ===== -->
+  <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ no }}">
+    <div style="flex:none; border-top:1px solid var(--color-hairline-soft); padding:12px 16px 16px; background:#fff;">
+      <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onPlaceOrder }}" hint-size="100%,48px">{{ payBtnText }}</x-import>
+    </div>
+  </sc-if>
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <sc-if value="{{ showTabBar }}" hint-placeholder-val="{{ yes }}">
+    <div style="flex:none; height:64px; border-top:1px solid var(--color-hairline-soft); display:flex; align-items:center; background:#fff; padding-bottom:4px;">
+      <div onClick="{{ onTabHome }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;">
+        <svg width="24" height="24" fill="none" stroke="{{ cHome }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"></path><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"></path></svg>
+        <span style="font-size:10px; font-weight:600; color:{{ cHome }};">홈</span>
+      </div>
+      <div onClick="{{ onTabSearch }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;">
+        <svg width="24" height="24" fill="none" stroke="{{ cSearch }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m20 20-4.5-4.5"></path></svg>
+        <span style="font-size:10px; font-weight:600; color:{{ cSearch }};">검색</span>
+      </div>
+      <div onClick="{{ onTabWish }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;">
+        <svg width="24" height="24" fill="none" stroke="{{ cWish }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21S3 15 3 8.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9 2.5C21 15 12 21 12 21Z"></path></svg>
+        <span style="font-size:10px; font-weight:600; color:{{ cWish }};">찜</span>
+      </div>
+      <div onClick="{{ onTabCart }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; position:relative;">
+        <div style="position:relative;">
+          <svg width="24" height="24" fill="none" stroke="{{ cCart }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h15l-1.5 9.5h-12z"></path><path d="M6 7 5 3H2"></path><circle cx="9" cy="20.5" r="1.3"></circle><circle cx="18" cy="20.5" r="1.3"></circle></svg>
+          <sc-if value="{{ hasCartBadge }}" hint-placeholder-val="{{ no }}"><span style="position:absolute; top:-5px; right:-7px; min-width:16px; height:16px; padding:0 4px; border-radius:9999px; background:var(--color-primary); color:#fff; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center;">{{ cartCount }}</span></sc-if>
+        </div>
+        <span style="font-size:10px; font-weight:600; color:{{ cCart }};">장바구니</span>
+      </div>
+      <div onClick="{{ onTabMy }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;">
+        <svg width="24" height="24" fill="none" stroke="{{ cMy }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"></path></svg>
+        <span style="font-size:10px; font-weight:600; color:{{ cMy }};">마이</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== OPTION BOTTOM SHEET ===== -->
+  <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ no }}">
+    <div onClick="{{ onCloseSheet }}" style="position:absolute; inset:0; background:rgba(0,0,0,0.5); z-index:80; display:flex; align-items:flex-end;">
+      <div onClick="{{ stop }}" style="width:100%; background:#fff; border-radius:20px 20px 0 0; padding:8px 20px 20px; animation:mcSheet 260ms cubic-bezier(.2,.8,.2,1);">
+        <div style="width:40px; height:4px; border-radius:9999px; background:#e0e0e0; margin:6px auto 16px;"></div>
+        <div style="display:flex; gap:12px; margin-bottom:18px;">
+          <div role="img" aria-label="{{ product.name }}" style="flex:none; width:56px; height:56px; border-radius:10px; background-color:#f2f2f2; background-image:url('{{ product.photo }}'); background-size:cover; background-position:center;"></div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:14px; font-weight:600; line-height:1.4;">{{ product.name }}</div>
+            <div style="font-size:16px; font-weight:800; margin-top:4px;">{{ product.priceText }}</div>
+          </div>
+        </div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:10px;">{{ product.optionLabel }} 선택</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+          <sc-for list="{{ sheetOptions }}" as="o" hint-placeholder-count="3">
+            <div onClick="{{ o.onTap }}" style="padding:11px 16px; border-radius:8px; border:1.5px solid {{ o.borderColor }}; background:{{ o.bg }}; color:{{ o.textColor }}; font-size:14px; font-weight:500; cursor:pointer;">{{ o.label }}</div>
+          </sc-for>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" disabled="{{ sheetDisabled }}" onClick="{{ onConfirmSheet }}" hint-size="100%,48px">{{ sheetCtaText }}</x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== SHARE SHEET ===== -->
+  <sc-if value="{{ shareOpen }}" hint-placeholder-val="{{ no }}">
+    <div onClick="{{ onCloseShare }}" style="position:absolute; inset:0; background:rgba(0,0,0,0.5); z-index:80; display:flex; align-items:flex-end;">
+      <div onClick="{{ stop }}" style="width:100%; background:#fff; border-radius:20px 20px 0 0; padding:8px 20px 24px; animation:mcSheet 260ms cubic-bezier(.2,.8,.2,1);">
+        <div style="width:40px; height:4px; border-radius:9999px; background:#e0e0e0; margin:6px auto 18px;"></div>
+        <div style="font-size:16px; font-weight:700; margin-bottom:18px;">공유하기</div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <div onClick="{{ onShareDone }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;"><div style="width:52px; height:52px; border-radius:9999px; background:#fee500; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#3a1d1d;">K</div><span style="font-size:12px; color:var(--color-body);">카카오톡</span></div>
+          <div onClick="{{ onShareDone }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;"><div style="width:52px; height:52px; border-radius:9999px; background:#1d9bf0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px;">✦</div><span style="font-size:12px; color:var(--color-body);">메시지</span></div>
+          <div onClick="{{ onShareDone }}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer;"><div style="width:52px; height:52px; border-radius:9999px; background:var(--color-surface-strong); display:flex; align-items:center; justify-content:center; font-size:20px;">⋯</div><span style="font-size:12px; color:var(--color-body);">더보기</span></div>
+        </div>
+        <div onClick="{{ onShareDone }}" style="display:flex; align-items:center; justify-content:space-between; margin-top:16px; border:1px solid var(--color-hairline); border-radius:10px; padding:13px 16px; cursor:pointer;">
+          <span style="font-size:13px; color:var(--color-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">minicommerce.app/p/{{ product.id }}</span>
+          <span style="flex:none; font-size:13px; font-weight:700; color:var(--color-primary); margin-left:10px;">링크 복사</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== SORT SHEET ===== -->
+  <sc-if value="{{ sortOpen }}" hint-placeholder-val="{{ no }}">
+    <div onClick="{{ onCloseSort }}" style="position:absolute; inset:0; background:rgba(0,0,0,0.5); z-index:80; display:flex; align-items:flex-end;">
+      <div onClick="{{ stop }}" style="width:100%; background:#fff; border-radius:20px 20px 0 0; padding:8px 0 16px; animation:mcSheet 260ms cubic-bezier(.2,.8,.2,1);">
+        <div style="width:40px; height:4px; border-radius:9999px; background:#e0e0e0; margin:6px auto 14px;"></div>
+        <div style="font-size:16px; font-weight:700; padding:0 20px 10px;">정렬</div>
+        <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="5">
+          <div onClick="{{ o.onTap }}" style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer;">
+            <span style="font-size:15px; color:{{ o.color }}; font-weight:{{ o.weight }};">{{ o.label }}</span>
+            <sc-if value="{{ o.active }}" hint-placeholder-val="{{ no }}"><span style="color:var(--color-primary); font-size:16px;">✓</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== FILTER SHEET ===== -->
+  <sc-if value="{{ filterOpen }}" hint-placeholder-val="{{ no }}">
+    <div onClick="{{ onCloseFilter }}" style="position:absolute; inset:0; background:rgba(0,0,0,0.5); z-index:80; display:flex; align-items:flex-end;">
+      <div onClick="{{ stop }}" style="width:100%; background:#fff; border-radius:20px 20px 0 0; padding:8px 20px 20px; animation:mcSheet 260ms cubic-bezier(.2,.8,.2,1);">
+        <div style="width:40px; height:4px; border-radius:9999px; background:#e0e0e0; margin:6px auto 16px;"></div>
+        <div style="font-size:16px; font-weight:700; margin-bottom:16px;">필터</div>
+        <div style="font-size:13px; font-weight:700; color:var(--color-muted); margin-bottom:10px;">가격대</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+          <div style="padding:9px 15px; border-radius:9999px; border:1.5px solid var(--color-primary); background:#fff0f3; color:var(--color-primary); font-size:13px; font-weight:600;">전체</div>
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">~5만원</div>
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">5~10만원</div>
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">10만원~</div>
+        </div>
+        <div style="font-size:13px; font-weight:700; color:var(--color-muted); margin-bottom:10px;">배송 · 평점</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px;">
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">무료배송</div>
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">4★ 이상</div>
+          <div style="padding:9px 15px; border-radius:9999px; border:1px solid var(--color-hairline); font-size:13px; color:var(--color-body);">리뷰 100+</div>
+        </div>
+        <x-import component-from-global-scope="MiniCommerceDesignSystem_f7d34b.Button" variant="primary" full-width="{{ yes }}" onClick="{{ onApplyFilter }}" hint-size="100%,48px">적용하기</x-import>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== TOAST ===== -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ no }}">
+    <div style="position:absolute; left:20px; right:20px; bottom:84px; z-index:90; background:#222; color:#fff; padding:14px 16px; border-radius:12px; font-size:14px; display:flex; justify-content:space-between; align-items:center; animation:mcFade 220ms ease;">
+      <span>{{ toast }}</span>
+      <span onClick="{{ onTabCart }}" style="color:#fff; font-weight:700; text-decoration:underline; cursor:pointer;">보기</span>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;networkError&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;search&quot;,&quot;category&quot;,&quot;promotion&quot;,&quot;login&quot;,&quot;signup&quot;,&quot;forgot&quot;,&quot;reset&quot;,&quot;cart&quot;,&quot;checkout&quot;,&quot;complete&quot;,&quot;wishlist&quot;,&quot;my&quot;,&quot;orderList&quot;,&quot;orderDetail&quot;,&quot;editProfile&quot;,&quot;emailChange&quot;,&quot;addressManage&quot;,&quot;reviewWrite&quot;,&quot;couponPoint&quot;,&quot;notifications&quot;,&quot;customerService&quot;,&quot;networkError&quot;,&quot;notFound&quot;,&quot;serverError&quot;,&quot;maintenance&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;freeShipThreshold&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:50000,&quot;min&quot;:0,&quot;max&quot;:150000,&quot;step&quot;:10000,&quot;tsType&quot;:&quot;number&quot;},&quot;prefilledAddress&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.scrollRef = React.createRef();
+    const pf = props.prefilledAddress !== false;
+    this.PRODUCTS = [
+      {id:'p1',name:'노이즈 캔슬링 헤드폰',brand:'SoundCore',price:129000,rating:4.92,reviews:1840,cat:'가전',badge:'베스트',photo:'1505740420928-5e560c06d30e',options:['미드나잇 블랙','스페이스 그레이','샌드 베이지'],optType:'컬러',desc:'주변 소음을 잡아주는 액티브 노이즈 캔슬링과 최대 40시간 재생. 출퇴근과 작업에 두루 어울리는 데일리 헤드폰이에요.'},
+      {id:'p2',name:'에어 쿠션 러닝화',brand:'Velo',price:89000,rating:4.85,reviews:932,cat:'패션',photo:'1542291026-7eec264c27ff',options:['250','260','270','280'],optType:'사이즈',desc:'가볍고 통기성 좋은 니트 어퍼에 에어 쿠션 미드솔. 러닝부터 일상까지 편하게 신을 수 있어요.'},
+      {id:'p3',name:'미니멀 가죽 백팩',brand:'Daily',price:79000,rating:4.78,reviews:564,cat:'패션',photo:'1553062407-98eeb64c6a62',options:['블랙','브라운'],optType:'컬러',desc:'15인치 노트북 수납과 군더더기 없는 실루엣. 출근, 캠퍼스, 여행까지 두루 어울려요.'},
+      {id:'p4',name:'오토매틱 메탈 워치',brand:'Tide',price:215000,rating:4.96,reviews:421,cat:'패션',badge:'신상',photo:'1523275335684-37898b6baf30',options:['실버','로즈골드'],optType:'컬러',desc:'배터리 없이 동작하는 오토매틱 무브먼트와 사파이어 글래스. 손목 위 작은 디테일을 완성해요.'},
+      {id:'p5',name:'무선 블루투스 스피커',brand:'SoundCore',price:64000,rating:4.81,reviews:1203,cat:'가전',photo:'1608043152269-423dbba4e7e1',options:['차콜','아이보리'],optType:'컬러',desc:'IPX7 방수와 24시간 재생, 360° 사운드. 책상 위에서도 캠핑장에서도 좋아요.'},
+      {id:'p6',name:'캐주얼 데일리 자켓',brand:'Norm',price:118000,rating:4.74,reviews:288,cat:'패션',photo:'1551028719-00167b16eac5',options:['S','M','L','XL'],optType:'사이즈',desc:'사계절 입기 좋은 가벼운 무게감과 베이직한 핏. 어떤 코디에도 자연스럽게 어울려요.'},
+      {id:'p7',name:'세라믹 머그 2P 세트',brand:'Hearth',price:24000,rating:4.88,reviews:742,cat:'생활',photo:'1514228742587-6b1558fcca3d',options:['웜 베이지','슬레이트'],optType:'컬러',desc:'손에 감기는 도톰한 핸들과 전자레인지 사용 가능. 매일의 커피 한 잔을 더 좋게 만들어요.'},
+      {id:'p8',name:'우드 LED 데스크 램프',brand:'Lumen',price:46000,rating:4.69,reviews:331,cat:'생활',badge:'특가',photo:'1507473885765-e6ed057f782c',options:['따뜻한 빛','주광색'],optType:'색온도',desc:'눈부심 적은 면발광과 3단계 밝기 조절. 따뜻한 우드 마감으로 책상 분위기를 살려요.'},
+    ];
+    const start = props.startScreen && props.startScreen !== 'home' ? props.startScreen : 'home';
+    const mainTabs = {home:'home', search:'search', cart:'cart', wishlist:'wish', my:'my'};
+    this.state = {
+      screen:start, tab: mainTabs[start] || 'home', query:'', appliedQuery:'',
+      wishlist:[], cart:[], productId:null, history:[],
+      sheetOpen:false, sheetMode:'cart', sheetOption:null,
+      shareOpen:false, filterOpen:false, sortOpen:false,
+      sortBy:'정확도순', cpTab:'coupon', orderId:null,
+      addr: pf ? {name:'김민수',phone:'010-2345-6789',a1:'서울 강남구 테헤란로 142',a2:'8층 미니커머스'} : {name:'',phone:'',a1:'',a2:''},
+      pay:'card', lastOrder:null, toast:'',
+    };
+    this.ORDERS = [
+      {id:'o1', date:'2026.06.17', status:'배송중', pid:'p1', option:'미드나잇 블랙', qty:1, no:'240617-038'},
+      {id:'o2', date:'2026.06.11', status:'배송완료', pid:'p7', option:'웜 베이지', qty:2, no:'240611-022'},
+      {id:'o3', date:'2026.05.29', status:'취소완료', pid:'p6', option:'M', qty:1, no:'240529-091'},
+    ];
+  }
+
+  money(n){ return n.toLocaleString('ko-KR') + '원'; }
+  img(id){ return 'https://images.unsplash.com/photo-' + id + '?w=700&q=80&auto=format&fit=crop'; }
+  top(){ const el = this.scrollRef.current; if (el) el.scrollTop = 0; }
+  go(screen, tab){ this.setState(tab ? {screen, tab} : {screen}, () => this.top()); }
+
+  openProduct(id){ this.setState({screen:'detail', productId:id, sheetOpen:false, sheetOption:null}, () => this.top()); }
+  backFromDetail(){ const t = this.state.tab; const s = t==='search'?'search':t==='wish'?'wishlist':'home'; this.setState({screen:s}, () => this.top()); }
+  toggleWishlist(id, e){ if (e && e.stopPropagation) e.stopPropagation(); this.setState(s => ({ wishlist: s.wishlist.includes(id) ? s.wishlist.filter(x=>x!==id) : [...s.wishlist, id] })); }
+
+  searchFor(q){ this.setState({screen:'search', tab:'search', query:q, appliedQuery:q}, () => this.top()); }
+
+  openSheet(mode){ this.setState({sheetOpen:true, sheetMode:mode, sheetOption:null}); }
+  closeSheet(){ this.setState({sheetOpen:false}); }
+  showToast(msg){ this.setState({toast:msg}); clearTimeout(this._t); this._t = setTimeout(()=>this.setState({toast:''}), 1900); }
+
+  addToCart(id, option, qty){
+    this.setState(s => {
+      const ex = s.cart.find(c => c.id===id && c.option===option);
+      let cart;
+      if (ex) cart = s.cart.map(c => (c.id===id && c.option===option) ? {...c, qty:c.qty+qty} : c);
+      else cart = [...s.cart, {id, option, qty}];
+      return {cart};
+    });
+  }
+  confirmSheet(){
+    const {productId, sheetOption, sheetMode} = this.state;
+    this.addToCart(productId, sheetOption, 1);
+    if (sheetMode === 'buy') this.setState({sheetOpen:false}, () => this.go('checkout'));
+    else { this.setState({sheetOpen:false}); this.showToast('장바구니에 담았어요'); }
+  }
+  inc(id, option){ this.setState(s => ({cart: s.cart.map(c => (c.id===id&&c.option===option) ? {...c, qty:c.qty+1} : c)})); }
+  dec(id, option){ this.setState(s => ({cart: s.cart.map(c => (c.id===id&&c.option===option) ? {...c, qty:Math.max(1,c.qty-1)} : c)})); }
+  remove(id, option){ this.setState(s => ({cart: s.cart.filter(c => !(c.id===id&&c.option===option))})); }
+
+  getTotals(cart){
+    const sub = cart.reduce((a,c) => { const p = this.PRODUCTS.find(x=>x.id===c.id); return a + p.price*c.qty; }, 0);
+    const thr = this.props.freeShipThreshold ?? 50000;
+    const ship = sub===0 ? 0 : (sub >= thr ? 0 : 3000);
+    return {subtotal:sub, shipping:ship, total:sub+ship};
+  }
+  placeOrder(){
+    const {cart} = this.state;
+    if (!cart.length) return;
+    const t = this.getTotals(cart);
+    const count = cart.reduce((a,c)=>a+c.qty,0);
+    const order = { no:'MC' + String(Date.now()).slice(-8), total:this.money(t.total), count, eta:'모레(수)까지 도착 예정이에요' };
+    this.setState({screen:'complete', lastOrder:order, cart:[]}, () => this.top());
+  }
+
+  componentDidUpdate(prevProps){
+    if (this.props.startScreen !== prevProps.startScreen) {
+      const start = this.props.startScreen || 'home';
+      const mainTabs = {home:'home', search:'search', cart:'cart', wishlist:'wish', my:'my'};
+      this.setState({screen:start, tab: mainTabs[start] || 'home', history:[]}, () => this.top());
+    }
+  }
+  push(screen, extra){ this.setState(s => ({history:[...s.history, s.screen], screen, ...(extra||{})}), () => this.top()); }
+  back(){ this.setState(s => { const h=[...s.history]; const prev = h.pop() || 'home'; return {history:h, screen:prev}; }, () => this.top()); }
+  openOrder(id){ this.push('orderDetail', {orderId:id}); }
+
+  renderVals(){
+    const s = this.state;
+    const wl = s.wishlist;
+    const dec = (p) => {
+      const saved = wl.includes(p.id);
+      return {
+        ...p, saved, hasBadge: !!p.badge,
+        ratingText: p.rating.toFixed(2),
+        reviewsText: p.reviews.toLocaleString('ko-KR'),
+        priceText: this.money(p.price),
+        photo: this.img(p.photo),
+        shipText: p.price >= (this.props.freeShipThreshold ?? 50000) ? '무료배송' : '배송비 3,000원',
+        optionLabel: p.optType,
+        optionSummary: p.options.join(' · '),
+        heartFill: saved ? 'var(--color-primary)' : 'rgba(0,0,0,0.45)',
+        heartStroke: saved ? 'var(--color-primary)' : '#ffffff',
+        onOpen: () => this.openProduct(p.id),
+        onSave: (e) => this.toggleWishlist(p.id, e),
+      };
+    };
+
+    const screen = s.screen;
+    const cartCount = s.cart.reduce((a,c)=>a+c.qty,0);
+    const totals = this.getTotals(s.cart);
+
+    const cartItems = s.cart.map(c => {
+      const p = this.PRODUCTS.find(x=>x.id===c.id);
+      return {
+        key: c.id + '|' + (c.option||''),
+        name: p.name, brand: p.brand, photo: this.img(p.photo),
+        optionText: c.option || '기본', qty: c.qty,
+        lineText: this.money(p.price * c.qty),
+        onInc: () => this.inc(c.id, c.option),
+        onDec: () => this.dec(c.id, c.option),
+        onRemove: () => this.remove(c.id, c.option),
+      };
+    });
+
+    const q = s.appliedQuery.trim();
+    const res = q ? this.PRODUCTS.filter(p => (p.name + p.brand + p.cat).toLowerCase().includes(q.toLowerCase())) : [];
+
+    const cur = this.PRODUCTS.find(p => p.id === s.productId);
+    const product = cur ? dec(cur) : null;
+    const sheetOptions = (cur ? cur.options : []).map(o => {
+      const sel = s.sheetOption === o;
+      return { label:o, onTap: () => this.setState({sheetOption:o}),
+        borderColor: sel ? 'var(--color-primary)' : 'var(--color-hairline)',
+        bg: sel ? '#fff0f3' : '#fff',
+        textColor: sel ? 'var(--color-primary)' : '#222' };
+    });
+
+    const tabColor = (name) => s.tab === name ? 'var(--color-primary)' : 'var(--color-muted-soft)';
+
+    const payColor = (k) => s.pay === k ? 'var(--color-primary)' : 'var(--color-border-strong)';
+    const payDot = (k) => s.pay === k ? 'var(--color-primary)' : 'transparent';
+
+    const statusColor = (st) => st==='취소완료' ? 'var(--color-muted)' : 'var(--color-primary)';
+    const orders = this.ORDERS.map(o => {
+      const p = this.PRODUCTS.find(x=>x.id===o.pid);
+      return { ...o, name:p.name, photo:this.img(p.photo), priceText:this.money(p.price*o.qty),
+        meta: this.money(p.price*o.qty) + ' · ' + o.qty + '개', statusColor: statusColor(o.status),
+        primary: o.status==='배송중' ? '배송조회' : '재구매', delivered: o.status==='배송완료',
+        onOpen: () => this.openOrder(o.id) };
+    });
+    const co = this.ORDERS.find(o => o.id === s.orderId) || this.ORDERS[0];
+    const cop = this.PRODUCTS.find(x=>x.id===co.pid);
+    const currentOrder = { ...co, name:cop.name, brand:cop.brand, photo:this.img(cop.photo),
+      optionText:co.option, priceText:this.money(cop.price*co.qty),
+      refundText:this.money(cop.price*co.qty + 3000), paidText:this.money(cop.price*co.qty),
+      statusColor: statusColor(co.status) };
+
+    const coupons = [
+      {kind:'10%', sub:'할인', name:'신규 가입 환영 쿠폰', cond:'~6/30 · 3만원 이상', accent:true},
+      {kind:'3,000원', sub:'할인', name:'첫 구매 감사 쿠폰', cond:'~7/15 · 첫 구매', accent:false},
+      {kind:'5%', sub:'할인', name:'주말 특가 쿠폰', cond:'~8/31 · 조건 없음', accent:false},
+      {kind:'15%', sub:'할인', name:'생일 축하 쿠폰', cond:'~9/10 · 5만원 이상', accent:false},
+    ].map(c => ({ ...c,
+      borderStyle: c.accent ? 'dashed' : 'solid',
+      borderColor: c.accent ? 'var(--color-primary)' : 'var(--color-hairline)',
+      cardBg: c.accent ? '#fff0f3' : '#fff',
+      amtColor: c.accent ? 'var(--color-primary)' : 'var(--color-body)' }));
+    const points = [
+      {label:'헤드폰 구매 적립', date:'6/20 · 구매 적립', amt:'+250P', plus:true},
+      {label:'주문 결제 사용', date:'6/14 · 주문 사용', amt:'−1,000P', plus:false},
+      {label:'리뷰 작성 적립', date:'6/05 · 리뷰 적립', amt:'+500P', plus:true},
+      {label:'신규 가입 적립', date:'5/28 · 가입 적립', amt:'+3,000P', plus:true},
+    ].map(p => ({ ...p, amtColor: p.plus ? 'var(--color-primary)' : 'var(--color-error,#c13515)' }));
+    const notifications = [
+      {icon:'🚚', bg:'var(--color-primary)', title:'주문하신 상품이 배송 중이에요', sub:'노이즈 캔슬링 헤드폰', time:'방금', unread:true},
+      {icon:'🎁', bg:'#e9b949', title:'15% 생일 축하 쿠폰이 도착했어요', sub:'9/10까지 사용 가능', time:'2시간', unread:false},
+      {icon:'★', bg:'var(--color-muted-soft)', title:'찜한 상품이 할인을 시작했어요', sub:'에어 쿠션 러닝화 · 12% 인하', time:'어제', unread:false},
+    ].map(n => ({ ...n, rowBg: n.unread ? '#fff0f3' : '#fff' }));
+    const faqs = ['배송은 얼마나 걸리나요?','교환·반품 절차가 궁금해요','쿠폰은 어떻게 쓰나요?','결제 수단을 바꾸고 싶어요'];
+    const sortOptions = ['정확도순','인기순','낮은 가격순','높은 가격순','리뷰 많은순'];
+
+    const catData = [
+      {label:'여성패션', photo:'1483985988355-763728e1935b'},
+      {label:'남성패션', photo:'1521572163474-6864f9cf17ab'},
+      {label:'뷰티', photo:'1596462502278-27bfdc403348'},
+      {label:'디지털', photo:'1505740420928-5e560c06d30e'},
+      {label:'식품', photo:'1542838132-92c53300491e'},
+      {label:'홈/리빙', photo:'1513506003901-1e6a229e2d15'},
+      {label:'스포츠', photo:'1542291026-7eec264c27ff'},
+      {label:'유아동', photo:'1522771930-78848d9293e8'},
+      {label:'전체', photo:'1441986300917-64674bd600d8'},
+    ];
+    const categoryTiles = catData.map(c => ({ label:c.label, photo:this.img(c.photo) }));
+    const promoProducts = [this.PRODUCTS[7], this.PRODUCTS[1], this.PRODUCTS[4], this.PRODUCTS[6]].map((p, i) => {
+      const pct = [40,25,30,20][i];
+      return { ...dec(p), discountText: '-' + pct + '%' };
+    });
+    const cpStyle = (active) => ({
+      weight: active ? 700 : 500,
+      color: active ? '#222' : 'var(--color-muted)',
+      border: active ? '#222' : 'transparent',
+    });
+    const cpC = cpStyle(s.cpTab==='coupon');
+    const cpP = cpStyle(s.cpTab==='point');
+
+    const screenNoTab = !['home','search','cart','wishlist','my'].includes(screen);
+
+    return {
+      yes:true, no:false,
+      scrollRef: this.scrollRef,
+      heart38:38, heart46:46,
+
+      isHome: screen==='home', isSearch: screen==='search', isDetail: screen==='detail',
+      isCart: screen==='cart', isCheckout: screen==='checkout', isComplete: screen==='complete',
+      isWishlist: screen==='wishlist', isMy: screen==='my',
+      showTabBar: ['home','search','cart','wishlist','my'].includes(screen),
+
+      cHome: tabColor('home'), cSearch: tabColor('search'), cWish: tabColor('wish'),
+      cCart: tabColor('cart'), cMy: tabColor('my'),
+
+      cartCount, hasCartBadge: cartCount > 0,
+      onTabHome: () => this.go('home','home'),
+      onTabSearch: () => this.go('search','search'),
+      onTabWish: () => this.go('wishlist','wish'),
+      onTabCart: () => this.go('cart','cart'),
+      onTabMy: () => this.go('my','my'),
+      onOpenSearch: () => this.go('search','search'),
+      onGoShop: () => this.go('home','home'),
+
+      homeProducts: this.PRODUCTS.map(dec),
+      categories: ['전체','패션','가전','생활','뷰티','식품'].map(label => ({label, onTap: () => this.searchFor(label==='전체'?'':label)})),
+
+      query: s.query, hasQueryText: !!s.query,
+      onQueryInput: (e) => this.setState({query:e.target.value}),
+      onSearchKey: (e) => { if (e.key === 'Enter') this.setState(st => ({appliedQuery:st.query})); },
+      onClearQuery: () => this.setState({query:'', appliedQuery:''}),
+      popularKeywords: ['헤드폰','러닝화','워치','자켓','램프'].map(label => ({label, onTap: () => this.searchFor(label)})),
+      showPopular: !q,
+      hasResults: q && res.length > 0,
+      noResults: q && res.length === 0,
+      appliedQuery: s.appliedQuery,
+      resultProducts: res.map(dec),
+      resultTitle: q ? ('‘' + s.appliedQuery + '’ 검색 결과') : '',
+      resultCountText: res.length + '개',
+
+      product, detailSaved: product ? product.saved : false,
+      onDetailSave: () => this.toggleWishlist(s.productId),
+      onBackFromDetail: () => this.backFromDetail(),
+      onOpenCartSheet: () => this.openSheet('cart'),
+      onOpenBuySheet: () => this.openSheet('buy'),
+
+      sheetOpen: s.sheetOpen, sheetOptions,
+      sheetDisabled: s.sheetOption == null,
+      sheetCtaText: s.sheetMode === 'buy' ? '바로 구매하기' : '장바구니 담기',
+      onConfirmSheet: () => this.confirmSheet(),
+      onCloseSheet: () => this.closeSheet(),
+      stop: (e) => e.stopPropagation(),
+
+      cartItems, cartEmpty: s.cart.length === 0, hasCart: s.cart.length > 0,
+      subtotalText: this.money(totals.subtotal),
+      shippingText: totals.shipping === 0 ? '무료' : this.money(totals.shipping),
+      totalText: this.money(totals.total),
+      checkoutBtnText: this.money(totals.total) + ' 결제하기',
+      onGoCheckout: () => this.go('checkout'),
+
+      addrName: s.addr.name, addrPhone: s.addr.phone, addr1: s.addr.a1, addr2: s.addr.a2,
+      onAddrName: (e) => { const v=e.target.value; this.setState(st => ({addr:{...st.addr, name:v}})); },
+      onAddrPhone: (e) => { const v=e.target.value; this.setState(st => ({addr:{...st.addr, phone:v}})); },
+      onAddr1: (e) => { const v=e.target.value; this.setState(st => ({addr:{...st.addr, a1:v}})); },
+      onAddr2: (e) => { const v=e.target.value; this.setState(st => ({addr:{...st.addr, a2:v}})); },
+      payCardColor: payColor('card'), payCardDot: payDot('card'),
+      payEasyColor: payColor('easy'), payEasyDot: payDot('easy'),
+      payBankColor: payColor('bank'), payBankDot: payDot('bank'),
+      onPayCard: () => this.setState({pay:'card'}),
+      onPayEasy: () => this.setState({pay:'easy'}),
+      onPayBank: () => this.setState({pay:'bank'}),
+      payBtnText: this.money(totals.total) + ' 결제하기',
+      onBackFromCheckout: () => this.go('cart','cart'),
+      onPlaceOrder: () => this.placeOrder(),
+
+      order: s.lastOrder || {no:'', total:'', count:0, eta:''},
+      onContinue: () => this.go('home','home'),
+      onGoOrders: () => this.go('my','my'),
+
+      wishProducts: this.PRODUCTS.filter(p => wl.includes(p.id)).map(dec),
+      wishCount: wl.length, wishEmpty: wl.length === 0, hasWish: wl.length > 0,
+
+      toast: s.toast, hasToast: !!s.toast,
+
+      // --- new screen flags ---
+      isLogin: screen==='login', isSignup: screen==='signup', isForgot: screen==='forgot', isReset: screen==='reset',
+      isCategory: screen==='category', isPromotion: screen==='promotion',
+      isOrderList: screen==='orderList', isOrderDetail: screen==='orderDetail',
+      isEditProfile: screen==='editProfile', isEmailChange: screen==='emailChange',
+      isAddressManage: screen==='addressManage', isReviewWrite: screen==='reviewWrite',
+      isCouponPoint: screen==='couponPoint', isNotifications: screen==='notifications',
+      isCustomerService: screen==='customerService',
+      isNetworkError: screen==='networkError', isNotFound: screen==='notFound',
+      isServerError: screen==='serverError', isMaintenance: screen==='maintenance',
+      screenNoTab,
+
+      onBack: () => this.back(),
+      onGoHome: () => this.go('home','home'),
+
+      // home / my entry points
+      onOpenNotifications: () => this.push('notifications'),
+      onOpenPromotion: () => this.push('promotion'),
+      onOpenCategory: () => this.push('category'),
+      onOpenOrders: () => this.push('orderList'),
+      onOpenAddress: () => this.push('addressManage'),
+      onOpenCoupons: () => this.push('couponPoint'),
+      onOpenCS: () => this.push('customerService'),
+      onOpenProfile: () => this.push('editProfile'),
+      onLogout: () => this.push('login'),
+
+      // auth
+      onLoginSubmit: () => this.go('home','home'),
+      onGoSignup: () => this.push('signup'),
+      onGoForgot: () => this.push('forgot'),
+      onSignupSubmit: () => { this.go('home','home'); this.showToast('가입이 완료되었어요'); },
+      onSendReset: () => this.push('reset'),
+      onResetDone: () => { this.setState({screen:'login', history:[]}, () => this.top()); this.showToast('비밀번호가 변경되었어요'); },
+
+      // profile / email
+      onOpenEmailChange: () => this.push('emailChange'),
+      onSaveProfile: () => { this.back(); this.showToast('저장되었어요'); },
+      onConfirmEmail: () => { this.back(); this.showToast('이메일이 변경되었어요'); },
+      onAddAddress: () => this.showToast('새 배송지를 추가했어요'),
+
+      // orders / review
+      orders, currentOrder,
+      onWriteReview: () => this.push('reviewWrite'),
+      onTrack: () => this.showToast('배송 조회를 시작했어요'),
+      onSubmitReview: () => { this.back(); this.showToast('리뷰가 등록되었어요'); },
+
+      // discovery
+      categoryTiles, promoProducts,
+
+      // coupon / point tabs
+      coupons, points, cpTab: s.cpTab,
+      cpCouponActive: s.cpTab==='coupon', cpPointActive: s.cpTab==='point',
+      cpCouponWeight: cpC.weight, cpCouponColor: cpC.color, cpCouponBorder: cpC.border,
+      cpPointWeight: cpP.weight, cpPointColor: cpP.color, cpPointBorder: cpP.border,
+      onCpCoupon: () => this.setState({cpTab:'coupon'}),
+      onCpPoint: () => this.setState({cpTab:'point'}),
+      onRegisterCoupon: () => this.showToast('쿠폰이 등록되었어요'),
+
+      // notifications / cs
+      notifications, faqs,
+      onReadAll: () => this.showToast('모든 알림을 읽음 처리했어요'),
+
+      // share / filter / sort sheets
+      shareOpen: s.shareOpen, filterOpen: s.filterOpen, sortOpen: s.sortOpen,
+      onOpenShareSheet: () => this.setState({shareOpen:true}),
+      onCloseShare: () => this.setState({shareOpen:false}),
+      onShareDone: () => { this.setState({shareOpen:false}); this.showToast('공유 링크를 복사했어요'); },
+      onOpenFilter: () => this.setState({filterOpen:true}),
+      onCloseFilter: () => this.setState({filterOpen:false}),
+      onApplyFilter: () => { this.setState({filterOpen:false}); this.showToast('필터를 적용했어요'); },
+      onOpenSort: () => this.setState({sortOpen:true}),
+      onCloseSort: () => this.setState({sortOpen:false}),
+      sortBy: s.sortBy, sortOptions: sortOptions.map(o => ({ label:o, active:o===s.sortBy,
+        onTap: () => { this.setState({sortBy:o, sortOpen:false}); } })),
+
+      // system
+      onRetry: () => this.showToast('다시 시도하고 있어요'),
+    };
+  }
+}
+</script>
+</body>
+</html>
