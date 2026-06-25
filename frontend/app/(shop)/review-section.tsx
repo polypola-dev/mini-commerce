@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createReview, deleteReview, getReviews, type Review, type ReviewListResponse } from "@/lib/api";
 
 type Props = {
@@ -27,13 +28,16 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
 }
 
 export default function ReviewSection({ productId, currentUserId }: Props) {
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const shouldOpenReview = searchParams.get("openReview") === "1";
+  const [open, setOpen] = useState(shouldOpenReview);
   const [data, setData] = useState<ReviewListResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open || data) return;
@@ -43,6 +47,12 @@ export default function ReviewSection({ productId, currentUserId }: Props) {
       .catch(() => setMessage("리뷰를 불러오지 못했습니다."))
       .finally(() => setLoading(false));
   }, [open, productId, data]);
+
+  useEffect(() => {
+    if (shouldOpenReview) {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [shouldOpenReview]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +101,7 @@ export default function ReviewSection({ productId, currentUserId }: Props) {
   }
 
   return (
-    <div className="mcReviewSection">
+    <div className="mcReviewSection" ref={sectionRef}>
       <button
         className="mcReviewToggle"
         onClick={() => setOpen((v) => !v)}

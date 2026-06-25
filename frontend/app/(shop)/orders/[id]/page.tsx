@@ -121,24 +121,37 @@ export default async function OrderDetailPage({
               key={i}
               style={{
                 display: "flex",
-                gap: "12px",
-                alignItems: "center",
+                flexDirection: "column",
+                gap: "10px",
                 padding: "12px 0",
                 borderBottom: i < order.lines.length - 1 ? "1px solid var(--color-hairline-soft)" : "none",
               }}
             >
-              <div className="mcCartItemImg">🛍️</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
-                  {line.productName}
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <div className="mcCartItemImg">🛍️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
+                    {line.productName}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+                    {line.selectedOptionValue || "기본"} · {line.unitPrice.toLocaleString("ko-KR")}원 × {line.quantity}개
+                  </div>
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
-                  {line.selectedOptionValue || "기본"} · {line.unitPrice.toLocaleString("ko-KR")}원 × {line.quantity}개
+                <div style={{ fontSize: "15px", fontWeight: 800 }}>
+                  {line.subtotal.toLocaleString("ko-KR")}원
                 </div>
               </div>
-              <div style={{ fontSize: "15px", fontWeight: 800 }}>
-                {line.subtotal.toLocaleString("ko-KR")}원
-              </div>
+
+              {order.status === "DELIVERED" && (
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <Link
+                    href={`/products/${line.productId}?openReview=1`}
+                    className="mcOrderLineActionBtn mcOrderLineActionBtn--primary"
+                  >
+                    리뷰 작성
+                  </Link>
+                </div>
+              )}
             </div>
           ))}
         </div>

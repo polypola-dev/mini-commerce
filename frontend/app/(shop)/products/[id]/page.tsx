@@ -2,9 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getProductById, getReviews } from "@/lib/api";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import ReviewSection from "../../review-section";
 import HeroHeart from "./hero-heart";
 import ActionBar from "./action-bar";
+import ShareButton from "./share-button";
 
 export default async function ProductDetailPage({
   params,
@@ -36,7 +38,10 @@ export default async function ProductDetailPage({
               <path d="m13 5-7 7 7 7" />
             </svg>
           </Link>
-          <HeroHeart productId={product.id} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <ShareButton />
+            <HeroHeart productId={product.id} />
+          </div>
         </div>
       </div>
 
@@ -75,7 +80,9 @@ export default async function ProductDetailPage({
       <div className="mcDivider8" />
 
       <div style={{ padding: "22px 20px 0" }}>
-        <ReviewSection productId={product.id} currentUserId={currentUserId} />
+        <Suspense fallback={null}>
+          <ReviewSection productId={product.id} currentUserId={currentUserId} />
+        </Suspense>
       </div>
 
       <ActionBar product={product} />
