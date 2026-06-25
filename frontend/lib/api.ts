@@ -110,6 +110,7 @@ export type ShippingInfo = {
 };
 
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:18080";
+const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? API_BASE_URL;
 
 export async function getProducts(q?: string): Promise<Product[]> {
   const url = new URL(`${API_BASE_URL}/api/products`);
@@ -153,7 +154,7 @@ export async function completeFakePayment(orderId: string): Promise<OrderRespons
 }
 
 export async function getReviews(productId: string): Promise<ReviewListResponse> {
-  const response = await fetch(`/api/proxy/products/${productId}/reviews`, {
+  const response = await fetch(`${PUBLIC_API_BASE_URL}/api/products/${productId}/reviews`, {
     cache: "no-store",
   });
 
@@ -262,6 +263,9 @@ export type NotificationItem = {
   sentAt: string | null;
 };
 
+// 주의: 아래 3개 함수는 클라이언트 컴포넌트(브라우저)에서만 호출할 것.
+// Server Component에서 로그인 세션이 필요한 데이터를 가져올 때는
+// 상대경로 fetch가 동작하지 않으므로 "@/lib/api-server"의 동일 이름 함수를 사용한다.
 export async function getNotifications(): Promise<NotificationItem[]> {
   const response = await fetch("/api/proxy/notifications", { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch notifications");
@@ -281,7 +285,7 @@ export async function getOrderById(orderId: string): Promise<OrderResponse> {
 }
 
 export async function getProductById(productId: string): Promise<Product> {
-  const response = await fetch(`/api/proxy/products/${productId}`, { cache: "no-store" });
+  const response = await fetch(`${PUBLIC_API_BASE_URL}/api/products/${productId}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch product");
   return response.json();
 }
