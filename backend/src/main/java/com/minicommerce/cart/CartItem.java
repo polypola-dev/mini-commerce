@@ -58,6 +58,10 @@ public class CartItem {
         this.quantity = quantity;
     }
 
+    public void increaseQuantity(int amount) {
+        this.quantity += amount;
+    }
+
     public BigDecimal getSubtotal() {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }

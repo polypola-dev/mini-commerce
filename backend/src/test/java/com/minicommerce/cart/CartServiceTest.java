@@ -102,6 +102,46 @@ class CartServiceTest {
     }
 
     @Test
+    @DisplayName("성공: 동일 상품+동일 옵션을 다시 담으면 새 행 대신 기존 항목의 수량이 합산된다")
+    void addItem_sameProductAndOption_mergesIntoExistingItem() {
+        String customerId = "cust-1";
+        Cart cart = new Cart(customerId);
+        AddCartItemRequest firstRequest = new AddCartItemRequest("prod-1", "상품1", BigDecimal.valueOf(10000), 1, "option-1");
+        AddCartItemRequest secondRequest = new AddCartItemRequest("prod-1", "상품1", BigDecimal.valueOf(10000), 2, "option-1");
+        ProductOption option = new ProductOption("option-1", "prod-1", "색상", "화이트", BigDecimal.valueOf(5000));
+        when(cartRepository.findById(customerId)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+        when(productOptionRepository.findById("option-1")).thenReturn(Optional.of(option));
+
+        CartItem first = cartService.addItem(customerId, firstRequest);
+        CartItem second = cartService.addItem(customerId, secondRequest);
+
+        assertThat(second.getId()).isEqualTo(first.getId());
+        assertThat(cart.getItems()).hasSize(1);
+        assertThat(cart.getItems().get(0).getQuantity()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("성공: 같은 상품이라도 옵션이 다르면 별개의 행으로 추가된다")
+    void addItem_sameProductDifferentOption_addsSeparateItem() {
+        String customerId = "cust-1";
+        Cart cart = new Cart(customerId);
+        AddCartItemRequest blackRequest = new AddCartItemRequest("prod-1", "상품1", BigDecimal.valueOf(10000), 1, "option-black");
+        AddCartItemRequest whiteRequest = new AddCartItemRequest("prod-1", "상품1", BigDecimal.valueOf(10000), 1, "option-white");
+        ProductOption black = new ProductOption("option-black", "prod-1", "색상", "블랙", BigDecimal.ZERO);
+        ProductOption white = new ProductOption("option-white", "prod-1", "색상", "화이트", BigDecimal.ZERO);
+        when(cartRepository.findById(customerId)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+        when(productOptionRepository.findById("option-black")).thenReturn(Optional.of(black));
+        when(productOptionRepository.findById("option-white")).thenReturn(Optional.of(white));
+
+        cartService.addItem(customerId, blackRequest);
+        cartService.addItem(customerId, whiteRequest);
+
+        assertThat(cart.getItems()).hasSize(2);
+    }
+
+    @Test
     @DisplayName("성공: 아이템 수량을 업데이트한다")
     void updateItem_updatesQuantity() {
         String customerId = "cust-1";

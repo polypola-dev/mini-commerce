@@ -3,16 +3,38 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCart, removeCartItem, updateCartItem, type Cart } from "@/lib/api";
+import { getCart, getProductById, removeCartItem, updateCartItem, type Cart, type CartItem } from "@/lib/api";
 import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
 
 const MAX_CHECKOUT_LINE_ITEMS = 100;
+
+type CartGroup = {
+  productId: string;
+  productName: string;
+  items: CartItem[];
+};
+
+function groupByProduct(items: CartItem[]): CartGroup[] {
+  const groups: CartGroup[] = [];
+  const index = new Map<string, CartGroup>();
+  for (const item of items) {
+    let group = index.get(item.productId);
+    if (!group) {
+      group = { productId: item.productId, productName: item.productName, items: [] };
+      index.set(item.productId, group);
+      groups.push(group);
+    }
+    group.items.push(item);
+  }
+  return groups;
+}
 
 export default function CartPage() {
   const router = useRouter();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
     getCart()
@@ -20,6 +42,22 @@ export default function CartPage() {
       .catch(() => setCart(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!cart) return;
+    const productIds = Array.from(new Set(cart.items.map((i) => i.productId)));
+    const missing = productIds.filter((id) => !(id in productImages));
+    if (missing.length === 0) return;
+    Promise.all(
+      missing.map((id) =>
+        getProductById(id)
+          .then((product) => [id, product.imageUrl] as const)
+          .catch(() => [id, ""] as const)
+      )
+    ).then((entries) => {
+      setProductImages((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
+  }, [cart, productImages]);
 
   async function changeQty(itemId: string, quantity: number) {
     if (quantity < 1) return;
@@ -102,6 +140,7 @@ export default function CartPage() {
   const total = subtotal + shipping;
   const count = items.reduce((a, i) => a + i.quantity, 0);
   const allSelected = items.length > 0 && selected.size === items.length;
+  const groups = groupByProduct(items);
 
   return (
     <div>
@@ -138,48 +177,59 @@ export default function CartPage() {
             </button>
           </div>
 
-          {items.map((item) => (
-            <div
-              key={item.itemId}
-              className="mcCartItem"
-              onClick={() => router.push(`/products/${item.productId}`)}
-              style={{ cursor: "pointer" }}
-            >
-              <input
-                type="checkbox"
-                checked={selected.has(item.itemId)}
-                onClick={(e) => e.stopPropagation()}
-                onChange={() => toggleSelected(item.itemId)}
-                style={{ flex: "none", width: 18, height: 18, alignSelf: "flex-start", marginTop: "2px" }}
-              />
-              <div className="mcCartItemImg">🛍️</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                  <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>{item.productName}</div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(item.itemId);
-                    }}
-                    aria-label="삭제"
-                    style={{ flex: "none", border: "none", background: "transparent", cursor: "pointer", color: "#bbb", padding: 0, fontSize: "16px" }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--color-muted)", margin: "4px 0 10px" }}>
-                  옵션 · {item.selectedOptionValue || "기본"}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div className="mcQtyControl" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" className="mcQtyBtn" onClick={() => changeQty(item.itemId, item.quantity - 1)}>−</button>
-                    <span style={{ width: 34, textAlign: "center", fontSize: "14px", fontWeight: 600 }}>{item.quantity}</span>
-                    <button type="button" className="mcQtyBtn" onClick={() => changeQty(item.itemId, item.quantity + 1)}>+</button>
-                  </div>
-                  <div style={{ fontSize: "16px", fontWeight: 800 }}>{item.subtotal.toLocaleString("ko-KR")}원</div>
-                </div>
+          {groups.map((group) => (
+            <div key={group.productId} className="mcCartGroup">
+              <div
+                className="mcCartGroupHeader"
+                onClick={() => router.push(`/products/${group.productId}`)}
+                style={{ cursor: "pointer" }}
+              >
+                {productImages[group.productId] ? (
+                  <img
+                    src={productImages[group.productId]}
+                    alt={group.productName}
+                    className="mcCartItemImg"
+                    style={{ width: 44, height: 44, objectFit: "cover" }}
+                  />
+                ) : (
+                  <div className="mcCartItemImg" style={{ width: 44, height: 44, fontSize: 18 }}>🛍️</div>
+                )}
+                <div className="mcCartGroupName">{group.productName}</div>
               </div>
+
+              {group.items.map((item) => (
+                <div key={item.itemId} className="mcCartGroupRow">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(item.itemId)}
+                    onChange={() => toggleSelected(item.itemId)}
+                    style={{ flex: "none", width: 18, height: 18, alignSelf: "flex-start", marginTop: "2px" }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
+                      <div style={{ fontSize: "13px", color: "var(--color-muted)" }}>
+                        옵션 · {item.selectedOptionValue || "기본"}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => remove(item.itemId)}
+                        aria-label="삭제"
+                        style={{ flex: "none", border: "none", background: "transparent", cursor: "pointer", color: "#bbb", padding: 0, fontSize: "16px" }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "10px" }}>
+                      <div className="mcQtyControl">
+                        <button type="button" className="mcQtyBtn" onClick={() => changeQty(item.itemId, item.quantity - 1)}>−</button>
+                        <span style={{ width: 34, textAlign: "center", fontSize: "14px", fontWeight: 600 }}>{item.quantity}</span>
+                        <button type="button" className="mcQtyBtn" onClick={() => changeQty(item.itemId, item.quantity + 1)}>+</button>
+                      </div>
+                      <div style={{ fontSize: "16px", fontWeight: 800 }}>{item.subtotal.toLocaleString("ko-KR")}원</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
 

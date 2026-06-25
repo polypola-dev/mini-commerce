@@ -42,10 +42,6 @@ public class CartService {
     public CartItem addItem(String customerId, AddCartItemRequest request) {
         Cart cart = getCart(customerId);
 
-        if (cart.getItems().size() >= MAX_CART_ITEMS) {
-            throw new CartFullException(customerId);
-        }
-
         String rawOptionId = request.selectedOptionId();
         boolean hasOption = rawOptionId != null && !rawOptionId.isBlank();
 
@@ -58,6 +54,17 @@ public class CartService {
             unitPrice = unitPrice.add(option.getAdditionalPrice());
             selectedOptionValue = option.getOptionValue();
             resolvedOptionId = rawOptionId;
+        }
+
+        CartItem existing = cart.findItem(request.productId(), resolvedOptionId).orElse(null);
+        if (existing != null) {
+            existing.increaseQuantity(request.quantity());
+            cartRepository.save(cart);
+            return existing;
+        }
+
+        if (cart.getItems().size() >= MAX_CART_ITEMS) {
+            throw new CartFullException(customerId);
         }
 
         CartItem item = new CartItem(

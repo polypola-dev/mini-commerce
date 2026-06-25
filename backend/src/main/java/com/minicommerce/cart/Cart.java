@@ -8,6 +8,8 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "carts")
@@ -35,6 +37,13 @@ public class Cart {
 
     public void addItem(CartItem item) {
         items.add(item);
+    }
+
+    public Optional<CartItem> findItem(String productId, String selectedOptionId) {
+        return items.stream()
+                .filter(item -> item.getProductId().equals(productId)
+                        && Objects.equals(item.getSelectedOptionId(), selectedOptionId))
+                .findFirst();
     }
 
     public void removeItem(String itemId) {

@@ -29,7 +29,7 @@ export default function SearchOverlayPanel() {
     if (!isOpen) return;
     fetch("/api/proxy/products")
       .then((r) => r.json())
-      .then(setAllProducts)
+      .then((data) => setAllProducts(data.content ?? []))
       .catch(() => setAllProducts([]));
   }, [isOpen]);
 
@@ -45,7 +45,7 @@ export default function SearchOverlayPanel() {
     setLoading(true);
     fetch(`/api/proxy/products?q=${encodeURIComponent(trimmed)}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => setResults(data))
+      .then((data) => setResults(data.content ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
     return () => controller.abort();
