@@ -12,6 +12,7 @@ export type CartItem = {
   unitPrice: number;
   quantity: number;
   subtotal: number;
+  selectedOptionId: string | null;
   selectedOptionValue: string | null;
 };
 
@@ -112,9 +113,15 @@ export type ShippingInfo = {
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:18080";
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? API_BASE_URL;
 
-export async function getProducts(q?: string): Promise<Product[]> {
+export async function getProducts(params?: {
+  page?: number;
+  size?: number;
+  q?: string;
+}): Promise<PageResponse<Product>> {
   const url = new URL(`${API_BASE_URL}/api/products`);
-  if (q) url.searchParams.set("q", q);
+  if (params?.q) url.searchParams.set("q", params.q);
+  if (params?.page !== undefined) url.searchParams.set("page", String(params.page));
+  if (params?.size !== undefined) url.searchParams.set("size", String(params.size));
 
   const response = await fetch(url.toString(), { cache: "no-store" });
 

@@ -40,10 +40,16 @@ function mockError(status: number, body = '') {
 // ----------------------------------------------------------------
 describe('getProducts', () => {
   test('검색어 없이 호출 시 /api/products 경로로 fetch', async () => {
-    const products = [
-      { id: '1', name: '상품1', description: '설명', price: 1000, availableStock: 10, imageUrl: '' },
-    ]
-    mockOk(products)
+    const page = {
+      content: [
+        { id: '1', name: '상품1', description: '설명', price: 1000, availableStock: 10, imageUrl: '' },
+      ],
+      totalElements: 1,
+      totalPages: 1,
+      page: 0,
+      size: 20,
+    }
+    mockOk(page)
 
     const result = await getProducts()
 
@@ -51,13 +57,13 @@ describe('getProducts', () => {
     const url = new URL(calledUrl)
     expect(url.pathname).toBe('/api/products')
     expect(url.searchParams.has('q')).toBe(false)
-    expect(result).toEqual(products)
+    expect(result).toEqual(page)
   })
 
   test('검색어 포함 호출 시 ?q= 파라미터 추가', async () => {
-    mockOk([])
+    mockOk({ content: [], totalElements: 0, totalPages: 0, page: 0, size: 20 })
 
-    await getProducts('신발')
+    await getProducts({ q: '신발' })
 
     const calledUrl: string = mockFetch.mock.calls[0][0]
     const url = new URL(calledUrl)

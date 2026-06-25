@@ -9,6 +9,7 @@ public record CartItemResponse(
         BigDecimal unitPrice,
         int quantity,
         BigDecimal subtotal,
+        String selectedOptionId,
         String selectedOptionValue
 ) {
     public static CartItemResponse from(CartItem item) {
@@ -19,6 +20,7 @@ public record CartItemResponse(
                 item.getUnitPrice(),
                 item.getQuantity(),
                 item.getSubtotal(),
+                item.getSelectedOptionId(),
                 item.getSelectedOptionValue()
         );
     }

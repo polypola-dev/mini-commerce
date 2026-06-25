@@ -3,7 +3,7 @@ import { getProducts } from "@/lib/api";
 import ProductCard from "../product-card";
 
 export default async function PromotionPage() {
-  const products = await getProducts();
+  const { content: products } = await getProducts();
 
   return (
     <div style={{ paddingBottom: "28px" }}>

@@ -3,8 +3,8 @@ import ProductCard from "../product-card";
 import Link from "next/link";
 
 export default async function SearchContent({ query }: { query: string }) {
-  const allProducts = await getProducts();
-  const results = query ? await getProducts(query) : [];
+  const { content: allProducts } = await getProducts();
+  const results = query ? (await getProducts({ q: query })).content : [];
 
   return (
     <>

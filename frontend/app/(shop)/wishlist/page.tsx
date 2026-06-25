@@ -12,7 +12,7 @@ export default function WishlistPage() {
 
   useEffect(() => {
     getProducts()
-      .then(setProducts)
+      .then((res) => setProducts(res.content))
       .catch(() => setProducts([]));
   }, []);
 

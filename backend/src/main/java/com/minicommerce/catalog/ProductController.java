@@ -1,8 +1,12 @@
 package com.minicommerce.catalog;
 
+import com.minicommerce.global.PageResult;
 import com.minicommerce.inventory.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,17 +27,23 @@ public class ProductController {
     }
 
     @GetMapping
-    List<ProductResponse> listProducts(@RequestParam(required = false) String q) {
-        List<Product> products = (q != null && !q.isBlank())
-                ? productRepository.searchActive(q)
-                : productRepository.findByActiveTrueOrderByNameAsc();
+    PageResult<ProductResponse> listProducts(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        String qParam = (q != null && !q.isBlank()) ? q : null;
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Product> productPage = productRepository.findWithFilters(true, qParam, pageable);
 
-        return products.stream()
+        List<ProductResponse> content = productPage.getContent().stream()
                 .map(product -> ProductResponse.from(
                         product,
                         inventoryService.availableStock(product.getId(), product.getStock()),
                         productOptionRepository.findByProductId(product.getId())))
                 .toList();
+
+        return new PageResult<>(content, productPage.getTotalElements(),
+                productPage.getTotalPages(), page, size);
     }
 
     @GetMapping("/{id}")

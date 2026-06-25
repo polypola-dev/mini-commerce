@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/api";
 import NotificationBell from "./notification-bell";
-import ProductCard from "./product-card";
+import ProductList from "./product-list";
 import SearchTriggerButton from "./search-trigger-button";
 
 const CATEGORIES = ["전체", "패션", "가전", "생활", "뷰티", "식품"];
+const PAGE_SIZE = 20;
 
 export default async function HomePage() {
-  const products = await getProducts();
+  const initialPageResponse = await getProducts({ page: 0, size: PAGE_SIZE });
 
   return (
     <div>
@@ -62,12 +63,12 @@ export default async function HomePage() {
       </div>
 
       <div className="mcSectionTitle">지금 만나보는 상품</div>
-      <div className="mcGrid">
-        {products.length === 0 && <p className="emptyState">등록된 상품이 없습니다.</p>}
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      <ProductList
+        initialProducts={initialPageResponse.content}
+        initialPage={initialPageResponse.page}
+        initialTotalPages={initialPageResponse.totalPages}
+        pageSize={PAGE_SIZE}
+      />
     </div>
   );
 }

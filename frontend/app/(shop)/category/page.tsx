@@ -15,7 +15,7 @@ const CATEGORIES = [
 const POPULAR_KEYWORDS = ["여성 원피스", "무선 이어폰", "캠핑용품"];
 
 export default async function CategoryPage() {
-  const products = await getProducts();
+  const { content: products } = await getProducts();
 
   return (
     <div>

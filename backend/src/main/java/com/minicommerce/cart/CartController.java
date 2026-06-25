@@ -2,8 +2,11 @@ package com.minicommerce.cart;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.net.URI;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,5 +63,13 @@ public class CartController {
     void clearCart(HttpServletRequest httpRequest) {
         String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
         cartService.clearCart(customerId);
+    }
+
+    @ExceptionHandler(CartFullException.class)
+    ProblemDetail handleCartFull(CartFullException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problem.setType(URI.create("https://mini-commerce.local/problems/cart-full"));
+        problem.setTitle("Cart full");
+        return problem;
     }
 }

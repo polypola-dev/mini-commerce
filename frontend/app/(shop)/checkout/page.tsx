@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { completeFakePayment, createOrder, getCart, type Cart } from "@/lib/api";
+import { completeFakePayment, createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
+import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
 
 type PayMethod = "card" | "easy" | "bank";
 
@@ -15,6 +16,7 @@ const PAY_LABEL: Record<PayMethod, string> = {
 export default function CheckoutPage() {
   const router = useRouter();
   const [cart, setCart] = useState<Cart | null>(null);
+  const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,14 +26,28 @@ export default function CheckoutPage() {
   useEffect(() => {
     getCart()
       .then((c) => {
-        if (c.items.length === 0) router.replace("/cart");
+        let selectedItems = c.items;
+        const raw = sessionStorage.getItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
+        if (raw) {
+          sessionStorage.removeItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
+          try {
+            const ids = new Set<string>(JSON.parse(raw));
+            if (ids.size > 0) selectedItems = c.items.filter((i) => ids.has(i.itemId));
+          } catch {
+            // ignore malformed selection, fall back to full cart
+          }
+        }
+        if (selectedItems.length === 0) {
+          router.replace("/cart");
+          return;
+        }
         setCart(c);
+        setItems(selectedItems);
       })
       .catch(() => router.replace("/cart"))
       .finally(() => setLoading(false));
   }, [router]);
 
-  const items = cart?.items ?? [];
   const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
   const shipping = subtotal === 0 || subtotal >= 50000 ? 0 : 3000;
   const total = subtotal + shipping;
@@ -42,7 +58,11 @@ export default function CheckoutPage() {
     setError(null);
     try {
       const order = await createOrder({
-        items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          ...(i.selectedOptionId ? { selectedOptionId: i.selectedOptionId } : {}),
+        })),
         shippingRecipient: addr.name,
         shippingPhone: addr.phone,
         shippingAddress: addr.a1,

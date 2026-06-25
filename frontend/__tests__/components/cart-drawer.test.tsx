@@ -17,6 +17,7 @@ const mockCart: api.Cart = {
       quantity: 2,
       unitPrice: 10000,
       subtotal: 20000,
+      selectedOptionId: null,
       selectedOptionValue: null,
     },
     {
@@ -26,6 +27,7 @@ const mockCart: api.Cart = {
       quantity: 1,
       unitPrice: 15000,
       subtotal: 15000,
+      selectedOptionId: null,
       selectedOptionValue: null,
     },
   ],

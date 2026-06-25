@@ -10,7 +10,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,5 +154,45 @@ class CartServiceTest {
         assertThatThrownBy(() -> cartService.updateItem("ghost", "item-1", new UpdateCartItemRequest(2)))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Cart not found");
+    }
+
+    @Test
+    @DisplayName("실패: 장바구니에 아이템이 200개 이상이면 추가 시 CartFullException을 던진다")
+    void addItem_cartAtMaxCapacity_throwsCartFullException() {
+        String customerId = "cust-1";
+        Cart cart = new Cart(customerId);
+        for (int i = 0; i < 200; i++) {
+            cart.addItem(new CartItem("item-" + i, cart, "prod-" + i, "상품" + i, BigDecimal.valueOf(1000), 1));
+        }
+        when(cartRepository.findById(customerId)).thenReturn(Optional.of(cart));
+        AddCartItemRequest request = new AddCartItemRequest("prod-new", "신상품", BigDecimal.valueOf(10000), 1, null);
+
+        assertThatThrownBy(() -> cartService.addItem(customerId, request))
+                .isInstanceOf(CartFullException.class);
+    }
+
+    @Test
+    @DisplayName("성공: 90일이 지난 아이템은 조회 시 자동으로 삭제된다")
+    void getCart_removesItemsOlderThan90Days() throws Exception {
+        String customerId = "cust-1";
+        Cart cart = new Cart(customerId);
+        CartItem freshItem = new CartItem("item-fresh", cart, "prod-1", "상품1", BigDecimal.valueOf(10000), 1);
+        CartItem expiredItem = new CartItem("item-expired", cart, "prod-2", "상품2", BigDecimal.valueOf(5000), 1);
+        setAddedAt(expiredItem, Instant.now().minus(91, ChronoUnit.DAYS));
+        cart.addItem(freshItem);
+        cart.addItem(expiredItem);
+        when(cartRepository.findById(customerId)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class))).thenReturn(cart);
+
+        Cart result = cartService.getCart(customerId);
+
+        assertThat(result.getItems()).extracting(CartItem::getId).containsExactly("item-fresh");
+        verify(cartRepository).save(cart);
+    }
+
+    private static void setAddedAt(CartItem item, Instant addedAt) throws Exception {
+        Field field = CartItem.class.getDeclaredField("addedAt");
+        field.setAccessible(true);
+        field.set(item, addedAt);
     }
 }

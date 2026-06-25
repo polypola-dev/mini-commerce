@@ -4,6 +4,8 @@ import com.minicommerce.catalog.ProductOption;
 import com.minicommerce.catalog.ProductOptionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class CartService {
+    private static final int MAX_CART_ITEMS = 200;
+    private static final long ITEM_EXPIRY_DAYS = 90;
+
     private final CartRepository cartRepository;
     private final ProductOptionRepository productOptionRepository;
 
@@ -20,12 +25,26 @@ public class CartService {
     }
 
     public Cart getCart(String customerId) {
-        return cartRepository.findById(customerId)
+        Cart cart = cartRepository.findById(customerId)
                 .orElseGet(() -> cartRepository.save(new Cart(customerId)));
+        removeExpiredItems(cart);
+        return cart;
+    }
+
+    private void removeExpiredItems(Cart cart) {
+        Instant cutoff = Instant.now().minus(ITEM_EXPIRY_DAYS, ChronoUnit.DAYS);
+        boolean changed = cart.getItems().removeIf(item -> item.getAddedAt().isBefore(cutoff));
+        if (changed) {
+            cartRepository.save(cart);
+        }
     }
 
     public CartItem addItem(String customerId, AddCartItemRequest request) {
         Cart cart = getCart(customerId);
+
+        if (cart.getItems().size() >= MAX_CART_ITEMS) {
+            throw new CartFullException(customerId);
+        }
 
         String rawOptionId = request.selectedOptionId();
         boolean hasOption = rawOptionId != null && !rawOptionId.isBlank();
