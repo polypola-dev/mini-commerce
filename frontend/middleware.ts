@@ -35,7 +35,13 @@ export async function middleware(request: NextRequest) {
   const isPublicPath =
     pathname === "/" ||
     pathname.startsWith("/products") ||
-    pathname.startsWith("/search");
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/category") ||
+    pathname.startsWith("/promotion") ||
+    pathname.startsWith("/customer-service");
 
   if (isAuthCallback) {
     return supabaseResponse;

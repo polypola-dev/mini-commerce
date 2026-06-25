@@ -51,12 +51,12 @@ export default function MyPage() {
 
   return (
     <div>
-      <div className="mcProfileHeader">
+      <Link href="/mypage/profile" className="mcProfileHeader" style={{ textDecoration: "none", color: "inherit" }}>
         <div className="mcAvatar">{label[0]?.toUpperCase()}</div>
         <div>
           <div style={{ fontSize: "18px", fontWeight: 700 }}>{label}</div>
         </div>
-      </div>
+      </Link>
 
       <div className="mcStatsRow">
         <Link href="/cart" className="mcStatItem" style={{ textDecoration: "none", color: "inherit" }}>
@@ -73,15 +73,15 @@ export default function MyPage() {
         <Link href="/orders" className="mcMenuItem">
           주문 내역<span className="mcMenuChevron">›</span>
         </Link>
-        <div className="mcMenuItem" style={{ color: "var(--color-muted-soft)", cursor: "default" }}>
-          배송지 관리<span className="mcMenuChevron">·</span>
-        </div>
+        <Link href="/mypage/address" className="mcMenuItem">
+          배송지 관리<span className="mcMenuChevron">›</span>
+        </Link>
         <div className="mcMenuItem" style={{ color: "var(--color-muted-soft)", cursor: "default" }}>
           쿠폰 / 적립금<span className="mcMenuChevron">·</span>
         </div>
-        <div className="mcMenuItem" style={{ color: "var(--color-muted-soft)", cursor: "default" }}>
-          고객센터<span className="mcMenuChevron">·</span>
-        </div>
+        <Link href="/customer-service" className="mcMenuItem">
+          고객센터<span className="mcMenuChevron">›</span>
+        </Link>
         <button type="button" className="mcMenuItem" onClick={handleLogout} style={{ color: "var(--color-muted)" }}>
           로그아웃
         </button>

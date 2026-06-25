@@ -10,12 +10,12 @@ type Props = {
 
 function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
   return (
-    <span className="starRating">
+    <span className="mcStarRating">
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
-          className={`star ${n <= value ? "star--filled" : ""}`}
+          className={`mcStar ${n <= value ? "mcStar--filled" : ""}`}
           onClick={() => onChange?.(n)}
           aria-label={`${n}점`}
         >
@@ -91,9 +91,9 @@ export default function ReviewSection({ productId, currentUserId }: Props) {
   }
 
   return (
-    <div className="reviewSection">
+    <div className="mcReviewSection">
       <button
-        className="reviewToggle"
+        className="mcReviewToggle"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
@@ -101,20 +101,20 @@ export default function ReviewSection({ productId, currentUserId }: Props) {
       </button>
 
       {open && (
-        <div className="reviewBody">
-          {loading && <p className="reviewLoading">불러오는 중…</p>}
+        <div className="mcReviewBody">
+          {loading && <p className="mcReviewLoading">불러오는 중…</p>}
 
           {data && data.totalCount > 0 && (
-            <p className="reviewAvg">
+            <p className="mcReviewAvg">
               평균 ★ {data.averageRating} &nbsp;({data.totalCount}개)
             </p>
           )}
 
           {currentUserId && (
-            <form className="reviewForm" onSubmit={handleSubmit}>
+            <form className="mcReviewForm" onSubmit={handleSubmit}>
               <StarRating value={rating} onChange={setRating} />
               <textarea
-                className="reviewTextarea"
+                className="mcReviewTextarea"
                 placeholder="리뷰를 작성하세요 (최대 500자)"
                 maxLength={500}
                 value={content}
@@ -122,40 +122,40 @@ export default function ReviewSection({ productId, currentUserId }: Props) {
                 rows={3}
                 required
               />
-              <button type="submit" disabled={submitting} className="reviewSubmit">
+              <button type="submit" disabled={submitting} className="mcReviewSubmit">
                 {submitting ? "등록 중…" : "리뷰 등록"}
               </button>
             </form>
           )}
 
-          {!currentUserId && <p className="reviewHint">로그인하면 리뷰를 작성할 수 있습니다.</p>}
+          {!currentUserId && <p className="mcReviewHint">로그인하면 리뷰를 작성할 수 있습니다.</p>}
 
           {message && <p className="message">{message}</p>}
 
-          <ul className="reviewList">
+          <ul className="mcReviewList">
             {data?.reviews.map((review) => (
-              <li key={review.id} className="reviewItem">
-                <div className="reviewItemHeader">
-                  <span className="reviewStars">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
-                  <span className="reviewDate">
+              <li key={review.id} className="mcReviewItem">
+                <div className="mcReviewItemHeader">
+                  <span className="mcReviewStars">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                  <span className="mcReviewDate">
                     {new Date(review.createdAt).toLocaleDateString("ko-KR")}
                   </span>
                   {currentUserId === review.authorId && (
                     <button
-                      className="reviewDelete"
+                      className="mcReviewDelete"
                       onClick={() => handleDelete(review)}
                     >
                       삭제
                     </button>
                   )}
                 </div>
-                <p className="reviewContent">{review.content}</p>
+                <p className="mcReviewContent">{review.content}</p>
               </li>
             ))}
           </ul>
 
           {data && data.reviews.length === 0 && !loading && (
-            <p className="reviewEmpty">아직 리뷰가 없습니다.</p>
+            <p className="mcReviewEmpty">아직 리뷰가 없습니다.</p>
           )}
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -30,6 +31,7 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setPending(true);
+    setError(null);
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -45,6 +47,7 @@ export default function LoginPage() {
 
   async function handleNaverLogin() {
     setPending(true);
+    setError(null);
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "custom:naver",
@@ -59,83 +62,81 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="loginViewport">
-      <div className="gradientBlob blob1"></div>
-      <div className="gradientBlob blob2"></div>
+    <div className="mcPage">
+      <div className="mcShell" style={{ minHeight: "100vh" }}>
+        <div className="mcLoginWrap">
+          <div className="mcLoginSpacer" />
+          <div className="mcLoginLogo">
+            <span>mini</span>
+            <span>commerce</span>
+          </div>
+          <div className="mcLoginTitle">로그인</div>
 
-      <div className="glassCard">
-        <div className="authHeader">
-          <span className="badge">SECURE AUTH PORTAL</span>
-          <h1>Mini Commerce</h1>
-          <p>보안과 동시성이 확보된 이커머스 포털 로그인</p>
-        </div>
-
-        <button className="googleBtn" onClick={handleGoogleLogin} disabled={pending}>
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-          Google 계정으로 로그인
-        </button>
-
-        <button className="naverBtn" onClick={handleNaverLogin} disabled={pending}>
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path fill="white" d="M13.5 12.76L7.62 4H4v16h6.5v-8.76L16.38 20H20V4h-6.5v8.76z" />
-          </svg>
-          네이버로 로그인
-        </button>
-
-        <div className="divider">
-          <span>또는 이메일로 시작하기</span>
-        </div>
-
-        <form onSubmit={handleLogin} className="authForm">
-          <div className="inputGroup">
-            <label htmlFor="email">이메일</label>
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             <input
-              id="email"
+              className="mcAuthInput"
               type="email"
               required
-              placeholder="이메일 입력"
+              placeholder="이메일 또는 휴대폰 번호"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={pending}
             />
-          </div>
-
-          <div className="inputGroup">
-            <label htmlFor="password">비밀번호</label>
             <input
-              id="password"
+              className="mcAuthInput"
               type="password"
               required
-              placeholder="비밀번호 입력"
+              placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={pending}
             />
+
+            {error && <div className="mcErrorText">{error}</div>}
+
+            <div style={{ marginTop: "4px" }}>
+              <button type="submit" className="mcBtn mcBtnPrimary" disabled={pending}>
+                {pending ? "로그인 중…" : "로그인"}
+              </button>
+            </div>
+          </form>
+
+          <div className="mcAuthLinks">
+            <Link href="/signup">회원가입</Link>
+            <span>·</span>
+            <Link href="/forgot-password">비밀번호 찾기</Link>
           </div>
 
-          {error && <div className="errorMessage">{error}</div>}
+          <div className="mcAuthDivider">
+            <div className="mcAuthDividerLine" />
+            <span>간편 로그인</span>
+            <div className="mcAuthDividerLine" />
+          </div>
 
-          <button type="submit" className="submitBtn" disabled={pending}>
-            {pending ? <span className="spinner"></span> : "로그인"}
-          </button>
-        </form>
+          <div className="mcSocialRow">
+            <button type="button" className="mcSocialCircle mcSocialCircleKakao" disabled aria-label="카카오로 로그인">
+              K
+            </button>
+            <button
+              type="button"
+              className="mcSocialCircle mcSocialCircleNaver"
+              onClick={handleNaverLogin}
+              disabled={pending}
+              aria-label="네이버로 로그인"
+            >
+              N
+            </button>
+            <button
+              type="button"
+              className="mcSocialCircle mcSocialCircleGoogle"
+              onClick={handleGoogleLogin}
+              disabled={pending}
+              aria-label="Google로 로그인"
+            >
+              G
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

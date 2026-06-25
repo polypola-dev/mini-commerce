@@ -1,4 +1,4 @@
-import { getOrderById } from "@/lib/api";
+import { getOrderById } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -10,6 +10,15 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELED: "취소됨",
   SHIPPED: "배송 중",
   DELIVERED: "배송 완료",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  PENDING_PAYMENT: "var(--color-muted)",
+  PAID: "var(--color-primary)",
+  PAYMENT_FAILED: "var(--color-error, #c13515)",
+  CANCELED: "var(--color-muted)",
+  SHIPPED: "var(--color-primary)",
+  DELIVERED: "var(--color-ink)",
 };
 
 export default async function OrderDetailPage({
@@ -76,98 +85,106 @@ export default async function OrderDetailPage({
     );
   }
 
+  const itemCount = order.lines?.reduce((a, l) => a + l.quantity, 0) ?? 0;
+  const statusColor = STATUS_COLOR[order.status] ?? "var(--color-ink)";
+
   return (
-    <main className="shell">
-      <section className="masthead">
-        <div>
-          <p className="eyebrow">Order Detail</p>
-          <h1>주문 상세</h1>
-          <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginTop: "0.25rem" }}>
-            {order.orderId}
-          </p>
-        </div>
-        <Link href="/orders" style={{ fontSize: "0.875rem", color: "var(--accent)" }}>
-          ← 주문 목록
+    <div style={{ paddingBottom: "24px" }}>
+      <div style={{ padding: "14px 20px 12px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--color-hairline-soft)" }}>
+        <Link href="/orders" aria-label="뒤로" style={{ border: "none", background: "transparent", cursor: "pointer", padding: 0, display: "flex" }}>
+          <svg width="22" height="22" fill="none" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m14 5-7 7 7 7" /></svg>
         </Link>
-      </section>
-
-      <div style={{ display: "grid", gap: "1.5rem" }}>
-        {/* 상태 */}
-        <section className="productCard" style={{ padding: "1.25rem" }}>
-          <h2 style={{ marginBottom: "1rem" }}>주문 상태</h2>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "0.375rem 1rem",
-                  borderRadius: "999px",
-                  fontWeight: 600,
-                  background: "var(--accent)",
-                  color: "#fff",
-                }}
-              >
-                {STATUS_LABEL[order.status] ?? order.status}
-              </span>
-              <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginTop: "0.5rem" }}>
-                주문일시: {new Date(order.createdAt).toLocaleString("ko-KR")}
-              </p>
-            </div>
-            <p style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-              {order.totalAmount.toLocaleString("ko-KR")}원
-            </p>
-          </div>
-        </section>
-
-        {/* 주문 상품 */}
-        <section className="productCard" style={{ padding: "1.25rem" }}>
-          <h2 style={{ marginBottom: "1rem" }}>주문 상품</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {order.lines?.map((line, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "0.75rem",
-                  background: "var(--surface)",
-                  borderRadius: "8px",
-                }}
-              >
-                <div>
-                  <p style={{ fontWeight: 600 }}>{line.productName}</p>
-                  {line.selectedOptionValue && (
-                    <p style={{ fontSize: "0.875rem", color: "var(--muted)" }}>
-                      옵션: {line.selectedOptionValue}
-                    </p>
-                  )}
-                  <p style={{ fontSize: "0.875rem", color: "var(--muted)" }}>
-                    {line.unitPrice.toLocaleString("ko-KR")}원 × {line.quantity}개
-                  </p>
-                </div>
-                <p style={{ fontWeight: 700 }}>
-                  {line.subtotal.toLocaleString("ko-KR")}원
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 배송지 */}
-        {order.shippingAddress && (
-          <section className="productCard" style={{ padding: "1.25rem" }}>
-            <h2 style={{ marginBottom: "1rem" }}>배송지 정보</h2>
-            <dl style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "0.5rem 1rem" }}>
-              <dt style={{ color: "var(--muted)", fontSize: "0.875rem" }}>받는 분</dt>
-              <dd>{order.shippingRecipient}</dd>
-              <dt style={{ color: "var(--muted)", fontSize: "0.875rem" }}>연락처</dt>
-              <dd>{order.shippingPhone}</dd>
-              <dt style={{ color: "var(--muted)", fontSize: "0.875rem" }}>주소</dt>
-              <dd>({order.shippingZipCode}) {order.shippingAddress} {order.shippingDetailAddress}</dd>
-            </dl>
-          </section>
-        )}
+        <span style={{ fontSize: "18px", fontWeight: 700 }}>주문 상세</span>
       </div>
-    </main>
+
+      <div style={{ padding: "20px" }}>
+        <div style={{ border: "1px solid var(--color-hairline)", borderRadius: "14px", padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: statusColor }}>
+              {STATUS_LABEL[order.status] ?? order.status}
+            </span>
+            <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+              주문번호 {order.orderId.slice(0, 8)}…
+            </span>
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+            주문일시 {new Date(order.createdAt).toLocaleString("ko-KR")}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "0 20px 18px" }}>
+        <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>주문 상품 {order.lines?.length ?? 0}개</div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {order.lines?.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                padding: "12px 0",
+                borderBottom: i < order.lines.length - 1 ? "1px solid var(--color-hairline-soft)" : "none",
+              }}
+            >
+              <div className="mcCartItemImg">🛍️</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
+                  {line.productName}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+                  {line.selectedOptionValue || "기본"} · {line.unitPrice.toLocaleString("ko-KR")}원 × {line.quantity}개
+                </div>
+              </div>
+              <div style={{ fontSize: "15px", fontWeight: 800 }}>
+                {line.subtotal.toLocaleString("ko-KR")}원
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mcDivider8" />
+
+      {order.shippingAddress && (
+        <div style={{ padding: "20px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>배송지 정보</div>
+          <div className="mcInfoTable">
+            <div className="mcInfoRow">
+              <span>받는 분</span>
+              <span>{order.shippingRecipient}</span>
+            </div>
+            <div className="mcInfoRow">
+              <span>연락처</span>
+              <span>{order.shippingPhone}</span>
+            </div>
+            <div className="mcInfoRow">
+              <span>주소</span>
+              <span>
+                ({order.shippingZipCode}) {order.shippingAddress} {order.shippingDetailAddress}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mcDivider8" />
+
+      <div style={{ padding: "20px" }}>
+        <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>결제 정보</div>
+        <div className="mcInfoTable">
+          <div className="mcInfoRow">
+            <span>상품 수</span>
+            <span>{itemCount}개</span>
+          </div>
+          <div className="mcInfoRow">
+            <span>결제 금액</span>
+            <span style={{ fontWeight: 700, color: "var(--color-primary)" }}>
+              {order.totalAmount.toLocaleString("ko-KR")}원
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

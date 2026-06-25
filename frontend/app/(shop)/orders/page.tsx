@@ -1,4 +1,5 @@
-import { getMyOrders, OrderResponse } from "@/lib/api";
+import type { OrderResponse } from "@/lib/api";
+import { getMyOrders } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -10,6 +11,15 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELED: "취소됨",
   SHIPPED: "배송 중",
   DELIVERED: "배송 완료",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  PENDING_PAYMENT: "var(--color-muted)",
+  PAID: "var(--color-primary)",
+  PAYMENT_FAILED: "var(--color-error, #c13515)",
+  CANCELED: "var(--color-muted)",
+  SHIPPED: "var(--color-primary)",
+  DELIVERED: "var(--color-ink)",
 };
 
 export default async function OrdersPage() {
@@ -25,72 +35,80 @@ export default async function OrdersPage() {
   }
 
   return (
-    <main className="shell">
-      <section className="masthead">
-        <div>
-          <p className="eyebrow">My Orders</p>
-          <h1>주문 내역</h1>
-        </div>
-        <Link href="/" style={{ fontSize: "0.875rem", color: "var(--accent)" }}>
-          ← 쇼핑 계속하기
-        </Link>
-      </section>
+    <div>
+      <div className="mcListHeader">
+        <h1>주문 내역</h1>
+        <span className="mcListHeaderCount">{orders.length}건</span>
+      </div>
 
       {orders.length === 0 ? (
-        <p className="emptyState">주문 내역이 없습니다.</p>
+        <div className="mcEmptyState">
+          <div className="mcEmptyIcon">📦</div>
+          <div className="mcEmptyTitle">주문 내역이 없어요</div>
+          <div className="mcEmptyDesc">첫 주문을 시작해보세요.</div>
+          <Link href="/" className="mcEmptyCta">쇼핑하러 가기</Link>
+        </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {orders.map((order) => (
-            <Link
-              key={order.orderId}
-              href={`/orders/${order.orderId}`}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <article
-                className="productCard"
-                style={{ cursor: "pointer", padding: "1.25rem" }}
+        <div style={{ padding: "8px 20px 28px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          {orders.map((order) => {
+            const firstLine = order.lines?.[0];
+            const extraCount = (order.lines?.length ?? 0) - 1;
+            return (
+              <div
+                key={order.orderId}
+                style={{
+                  border: "1px solid var(--color-hairline)",
+                  borderRadius: "14px",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "13px",
+                }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "0.25rem" }}>
-                      주문번호: {order.orderId.slice(0, 8)}…
-                    </p>
-                    <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-                      {order.lines?.map((l) => l.productName).join(", ") || "-"}
-                    </p>
-                    <p style={{ fontSize: "0.875rem", color: "var(--muted)" }}>
-                      {new Date(order.createdAt).toLocaleString("ko-KR")}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "0.25rem 0.75rem",
-                        borderRadius: "999px",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        background: order.status === "PAID" || order.status === "DELIVERED"
-                          ? "var(--accent)"
-                          : "var(--surface)",
-                        color: order.status === "PAID" || order.status === "DELIVERED"
-                          ? "#fff"
-                          : "var(--fg)",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      {STATUS_LABEL[order.status] ?? order.status}
-                    </span>
-                    <p style={{ fontWeight: 700, fontSize: "1.1rem" }}>
-                      {order.totalAmount.toLocaleString("ko-KR")}원
-                    </p>
-                  </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+                    {new Date(order.createdAt).toLocaleDateString("ko-KR")}
+                  </span>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: STATUS_COLOR[order.status] ?? "var(--color-ink)" }}>
+                    {STATUS_LABEL[order.status] ?? order.status}
+                  </span>
                 </div>
-              </article>
-            </Link>
-          ))}
+                <Link
+                  href={`/orders/${order.orderId}`}
+                  style={{ display: "flex", gap: "12px", alignItems: "center", textDecoration: "none", color: "inherit" }}
+                >
+                  <div className="mcCartItemImg">🛍️</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
+                      {firstLine?.productName ?? "-"}
+                      {extraCount > 0 ? ` 외 ${extraCount}건` : ""}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
+                      주문번호 {order.orderId.slice(0, 8)}… · {order.totalAmount.toLocaleString("ko-KR")}원
+                    </div>
+                  </div>
+                  <span style={{ color: "#bbb" }}>›</span>
+                </Link>
+                <Link
+                  href={`/orders/${order.orderId}`}
+                  style={{
+                    flex: 1,
+                    border: "1px solid var(--color-hairline)",
+                    borderRadius: "8px",
+                    textAlign: "center",
+                    padding: "10px 0",
+                    fontSize: "13px",
+                    color: "var(--color-body)",
+                    textDecoration: "none",
+                  }}
+                >
+                  주문 상세
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
-    </main>
+    </div>
   );
 }

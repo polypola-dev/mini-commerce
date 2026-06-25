@@ -36,7 +36,7 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      <div className="mcBanner">
+      <Link href="/promotion" className="mcBanner">
         <div className="mcBannerInner">
           <img
             src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80&auto=format&fit=crop"
@@ -50,7 +50,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-      </div>
+      </Link>
 
       <div className="mcChipRow">
         {CATEGORIES.map((c) => (
