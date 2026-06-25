@@ -2,7 +2,13 @@ import TabBar from "./tab-bar";
 import SearchOverlayPanel from "./search-overlay-panel";
 import { SearchOverlayProvider } from "@/lib/search-overlay";
 
-export default function ShopLayout({ children }: { children: React.ReactNode }) {
+export default function ShopLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   return (
     <div className="mcPage">
       <SearchOverlayProvider>
@@ -10,6 +16,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
           <div className="mcContent">{children}</div>
           <TabBar />
           <SearchOverlayPanel />
+          {modal}
         </div>
       </SearchOverlayProvider>
     </div>

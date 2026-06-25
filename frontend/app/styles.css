@@ -1280,6 +1280,20 @@ h1 {
   flex-direction: column;
 }
 
+.mcProductModalOverlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  z-index: 70;
+  background: var(--color-canvas);
+  overflow-y: auto;
+  animation: mcFade 180ms ease;
+}
+
 .mcSearchOverlayHeader {
   display: flex;
   align-items: center;
