@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getCart } from "@/lib/api";
 import { useWishlist } from "@/lib/wishlist";
+import { useSearchOverlay } from "@/lib/search-overlay";
 
 const TABS = [
   {
@@ -71,6 +72,7 @@ export default function TabBar() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const { ids: wishIds } = useWishlist();
+  const { isOpen: searchOpen, openSearch } = useSearchOverlay();
 
   useEffect(() => {
     getCart()
@@ -83,10 +85,10 @@ export default function TabBar() {
   return (
     <nav className="mcTabBar">
       {TABS.map((tab) => {
-        const active = tab.match(pathname);
+        const active = tab.href === "/search" ? searchOpen || tab.match(pathname) : tab.match(pathname);
         const color = active ? "var(--color-primary)" : "var(--color-muted-soft)";
-        return (
-          <Link key={tab.href} href={tab.href} className="mcTabItem">
+        const content = (
+          <>
             <div style={{ position: "relative" }}>
               {tab.icon(color)}
               {tab.href === "/cart" && cartCount > 0 && (
@@ -99,6 +101,20 @@ export default function TabBar() {
             <span className="mcTabLabel" style={{ color }}>
               {tab.label}
             </span>
+          </>
+        );
+
+        if (tab.href === "/search") {
+          return (
+            <button key={tab.href} type="button" className="mcTabItem" onClick={() => openSearch()}>
+              {content}
+            </button>
+          );
+        }
+
+        return (
+          <Link key={tab.href} href={tab.href} className="mcTabItem">
+            {content}
           </Link>
         );
       })}

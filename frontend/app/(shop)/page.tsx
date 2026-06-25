@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getProducts } from "@/lib/api";
 import NotificationBell from "./notification-bell";
 import ProductCard from "./product-card";
+import SearchTriggerButton from "./search-trigger-button";
 
 const CATEGORIES = ["전체", "패션", "가전", "생활", "뷰티", "식품"];
 
@@ -27,13 +28,13 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-        <Link href="/search" className="mcSearchTrigger">
+        <SearchTriggerButton className="mcSearchTrigger">
           <svg width="18" height="18" fill="none" stroke="#6a6a6a" strokeWidth="1.8" strokeLinecap="round">
             <circle cx="8" cy="8" r="6" />
             <path d="m17 17-4-4" />
           </svg>
           <span>찾는 상품을 검색해보세요</span>
-        </Link>
+        </SearchTriggerButton>
       </div>
 
       <Link href="/promotion" className="mcBanner">

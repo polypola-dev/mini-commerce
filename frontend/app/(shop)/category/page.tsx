@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProducts } from "@/lib/api";
 import ProductCard from "../product-card";
+import SearchTriggerButton from "../search-trigger-button";
 
 const CATEGORIES = [
   { label: "전체", photo: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&q=80&auto=format&fit=crop" },
@@ -28,13 +29,13 @@ export default async function CategoryPage() {
       </div>
 
       <div style={{ padding: "4px 20px 0" }}>
-        <Link href="/search" className="mcSearchTrigger">
+        <SearchTriggerButton className="mcSearchTrigger">
           <svg width="17" height="17" fill="none" stroke="#6a6a6a" strokeWidth="1.8" strokeLinecap="round">
             <circle cx="8" cy="8" r="6" />
             <path d="m17 17-4-4" />
           </svg>
           <span>상품, 브랜드 검색</span>
-        </Link>
+        </SearchTriggerButton>
       </div>
 
       <div className="mcCategoryTileGrid">
