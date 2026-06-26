@@ -773,6 +773,7 @@ h1 {
 .mcContent {
   flex: 1;
   padding-bottom: 84px;
+  overflow-x: hidden;
 }
 
 .mcTopBar {

@@ -41,6 +41,7 @@ export default function MyPage() {
   const [label, setLabel] = useState<string | null | undefined>(undefined);
   const [cartCount, setCartCount] = useState(0);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [orderImages, setOrderImages] = useState<Record<string, string | null>>({});
   const { ids: wishIds } = useWishlist();
 
@@ -66,6 +67,7 @@ export default function MyPage() {
       .then(async (data) => {
         const recent = data.slice(0, 10);
         setOrders(recent);
+        setOrdersLoaded(true);
         const ids = recent.map((o) => o.lines?.[0]?.productId).filter(Boolean) as string[];
         const unique = [...new Set(ids)];
         const entries = await Promise.all(
@@ -82,7 +84,7 @@ export default function MyPage() {
         );
         setOrderImages(Object.fromEntries(entries));
       })
-      .catch(() => {});
+      .catch(() => { setOrdersLoaded(true); });
   }, []);
 
   async function handleLogout() {
@@ -103,17 +105,46 @@ export default function MyPage() {
         </div>
       </Link>
 
-      {orders.length > 0 && (
-        <div style={{ padding: "20px 0 8px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px 12px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "16px", fontWeight: 700 }}>주문/배송내역</span>
-              <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>옆으로 밀어보세요</span>
-            </div>
-            <Link href="/orders" style={{ fontSize: "13px", color: "var(--color-primary)", textDecoration: "none" }}>
-              전체보기 ›
+      <div className="mcStatsRow">
+        <Link href="/cart" className="mcStatItem" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="mcStatValue">{cartCount}</div>
+          <div className="mcStatLabel">장바구니</div>
+        </Link>
+        <Link href="/wishlist" className="mcStatItem" style={{ textDecoration: "none", color: "inherit" }}>
+          <div className="mcStatValue">{wishIds.length}</div>
+          <div className="mcStatLabel">찜</div>
+        </Link>
+      </div>
+
+      <div style={{ padding: "20px 0 8px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px 12px" }}>
+          <span style={{ fontSize: "16px", fontWeight: 700 }}>주문/배송내역</span>
+          <Link href="/orders" style={{ fontSize: "13px", color: "var(--color-primary)", textDecoration: "none" }}>
+            전체보기 ›
+          </Link>
+        </div>
+        {ordersLoaded && orders.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "32px 20px", gap: "12px" }}>
+            <span style={{ fontSize: "56px" }}>📦</span>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--color-ink)" }}>주문 내역이 없어요</div>
+            <div style={{ fontSize: "14px", color: "var(--color-muted)" }}>첫 주문을 시작해보세요.</div>
+            <Link
+              href="/"
+              style={{
+                marginTop: "8px",
+                padding: "14px 32px",
+                background: "var(--color-primary)",
+                color: "#fff",
+                borderRadius: "12px",
+                fontSize: "16px",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              쇼핑하러 가기
             </Link>
           </div>
+        ) : (
           <div
             style={{
               display: "flex",
@@ -196,24 +227,10 @@ export default function MyPage() {
               );
             })}
           </div>
-        </div>
-      )}
-
-      <div className="mcStatsRow">
-        <Link href="/cart" className="mcStatItem" style={{ textDecoration: "none", color: "inherit" }}>
-          <div className="mcStatValue">{cartCount}</div>
-          <div className="mcStatLabel">장바구니</div>
-        </Link>
-        <Link href="/wishlist" className="mcStatItem" style={{ textDecoration: "none", color: "inherit" }}>
-          <div className="mcStatValue">{wishIds.length}</div>
-          <div className="mcStatLabel">찜</div>
-        </Link>
+        )}
       </div>
 
       <div>
-        <Link href="/orders" className="mcMenuItem">
-          주문 내역<span className="mcMenuChevron">›</span>
-        </Link>
         <Link href="/mypage/address" className="mcMenuItem">
           배송지 관리<span className="mcMenuChevron">›</span>
         </Link>
