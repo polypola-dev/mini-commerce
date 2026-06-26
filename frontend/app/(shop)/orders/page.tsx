@@ -1,8 +1,17 @@
 import type { OrderResponse } from "@/lib/api";
-import { getMyOrders } from "@/lib/api-server";
+import { getMyOrders, getProductImages } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+function formatOrderDate(iso: string): string {
+  const d = new Date(iso);
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${m}.${day} ${hh}:${mm} 주문`;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING_PAYMENT: "결제 대기",
@@ -33,6 +42,11 @@ export default async function OrdersPage() {
   } catch {
     orders = [];
   }
+
+  const firstLineProductIds = orders
+    .map((o) => o.lines?.[0]?.productId)
+    .filter((id): id is string => !!id);
+  const imageMap = await getProductImages(firstLineProductIds);
 
   return (
     <div>
@@ -67,7 +81,7 @@ export default async function OrdersPage() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>
-                    {new Date(order.createdAt).toLocaleDateString("ko-KR")}
+                    {formatOrderDate(order.createdAt)}
                   </span>
                   <span style={{ fontSize: "13px", fontWeight: 700, color: STATUS_COLOR[order.status] ?? "var(--color-ink)" }}>
                     {STATUS_LABEL[order.status] ?? order.status}
@@ -77,7 +91,15 @@ export default async function OrdersPage() {
                   href={`/orders/${order.orderId}`}
                   style={{ display: "flex", gap: "12px", alignItems: "center", textDecoration: "none", color: "inherit" }}
                 >
-                  <div className="mcCartItemImg">🛍️</div>
+                  {imageMap[firstLine?.productId ?? ""] ? (
+                    <img
+                      src={imageMap[firstLine!.productId]!}
+                      alt={firstLine!.productName}
+                      style={{ width: 60, height: 60, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div className="mcCartItemImg" style={{ fontSize: 28 }}>🛍️</div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
                       {firstLine?.productName ?? "-"}

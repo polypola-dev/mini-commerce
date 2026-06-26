@@ -33,7 +33,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     @Override
     public Optional<Order> findById(String id) {
-        return jpaRepository.findById(id);
+        return jpaRepository.findByIdWithLines(id);
     }
 
     @Override

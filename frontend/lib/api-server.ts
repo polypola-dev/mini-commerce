@@ -40,6 +40,34 @@ export async function getMyOrders(): Promise<OrderResponse[]> {
 
 export async function getOrderById(orderId: string): Promise<OrderResponse> {
   const response = await authedFetch(`/api/orders/${orderId}`);
-  if (!response.ok) throw new Error("Failed to fetch order");
+  if (response.status === 404) {
+    const err = new Error("Order not found") as Error & { status: number };
+    err.status = 404;
+    throw err;
+  }
+  if (!response.ok) {
+    const err = new Error(`Failed to fetch order: ${response.status}`) as Error & { status: number };
+    err.status = response.status;
+    throw err;
+  }
   return response.json();
+}
+
+export async function getProductImages(
+  productIds: string[]
+): Promise<Record<string, string | null>> {
+  const unique = [...new Set(productIds)];
+  const entries = await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/products/${id}`, { cache: "no-store" });
+        if (!res.ok) return [id, null] as const;
+        const p = await res.json();
+        return [id, (p.imageUrl as string) ?? null] as const;
+      } catch {
+        return [id, null] as const;
+      }
+    })
+  );
+  return Object.fromEntries(entries);
 }

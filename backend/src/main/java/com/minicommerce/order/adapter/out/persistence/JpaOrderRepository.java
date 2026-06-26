@@ -3,6 +3,7 @@ package com.minicommerce.order.adapter.out.persistence;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 interface JpaOrderRepository extends JpaRepository<Order, String> {
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.lines WHERE o.id = :id")
+    Optional<Order> findByIdWithLines(@Param("id") String id);
+
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.lines WHERE o.customerId = :customerId ORDER BY o.createdAt DESC")
     List<Order> findAllByCustomerIdWithLines(String customerId);
 

@@ -1,4 +1,4 @@
-import { getOrderById } from "@/lib/api-server";
+import { getOrderById, getProductImages } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -37,9 +37,15 @@ export default async function OrderDetailPage({
   let order;
   try {
     order = await getOrderById(id);
-  } catch {
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    if (status === 401) redirect("/login");
+    if (status === 404) notFound();
     notFound();
   }
+
+  const lineProductIds = order.lines?.map((l) => l.productId) ?? [];
+  const imageMap = await getProductImages(lineProductIds);
 
   if (completed === "1") {
     const count = order.lines?.reduce((a, l) => a + l.quantity, 0) ?? 0;
@@ -128,7 +134,15 @@ export default async function OrderDetailPage({
               }}
             >
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <div className="mcCartItemImg">🛍️</div>
+                {imageMap[line.productId] ? (
+                  <img
+                    src={imageMap[line.productId]!}
+                    alt={line.productName}
+                    style={{ width: 60, height: 60, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                  />
+                ) : (
+                  <div className="mcCartItemImg" style={{ fontSize: 28 }}>🛍️</div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4, marginBottom: "4px" }}>
                     {line.productName}
