@@ -32,3 +32,6 @@ app:
   security:
     jwks-url: ${SUPABASE_JWKS_URL:https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json}
     bff-secret-key: ${BFF_SECRET_KEY}
+  supabase:
+    url: ${SUPABASE_URL:https://wzdifkwupleogfixibiv.supabase.co}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}

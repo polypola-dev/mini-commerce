@@ -37,6 +37,7 @@ services:
       CORS_ALLOWED_ORIGINS: http://localhost:3000
       SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
       BFF_SECRET_KEY: ${BFF_SECRET_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     ports:
       - "18080:8080"
     depends_on:
