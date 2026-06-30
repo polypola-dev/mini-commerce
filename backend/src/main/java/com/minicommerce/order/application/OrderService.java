@@ -13,7 +13,7 @@ import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
 import com.minicommerce.order.application.port.out.ProductQueryPort.ProductInfo;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
-import jakarta.persistence.EntityNotFoundException;
+import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -87,9 +87,9 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, 
     @Transactional(readOnly = true)
     public Order getOrder(String orderId, String customerId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
         if (!order.getCustomerId().equals(customerId)) {
-            throw new EntityNotFoundException("Order not found: " + orderId);
+            throw new OrderNotFoundException(orderId);
         }
         return order;
     }
@@ -97,7 +97,7 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, 
     @Override
     public Order complete(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.markPaid();
         inventoryPort.confirmByOrderId(orderId);
         eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());

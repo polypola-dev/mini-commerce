@@ -19,6 +19,22 @@ public class ApiExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(BusinessException.class)
+    ProblemDetail handleBusiness(BusinessException exception) {
+        ErrorCode errorCode = exception.getErrorCode();
+        HttpStatus status = switch (errorCode.getType()) {
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case INVALID -> HttpStatus.BAD_REQUEST;
+            case FORBIDDEN -> HttpStatus.FORBIDDEN;
+            case INTERNAL -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, exception.getMessage());
+        problem.setTitle(status.getReasonPhrase());
+        problem.setProperty("code", errorCode.getCode());
+        return problem;
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     ProblemDetail handleNotFound(EntityNotFoundException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());

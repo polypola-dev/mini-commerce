@@ -2,6 +2,7 @@ package com.minicommerce.order.adapter.in.web;
 
 import com.minicommerce.global.PageResult;
 import com.minicommerce.order.application.port.out.OrderRepository;
+import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +47,7 @@ public class OrderAdminController {
     OrderResponse updateStatus(@PathVariable String orderId,
                                @Valid @RequestBody UpdateOrderStatusRequest request) {
         var order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.updateStatus(request.status());
         return OrderResponse.from(orderRepository.save(order));
     }
