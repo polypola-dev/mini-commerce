@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getNotifications, NotificationItem } from "@/lib/api";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -14,10 +14,23 @@ const STATUS_COLOR: Record<string, string> = {
   PENDING: "#6b7280",
 };
 
+function formatCount(count: number): string {
+  return count > 10 ? "10+" : String(count);
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getNotifications()
+      .then((data) => setCount(data.length))
+      .catch(() => setCount(0));
+  }, []);
+
+  if (count === 0) return null;
 
   async function handleToggle() {
     const nextOpen = !open;
@@ -27,6 +40,7 @@ export default function NotificationBell() {
       try {
         const data = await getNotifications();
         setNotifications(data);
+        setCount(data.length);
       } catch {
         setNotifications([]);
       } finally {
@@ -39,17 +53,14 @@ export default function NotificationBell() {
     <div style={{ position: "relative" }}>
       <button
         onClick={handleToggle}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "20px",
-          padding: "4px 8px",
-          lineHeight: 1,
-        }}
+        className="mcIconBtn"
         aria-label="알림 보기"
       >
-        🔔
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        <span className="mcIconBadge">{formatCount(count)}</span>
       </button>
 
       {open && (
