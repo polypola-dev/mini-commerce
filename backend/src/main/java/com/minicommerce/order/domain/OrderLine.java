@@ -1,42 +1,34 @@
 package com.minicommerce.order.domain;
 
-import com.minicommerce.order.domain.Order;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "order_lines")
+/**
+ * 주문 라인. 순수 POJO. id는 영속성 식별자로, 신규 생성 시 null이며 저장 후/복원 시 채워진다.
+ */
 public class OrderLine {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private final Long id;
+    private final String productId;
+    private final String productName;
+    private final BigDecimal unitPrice;
+    private final long quantity;
+    private final String selectedOptionValue;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "order_id")
-    private Order order;
-
-    private String productId;
-    private String productName;
-    private BigDecimal unitPrice;
-    private long quantity;
-    private String selectedOptionValue;
-
-    protected OrderLine() {
+    public OrderLine(String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
+        this(null, productId, productName, unitPrice, quantity, selectedOptionValue);
     }
 
-    public OrderLine(Order order, String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
-        this.order = order;
+    private OrderLine(Long id, String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
+        this.id = id;
         this.productId = productId;
         this.productName = productName;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
         this.selectedOptionValue = selectedOptionValue;
+    }
+
+    /** 영속성에서 복원할 때만 사용 (Mapper 전용). */
+    public static OrderLine reconstitute(Long id, String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
+        return new OrderLine(id, productId, productName, unitPrice, quantity, selectedOptionValue);
     }
 
     public Long getId() { return id; }

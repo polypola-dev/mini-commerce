@@ -21,29 +21,31 @@ public class OrderPersistenceAdapter implements OrderRepository {
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "totalAmount", "status");
 
     private final JpaOrderRepository jpaRepository;
+    private final OrderPersistenceMapper mapper;
 
-    public OrderPersistenceAdapter(JpaOrderRepository jpaRepository) {
+    public OrderPersistenceAdapter(JpaOrderRepository jpaRepository, OrderPersistenceMapper mapper) {
         this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
     }
 
     @Override
     public Order save(Order order) {
-        return jpaRepository.save(order);
+        return mapper.toDomain(jpaRepository.save(mapper.toEntity(order)));
     }
 
     @Override
     public Optional<Order> findById(String id) {
-        return jpaRepository.findByIdWithLines(id);
+        return jpaRepository.findByIdWithLines(id).map(mapper::toDomain);
     }
 
     @Override
     public List<Order> findAllByCustomerId(String customerId) {
-        return jpaRepository.findAllByCustomerIdWithLines(customerId);
+        return jpaRepository.findAllByCustomerIdWithLines(customerId).stream().map(mapper::toDomain).toList();
     }
 
     @Override
     public List<Order> findAll() {
-        return jpaRepository.findAllWithLines();
+        return jpaRepository.findAllWithLines().stream().map(mapper::toDomain).toList();
     }
 
     @Override
@@ -62,7 +64,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
             return new PageResult<>(List.of(), idsPage.getTotalElements(), idsPage.getTotalPages(), page, size);
         }
 
-        List<Order> orders = jpaRepository.findByIdsWithLines(ids);
+        List<Order> orders = jpaRepository.findByIdsWithLines(ids).stream().map(mapper::toDomain).toList();
         Map<String, Order> byId = orders.stream().collect(Collectors.toMap(Order::getId, o -> o));
         List<Order> sorted = ids.stream().map(byId::get).filter(Objects::nonNull).toList();
 

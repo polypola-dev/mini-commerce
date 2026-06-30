@@ -1,42 +1,27 @@
 package com.minicommerce.order.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "orders")
+/**
+ * 주문 애그리거트 루트. 순수 POJO — JPA/Spring 등 기술 의존을 갖지 않는다.
+ * 영속성 매핑은 adapter.out.persistence 의 JpaEntity + Mapper가 담당한다.
+ */
 public class Order {
-    @Id
-    private String id;
-
-    private String customerId;
-
-    @Enumerated(EnumType.STRING)
+    private final String id;
+    private final String customerId;
     private OrderStatus status;
+    private final BigDecimal totalAmount;
+    private final Instant createdAt;
 
-    private BigDecimal totalAmount;
-    private Instant createdAt;
+    private final String shippingRecipient;
+    private final String shippingPhone;
+    private final String shippingAddress;
+    private final String shippingDetailAddress;
+    private final String shippingZipCode;
 
-    private String shippingRecipient;
-    private String shippingPhone;
-    private String shippingAddress;
-    private String shippingDetailAddress;
-    private String shippingZipCode;
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderLine> lines = new ArrayList<>();
-
-    protected Order() {
-    }
+    private final List<OrderLine> lines;
 
     public Order(String id, String customerId, List<OrderLineDraft> lineDrafts) {
         this(id, customerId, lineDrafts, null, null, null, null, null);
@@ -53,13 +38,38 @@ public class Order {
                 .map(OrderLineDraft::subtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         this.lines = lineDrafts.stream()
-                .map(draft -> new OrderLine(this, draft.productId(), draft.productName(), draft.unitPrice(), draft.quantity(), draft.selectedOptionValue()))
+                .map(draft -> new OrderLine(draft.productId(), draft.productName(), draft.unitPrice(), draft.quantity(), draft.selectedOptionValue()))
                 .toList();
         this.shippingRecipient = shippingRecipient;
         this.shippingPhone = shippingPhone;
         this.shippingAddress = shippingAddress;
         this.shippingDetailAddress = shippingDetailAddress;
         this.shippingZipCode = shippingZipCode;
+    }
+
+    private Order(String id, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
+                  String shippingRecipient, String shippingPhone, String shippingAddress,
+                  String shippingDetailAddress, String shippingZipCode, List<OrderLine> lines) {
+        this.id = id;
+        this.customerId = customerId;
+        this.status = status;
+        this.totalAmount = totalAmount;
+        this.createdAt = createdAt;
+        this.shippingRecipient = shippingRecipient;
+        this.shippingPhone = shippingPhone;
+        this.shippingAddress = shippingAddress;
+        this.shippingDetailAddress = shippingDetailAddress;
+        this.shippingZipCode = shippingZipCode;
+        this.lines = lines;
+    }
+
+    /** 영속성에서 도메인 객체를 복원할 때만 사용 (Mapper 전용). */
+    public static Order reconstitute(String id, String customerId, OrderStatus status, BigDecimal totalAmount,
+                                     Instant createdAt, String shippingRecipient, String shippingPhone,
+                                     String shippingAddress, String shippingDetailAddress, String shippingZipCode,
+                                     List<OrderLine> lines) {
+        return new Order(id, customerId, status, totalAmount, createdAt, shippingRecipient, shippingPhone,
+                shippingAddress, shippingDetailAddress, shippingZipCode, lines);
     }
 
     public String getId() { return id; }
