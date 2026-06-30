@@ -11,22 +11,47 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    setNeedsConfirm(false);
+    setResendDone(false);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      if (error.message.includes("Email not confirmed")) {
+        setNeedsConfirm(true);
+        setError("이메일 인증이 필요해요. 가입 시 발송된 메일을 확인해 주세요.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        setError("이메일 또는 비밀번호가 올바르지 않아요.");
+      } else {
+        setError("로그인 중 오류가 발생했어요. 다시 시도해 주세요.");
+      }
       setPending(false);
     } else {
       router.push("/");
       router.refresh();
     }
+  }
+
+  async function handleResend() {
+    setResending(true);
+    setResendDone(false);
+    const supabase = createClient();
+    await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setResending(false);
+    setResendDone(true);
   }
 
   async function handleGoogleLogin() {
@@ -93,6 +118,22 @@ export default function LoginPage() {
             />
 
             {error && <div className="mcErrorText">{error}</div>}
+            {needsConfirm && (
+              <div style={{ textAlign: "center" }}>
+                {resendDone ? (
+                  <span className="mcSuccessText">인증 메일을 재발송했어요. 메일함을 확인해 주세요.</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="mcTextBtn"
+                    onClick={handleResend}
+                    disabled={resending}
+                  >
+                    {resending ? "발송 중…" : "인증 메일 재발송"}
+                  </button>
+                )}
+              </div>
+            )}
 
             <div style={{ marginTop: "4px" }}>
               <button type="submit" className="mcBtn mcBtnPrimary" disabled={pending}>

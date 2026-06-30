@@ -832,6 +832,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   height: 48px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-hairline);
@@ -1157,6 +1158,22 @@ h1 {
   bottom: 0;
   max-width: 480px;
   margin: 0 auto;
+}
+
+.mcTextBtn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mcTextBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .mcBtn {
@@ -1943,17 +1960,20 @@ h1 {
   width: 20px;
   height: 20px;
   border-radius: 5px;
-  background: var(--color-hairline);
+  background: transparent;
+  border: 1.5px solid var(--color-hairline);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: transparent;
   font-size: 12px;
   flex: none;
 }
 
 .mcAgreeAllCheck.checked {
   background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
 }
 
 .mcAgreeAll span:last-child {
@@ -2566,4 +2586,63 @@ h1 {
 
 .mcMaintenanceFooter {
   padding: 0 20px 24px;
+}
+
+/* ==========================================================================
+   Signup Page — validation feedback & term accordion
+   ========================================================================== */
+
+.mcSuccessText {
+  font-size: 13px;
+  color: #1f8a5b;
+  margin-top: 4px;
+}
+
+.mcEmailHint {
+  font-size: 12px;
+  color: var(--color-muted-soft);
+  margin-top: 6px;
+}
+
+.mcAgreeItemRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-left: 4px;
+}
+
+.mcAgreeItemRow .mcAgreeItem {
+  flex: none;
+  padding: 0;
+}
+
+.mcAgreeTermBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 0 4px 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: var(--color-body);
+}
+
+.mcAgreeTermArrow {
+  flex: none;
+  font-size: 11px;
+  color: var(--color-muted-soft);
+}
+
+.mcAgreeTermContent {
+  background: #f9f9f9;
+  border-bottom: 1px solid var(--color-hairline-soft);
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin-left: 4px;
 }
