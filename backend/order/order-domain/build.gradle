@@ -1,4 +1,10 @@
 // jakarta.persistence / spring-web 의존 금지 (Phase 7 ArchUnit으로 강제 예정)
 dependencies {
     implementation project(':shared-core')
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-tx'
+
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
 }

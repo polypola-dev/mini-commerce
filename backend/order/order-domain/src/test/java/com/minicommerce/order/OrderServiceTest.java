@@ -12,7 +12,6 @@ import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
 import com.minicommerce.order.application.port.out.ProductQueryPort.ProductInfo;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -138,11 +137,11 @@ class OrderServiceTest {
         );
 
         when(inventoryPort.reserve(any())).thenReturn(expectedHold);
-        when(productQueryPort.findProduct(productId)).thenThrow(new EntityNotFoundException("Product not found: " + productId));
+        when(productQueryPort.findProduct(productId)).thenThrow(new IllegalStateException("Product not found: " + productId));
 
         // when & then
         assertThatThrownBy(() -> orderService.place(command, "cust-1"))
-                .isInstanceOf(EntityNotFoundException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Product not found");
 
         verify(inventoryPort).release(expectedHold);
