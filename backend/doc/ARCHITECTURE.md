@@ -3,15 +3,28 @@
 > 새 기능 개발 시 **헥사고날 도메인 보호 원칙**이 깨지지 않게 하는 강제 규칙이다.
 > 코드를 작성하기 전에 이 규칙을 먼저 따른다. 위반은 버그가 아니라 차단 대상이다.
 
+이 문서는 backend 전체의 **목표 아키텍처와 공통 규칙**을 담는다. 컨텍스트(도메인)별
+현재 구현 상태·부채·전환 계획은 [`architecture/`](architecture/) 하위 개별 문서를 본다.
+
 ## 스타일
 
 - **헥사고날(포트 & 어댑터) + 모듈러 모놀리스(Spring Modulith)**, 추후 MSA 분리를 전제.
 - 컨텍스트(=바운디드 컨텍스트) 패키지 루트: `com.minicommerce.<context>`
   (`order`, `catalog`, `inventory`, `cart`, `review`, `notification`).
+- **이 스타일은 목표 패턴이다.** 아래 "컨텍스트별 현황"에서 실제 적용 여부를 확인한다.
+  전체가 이미 이 구조를 따른다고 가정하지 말 것.
 
-## 레이어 & 의존 방향
+## 빌드 구조
 
-컨텍스트마다 동일 구조. 의존은 **항상 안쪽(domain)으로만** 흐른다.
+- 현재: **단일 Gradle 모듈**(`mini-commerce-backend`), 패키지 단위로 컨텍스트/레이어를 구분.
+- 목표(ADR-004 Step B, 진행 중 — 진행상황은 [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조):
+  `shared-core` / `shared-web` / `catalog` / `inventory` / `order-domain` / `order-infra` /
+  `shop-api`(BOOT) / `order-admin`(BOOT) / `order-batch`(BOOT) 멀티모듈 분리.
+  추출 범위는 **order 인접부만** — `cart`/`review`/`notification`은 당분간 `shop-api`에 잔류.
+
+## 레이어 & 의존 방향 (목표 패턴)
+
+컨텍스트마다 동일 구조를 지향한다. 의존은 **항상 안쪽(domain)으로만** 흐른다.
 
 ```
 adapter.in(web) → application → domain ← application ← adapter.out(persistence/외부연동)
@@ -23,6 +36,8 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 - `adapter/out/**` — 영속성·외부연동 구현체 (Driven Adapter).
 
 ## 절대 규칙 (도메인 보호)
+
+새 코드, 그리고 레거시 컨텍스트를 이 패턴으로 전환할 때 반드시 지킨다.
 
 1. **`domain` 패키지에 기술 애너테이션 금지** — `@Entity`, `@Table`,
    `jakarta.persistence.*`, `org.springframework.*` 사용 안 함. 도메인은
@@ -52,13 +67,21 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 - 별도 부팅 모듈(admin·batch)을 **별도 서버로 띄우는 순간** in-process 이벤트는 불가 →
   브로커가 필요한 시점. 단순 스케줄 잡이면 `@Scheduled`로 같은 앱 안에서 처리(트리거 없으면 분리 금지).
 
-## 현재 상태 / 알려진 부채
+## 컨텍스트별 현황
 
-- 빌드: **단일 Gradle 모듈**, 패키지 단위 헥사고날. (목표: 멀티모듈 —
-  `order-domain` / `order-infra` / `shop-api` / `order-admin` / `order-batch` 분리.)
-- ⚠️ `order.domain.Order` / `OrderLine`이 아직 `@Entity` (규칙 1·2 위반, 리팩터링 예정).
-  **새 도메인 객체는 이 패턴을 복제하지 말 것.**
-- 깨끗한 참조 지점: `order/application/port/*`, `adapter/out` 분리 구조.
+| 컨텍스트 | 구조 | 상태 | 상세 문서 |
+|---|---|---|---|
+| `order` | 헥사고날(domain/application/adapter) | ✅ 도메인 순수화 완료(POJO), 멀티모듈 전환 진행 중 | [architecture/order.md](architecture/order.md) |
+| `catalog` | 레거시 플랫(Entity+Controller+Service+Repository) | ⚠️ 미전환 | [architecture/catalog.md](architecture/catalog.md) |
+| `inventory` | 레거시 플랫 | ⚠️ 미전환 | [architecture/inventory.md](architecture/inventory.md) |
+| `cart` | 레거시 플랫 | ⚠️ 미전환 | [architecture/cart.md](architecture/cart.md) |
+| `review` | 레거시 플랫 | ⚠️ 미전환 | [architecture/review.md](architecture/review.md) |
+| `notification` | 레거시 플랫 | ⚠️ 미전환 | [architecture/notification.md](architecture/notification.md) |
+| `global`(공통) | 공용 패키지 | 향후 shared-core/shared-web 분리 대상 | [architecture/shared.md](architecture/shared.md) |
+
+**레거시 컨텍스트를 건드릴 때**: 기존 패턴을 그대로 복제하지 말 것. 최소한 새로 추가하는
+코드만이라도 위 "절대 규칙"을 따르도록 하고, 전체 전환은 별도 계획 없이 진행하지 않는다
+(범위가 커서 order처럼 안전망 테스트 → 단계별 전환이 필요).
 
 ## 새 기능 추가 체크리스트
 
