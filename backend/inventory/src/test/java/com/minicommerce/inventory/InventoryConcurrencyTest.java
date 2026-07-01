@@ -31,7 +31,7 @@ class InventoryConcurrencyTest {
         StringRedisTemplate template = new StringRedisTemplate();
         template.setConnectionFactory(connectionFactory);
         template.afterPropertiesSet();
-        inventoryService = new InventoryService(template);
+        inventoryService = new InventoryService(template, null);
     }
 
     @AfterAll

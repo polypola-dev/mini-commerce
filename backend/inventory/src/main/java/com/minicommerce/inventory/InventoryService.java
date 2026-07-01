@@ -1,5 +1,6 @@
 package com.minicommerce.inventory;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -13,6 +14,7 @@ public class InventoryService {
     private static final Duration RESERVATION_TTL = Duration.ofMinutes(10);
 
     private final StringRedisTemplate redisTemplate;
+    private final InventoryReservationRepository reservationRepository;
 
     private final DefaultRedisScript<Long> reserveScript = new DefaultRedisScript<>("""
             local reservationKey = KEYS[#KEYS]
@@ -68,8 +70,9 @@ public class InventoryService {
             return 1
             """, Long.class);
 
-    public InventoryService(StringRedisTemplate redisTemplate) {
+    public InventoryService(StringRedisTemplate redisTemplate, InventoryReservationRepository reservationRepository) {
         this.redisTemplate = redisTemplate;
+        this.reservationRepository = reservationRepository;
     }
 
     public void initializeStockIfAbsent(String productId, long stock) {
@@ -131,6 +134,20 @@ public class InventoryService {
     public boolean confirm(String reservationId) {
         Long result = redisTemplate.execute(confirmScript, List.of(reservationKey(reservationId)));
         return result != null && result == 1L;
+    }
+
+    public void createReservationForOrder(String orderId, String reservationId, Instant expiresAt, List<InventoryItem> items) {
+        List<ReservationLine> lines = items.stream()
+                .map(item -> new ReservationLine(item.productId(), item.quantity()))
+                .toList();
+        reservationRepository.save(new InventoryReservation(reservationId, orderId, expiresAt, lines));
+    }
+
+    public void confirmByOrderId(String orderId) {
+        InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
+        reservation.confirm();
+        confirm(reservation.getId());
     }
 
     private static List<String> stockKeys(List<InventoryItem> items) {

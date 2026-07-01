@@ -42,4 +42,10 @@ subprojects {
     tasks.withType(Test) {
         useJUnitPlatform()
     }
+
+    tasks.withType(JavaCompile) {
+        // Spring Boot 플러그인은 이 옵션을 자동 적용하지만, 라이브러리 모듈(비-BOOT)에는
+        // 적용되지 않아 @RequestParam 등 파라미터명 리플렉션이 필요한 코드가 깨진다.
+        options.compilerArgs << '-parameters'
+    }
 }

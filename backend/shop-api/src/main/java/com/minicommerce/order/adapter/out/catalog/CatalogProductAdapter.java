@@ -1,35 +1,27 @@
 package com.minicommerce.order.adapter.out.catalog;
 
-import com.minicommerce.catalog.Product;
-import com.minicommerce.catalog.ProductOption;
-import com.minicommerce.catalog.ProductOptionRepository;
-import com.minicommerce.catalog.ProductRepository;
+import com.minicommerce.catalog.ProductReader;
 import com.minicommerce.order.application.port.out.ProductQueryPort;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CatalogProductAdapter implements ProductQueryPort {
 
-    private final ProductRepository productRepository;
-    private final ProductOptionRepository productOptionRepository;
+    private final ProductReader productReader;
 
-    public CatalogProductAdapter(ProductRepository productRepository, ProductOptionRepository productOptionRepository) {
-        this.productRepository = productRepository;
-        this.productOptionRepository = productOptionRepository;
+    public CatalogProductAdapter(ProductReader productReader) {
+        this.productReader = productReader;
     }
 
     @Override
     public ProductInfo findProduct(String productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
-        return new ProductInfo(product.getId(), product.getName(), product.getPrice());
+        ProductReader.ProductInfo info = productReader.findProduct(productId);
+        return new ProductInfo(info.id(), info.name(), info.price());
     }
 
     @Override
     public OptionInfo findOption(String optionId) {
-        ProductOption option = productOptionRepository.findById(optionId)
-                .orElseThrow(() -> new EntityNotFoundException("Product option not found: " + optionId));
-        return new OptionInfo(option.getAdditionalPrice(), option.getOptionValue());
+        ProductReader.OptionInfo info = productReader.findOption(optionId);
+        return new OptionInfo(info.additionalPrice(), info.optionValue());
     }
 }
