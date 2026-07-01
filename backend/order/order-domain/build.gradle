@@ -1,0 +1,4 @@
+// jakarta.persistence / spring-web 의존 금지 (Phase 7 ArchUnit으로 강제 예정)
+dependencies {
+    implementation project(':shared-core')
+}

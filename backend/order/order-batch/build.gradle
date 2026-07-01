@@ -1,0 +1,9 @@
+// Phase 6에서 별도 부팅 모듈(BOOT)로 전환 예정. 현재는 라이브러리 스켈레톤.
+dependencies {
+    implementation project(':shared-core')
+    implementation project(':shared-web')
+    implementation project(':order:order-domain')
+    implementation project(':order:order-infra')
+    implementation project(':catalog')
+    implementation project(':inventory')
+}

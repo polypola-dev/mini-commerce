@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':shared-core')
+    implementation project(':order:order-domain')
+    implementation project(':catalog')
+    implementation project(':inventory')
+}

@@ -13,3 +13,13 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = 'mini-commerce-backend'
+
+include 'shared-core'
+include 'shared-web'
+include 'catalog'
+include 'inventory'
+include 'shop-api'
+include 'order:order-domain'
+include 'order:order-infra'
+include 'order:order-admin'
+include 'order:order-batch'
