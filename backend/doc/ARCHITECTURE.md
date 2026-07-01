@@ -16,10 +16,12 @@
 
 ## 빌드 구조
 
-- 현재: **단일 Gradle 모듈**(`mini-commerce-backend`), 패키지 단위로 컨텍스트/레이어를 구분.
-- 목표(ADR-004 Step B, 진행 중 — 진행상황은 [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조):
-  `shared-core` / `shared-web` / `catalog` / `inventory` / `order-domain` / `order-infra` /
-  `shop-api`(BOOT) / `order-admin`(BOOT) / `order-batch`(BOOT) 멀티모듈 분리.
+- 현재: **Gradle 멀티모듈**(ADR-004 Step B, 진행 중 — 진행상황은
+  [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조).
+  `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory` /
+  `order/order-domain` / `order/order-infra`는 빈 스켈레톤 상태(Phase 4~5 예정), 코드는 아직
+  `shop-api`에 있음. `shop-api`가 현재 유일한 BOOT 모듈이고 `order/order-admin` /
+  `order/order-batch`는 메인 클래스가 생기는 Phase 6까지 일반 라이브러리 모듈로 유예.
   추출 범위는 **order 인접부만** — `cart`/`review`/`notification`은 당분간 `shop-api`에 잔류.
 
 ## 레이어 & 의존 방향 (목표 패턴)
@@ -77,7 +79,7 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 | `cart` | 레거시 플랫 | ⚠️ 미전환 | [architecture/cart.md](architecture/cart.md) |
 | `review` | 레거시 플랫 | ⚠️ 미전환 | [architecture/review.md](architecture/review.md) |
 | `notification` | 레거시 플랫 | ⚠️ 미전환 | [architecture/notification.md](architecture/notification.md) |
-| `global`(공통) | 공용 패키지 | 향후 shared-core/shared-web 분리 대상 | [architecture/shared.md](architecture/shared.md) |
+| `global`(공통) | 공용 패키지 | ✅ shared-core/shared-web 모듈 분리 완료 | [architecture/shared.md](architecture/shared.md) |
 
 **레거시 컨텍스트를 건드릴 때**: 기존 패턴을 그대로 복제하지 말 것. 최소한 새로 추가하는
 코드만이라도 위 "절대 규칙"을 따르도록 하고, 전체 전환은 별도 계획 없이 진행하지 않는다
