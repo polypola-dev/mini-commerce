@@ -1,27 +1,32 @@
 # `order` 컨텍스트
 
-**상태**: 헥사고날 도메인 순수화 완료(Phase 0–1). 멀티모듈 분리(Phase 2–7)는 진행 중 —
-체크리스트/현황은 [GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1)
+**상태**: 헥사고날 도메인 순수화 완료(Phase 0–1) + 모듈 분리 완료(Phase 2–5, 2026-07-02).
+남은 건 부팅 모듈(order-admin/order-batch) 구성(Phase 6)과 경계 강제(Phase 7). 체크리스트/현황은
+[GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1)
 "order 헥사고날 멀티모듈 전환 (Phase 0~7)" 참조.
 결정 배경은 Obsidian ADR-004("order 서비스 헥사고날 + 멀티모듈 전환 및 MSA 대비").
 
-## 패키지 구조
+## 패키지 구조 (모듈 경계 포함)
 
 ```
-order/
+order/order-domain/          (Gradle 모듈 — jakarta.persistence·spring-web 의존 0)
 ├── domain/                 순수 POJO. 기술 의존 0.
 │   ├── Order, OrderLine, OrderLineDraft, OrderStatus
 │   └── exception/          OrderNotFoundException, OrderErrorCode
-├── application/             유즈케이스 구현 + 포트
+├── application/             유즈케이스 구현 + 포트 (spring-context/spring-tx만 의존)
 │   ├── OrderService, PlaceOrderCommand
 │   ├── port/in/             PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase
 │   └── port/out/            OrderRepository, InventoryPort, ProductQueryPort, OrderEventPublisher
-├── adapter/in/web/          OrderController, OrderAdminController, DTO
-├── adapter/out/persistence/ OrderJpaEntity, OrderLineJpaEntity, OrderPersistenceMapper, OrderPersistenceAdapter
-├── adapter/out/catalog/     CatalogProductAdapter (ProductQueryPort 구현, catalog 접근)
-├── adapter/out/inventory/   InventoryAdapter (InventoryPort 구현, inventory 접근)
-├── adapter/out/event/       SpringOrderEventAdapter
 └── OrderPlacedEvent, OrderPaidEvent  도메인 이벤트 (order가 소유)
+
+order/order-infra/           (Gradle 모듈 — order-domain, catalog, inventory에 의존)
+├── adapter/out/persistence/ OrderJpaEntity, OrderLineJpaEntity, OrderPersistenceMapper, OrderPersistenceAdapter
+├── adapter/out/catalog/     CatalogProductAdapter (ProductQueryPort 구현, catalog의 ProductReader 공개 API 경유)
+├── adapter/out/inventory/   InventoryAdapter (InventoryPort 구현, inventory의 InventoryService 공개 API 경유)
+└── adapter/out/event/       SpringOrderEventAdapter
+
+shop-api/                    (BOOT 모듈 — order-domain/order-infra에 의존)
+└── adapter/in/web/          OrderController, OrderAdminController, DTO
 ```
 
 ## 완료된 사항 (Phase 0–1)
@@ -34,11 +39,12 @@ order/
   도메인 예외(`OrderNotFoundException`, `BusinessException` 기반)로 교체.
 - Modularity.verify() 통과 — global↔order 순환은 공통 베이스 예외로 해소, order→global 단방향 유지.
 
-## 남은 계획 (Phase 2–7, 멀티모듈 전환)
+## 남은 계획 (Phase 6–7, 멀티모듈 전환)
 
-`shared-core`/`shared-web` 분리, `catalog`/`inventory` 라이브러리화, `order-domain`/`order-infra`
-분리, `shop-api`/`order-admin`/`order-batch` 부팅 모듈 분리, ArchUnit 경계 강제. 상세 Phase별
-작업 내용과 진행 체크박스는 GitHub Issue를 단일 소스로 유지한다(이 문서에 복제하지 않음).
+`shared-core`/`shared-web` 분리(Phase 3), `catalog`/`inventory` 라이브러리화(Phase 4),
+`order-domain`/`order-infra` 분리(Phase 5)는 완료. 남은 건 `order-admin`/`order-batch`
+부팅 모듈 분리(Phase 6), ArchUnit 경계 강제(Phase 7). 상세 Phase별 작업 내용과 진행
+체크박스는 GitHub Issue를 단일 소스로 유지한다(이 문서에 복제하지 않음).
 
 ## 크로스 컨텍스트 접근
 

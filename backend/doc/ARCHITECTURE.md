@@ -19,8 +19,8 @@
 - 현재: **Gradle 멀티모듈**(ADR-004 Step B, 진행 중 — 진행상황은
   [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조).
   `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory`
-  분리 완료(Phase 4, 공개 API `ProductReader`/`InventoryService` 경유). `order/order-domain` /
-  `order/order-infra`는 빈 스켈레톤 상태(Phase 5 예정), 코드는 아직 `shop-api`에 있음.
+  분리 완료(Phase 4, 공개 API `ProductReader`/`InventoryService` 경유). `order/order-domain`
+  (jakarta.persistence·spring-web 의존 0) / `order/order-infra` 분리 완료(Phase 5).
   `shop-api`가 현재 유일한 BOOT 모듈이고 `order/order-admin` / `order/order-batch`는
   메인 클래스가 생기는 Phase 6까지 일반 라이브러리 모듈로 유예.
   추출 범위는 **order 인접부만** — `cart`/`review`/`notification`은 당분간 `shop-api`에 잔류.
