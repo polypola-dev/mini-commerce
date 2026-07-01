@@ -18,10 +18,11 @@
 
 - 현재: **Gradle 멀티모듈**(ADR-004 Step B, 진행 중 — 진행상황은
   [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조).
-  `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory` /
-  `order/order-domain` / `order/order-infra`는 빈 스켈레톤 상태(Phase 4~5 예정), 코드는 아직
-  `shop-api`에 있음. `shop-api`가 현재 유일한 BOOT 모듈이고 `order/order-admin` /
-  `order/order-batch`는 메인 클래스가 생기는 Phase 6까지 일반 라이브러리 모듈로 유예.
+  `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory`
+  분리 완료(Phase 4, 공개 API `ProductReader`/`InventoryService` 경유). `order/order-domain` /
+  `order/order-infra`는 빈 스켈레톤 상태(Phase 5 예정), 코드는 아직 `shop-api`에 있음.
+  `shop-api`가 현재 유일한 BOOT 모듈이고 `order/order-admin` / `order/order-batch`는
+  메인 클래스가 생기는 Phase 6까지 일반 라이브러리 모듈로 유예.
   추출 범위는 **order 인접부만** — `cart`/`review`/`notification`은 당분간 `shop-api`에 잔류.
 
 ## 레이어 & 의존 방향 (목표 패턴)
@@ -74,8 +75,8 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 | 컨텍스트 | 구조 | 상태 | 상세 문서 |
 |---|---|---|---|
 | `order` | 헥사고날(domain/application/adapter) | ✅ 도메인 순수화 완료(POJO), 멀티모듈 전환 진행 중 | [architecture/order.md](architecture/order.md) |
-| `catalog` | 레거시 플랫(Entity+Controller+Service+Repository) | ⚠️ 미전환 | [architecture/catalog.md](architecture/catalog.md) |
-| `inventory` | 레거시 플랫 | ⚠️ 미전환 | [architecture/inventory.md](architecture/inventory.md) |
+| `catalog` | 레거시 플랫(Entity+Controller+Service+Repository) | ✅ Gradle 모듈 분리 완료, 내부는 ⚠️ 미전환 | [architecture/catalog.md](architecture/catalog.md) |
+| `inventory` | 레거시 플랫 | ✅ Gradle 모듈 분리 완료, 내부는 ⚠️ 미전환 | [architecture/inventory.md](architecture/inventory.md) |
 | `cart` | 레거시 플랫 | ⚠️ 미전환 | [architecture/cart.md](architecture/cart.md) |
 | `review` | 레거시 플랫 | ⚠️ 미전환 | [architecture/review.md](architecture/review.md) |
 | `notification` | 레거시 플랫 | ⚠️ 미전환 | [architecture/notification.md](architecture/notification.md) |
