@@ -1,3 +1,11 @@
 dependencies {
     implementation project(':shared-core')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'com.auth0:java-jwt:4.4.0'
+    implementation 'com.auth0:jwks-rsa:0.22.1'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-validation'
 }

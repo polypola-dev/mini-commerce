@@ -1,6 +1,5 @@
 package com.minicommerce.global;
 
-import com.minicommerce.inventory.OutOfStockException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -30,11 +29,6 @@ class ApiExceptionHandlerTest {
     @RestController
     static class TestController {
 
-        @GetMapping("/test/out-of-stock")
-        void outOfStock() {
-            throw new OutOfStockException("prod-1");
-        }
-
         @GetMapping("/test/not-found")
         void notFound() {
             throw new EntityNotFoundException("Product not found");
@@ -62,20 +56,6 @@ class ApiExceptionHandlerTest {
                 .setControllerAdvice(new ApiExceptionHandler())
                 .setValidator(validator)
                 .build();
-    }
-
-    // ----------------------------------------------------------------
-    // OutOfStockException → 409 Conflict
-    // ----------------------------------------------------------------
-
-    @Test
-    @DisplayName("OutOfStockException → 409 Conflict, title 'Out of stock', type 'out-of-stock' 포함")
-    void outOfStockException_returns409WithProblemDetail() throws Exception {
-        mockMvc.perform(get("/test/out-of-stock"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.title").value("Out of stock"))
-                .andExpect(jsonPath("$.type").value(
-                        org.hamcrest.Matchers.containsString("out-of-stock")));
     }
 
     // ----------------------------------------------------------------
