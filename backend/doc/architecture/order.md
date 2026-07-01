@@ -42,8 +42,10 @@ shop-api/                    (BOOT 모듈 — order-domain/order-infra에 의존
 ## 남은 계획 (Phase 6–7, 멀티모듈 전환)
 
 `shared-core`/`shared-web` 분리(Phase 3), `catalog`/`inventory` 라이브러리화(Phase 4),
-`order-domain`/`order-infra` 분리(Phase 5)는 완료. 남은 건 `order-admin`/`order-batch`
-부팅 모듈 분리(Phase 6), ArchUnit 경계 강제(Phase 7). 상세 Phase별 작업 내용과 진행
+`order-domain`/`order-infra` 분리(Phase 5)는 완료. `order-admin`/`order-batch`는 BOOT
+스켈레톤만 완료(Phase 6, 크로스프로세스 이벤트 문제가 실질 게이트). ArchUnit 경계 강제
+(Phase 7)는 `order-domain`의 jpa/spring-web 의존 금지 + 의존 방향 룰(`OrderModuleArchTest`,
+shop-api)까지 완료, 부팅 스모크·Modulith verify는 아직. 상세 Phase별 작업 내용과 진행
 체크박스는 GitHub Issue를 단일 소스로 유지한다(이 문서에 복제하지 않음).
 
 ## 크로스 컨텍스트 접근
