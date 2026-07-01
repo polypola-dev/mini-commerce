@@ -1,4 +1,4 @@
-// Phase 6에서 별도 부팅 모듈(BOOT)로 전환 예정. 현재는 라이브러리 스켈레톤.
+// Phase 6: BOOT 모듈 스켈레톤. 실제 어드민 전용 컨트롤러/빈 조립은 후속 작업.
 dependencies {
     implementation project(':shared-core')
     implementation project(':shared-web')
@@ -6,4 +6,8 @@ dependencies {
     implementation project(':order:order-infra')
     implementation project(':catalog')
     implementation project(':inventory')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
