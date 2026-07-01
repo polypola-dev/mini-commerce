@@ -21,8 +21,9 @@
   `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory`
   분리 완료(Phase 4, 공개 API `ProductReader`/`InventoryService` 경유). `order/order-domain`
   (jakarta.persistence·spring-web 의존 0) / `order/order-infra` 분리 완료(Phase 5).
-  `shop-api`가 현재 유일한 BOOT 모듈이고 `order/order-admin` / `order/order-batch`는
-  메인 클래스가 생기는 Phase 6까지 일반 라이브러리 모듈로 유예.
+  `order/order-admin` / `order/order-batch`도 BOOT 모듈로 전환 완료(Phase 6 스켈레톤,
+  최소 `@SpringBootApplication` 진입점만 — 실제 컨트롤러/배치 Job 이관은 크로스프로세스
+  이벤트 문제 해결 후 진행 예정, 아래 참조).
   추출 범위는 **order 인접부만** — `cart`/`review`/`notification`은 당분간 `shop-api`에 잔류.
 
 ## 레이어 & 의존 방향 (목표 패턴)
