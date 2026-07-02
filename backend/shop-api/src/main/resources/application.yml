@@ -37,6 +37,11 @@ spring:
           enabled: true
 
 app:
+  catalog:
+    # order가 catalog를 REST로 조회하는 base-url(ADR-005 S2). 지금은 order/catalog가 같은
+    # 프로세스(shop-api)라 로컬 루프백. order-service가 별도 프로세스로 분리되면(S3) catalog의
+    # 실제 호스트로 교체한다.
+    base-url: ${CATALOG_BASE_URL:http://localhost:8080}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:

@@ -1,10 +1,14 @@
 dependencies {
     implementation project(':shared-core')
     implementation project(':order:order-domain')
-    implementation project(':catalog')
     implementation project(':inventory')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // catalog는 REST로만 호출한다(ADR-005 S2) — 모듈 의존 대신 spring-web의 RestClient만 사용.
+    // Jackson은 명시 의존해야 한다(shop-api를 통해 전이적으로 딸려오는 것에 기대지 않음) —
+    // 안 하면 JSON HttpMessageConverter가 없어 RestClient가 UnknownContentTypeException을 던진다.
+    implementation 'org.springframework:spring-web'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'com.h2database:h2'
