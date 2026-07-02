@@ -11,11 +11,15 @@ import com.minicommerce.order.application.port.out.ProductQueryPort;
 import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
 import com.minicommerce.order.application.port.out.ProductQueryPort.ProductInfo;
 import com.minicommerce.order.domain.Order;
+import com.minicommerce.order.domain.OrderLine;
 import com.minicommerce.order.domain.OrderLineDraft;
+import com.minicommerce.order.domain.OrderStatus;
+import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -146,5 +150,83 @@ class OrderServiceTest {
 
         verify(inventoryPort).release(expectedHold);
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("성공: 결제 완료 시 주문 상태가 PAID로 저장되고 재고 확정 후 OrderPaid 이벤트가 발행된다")
+    void completePayment_Success() {
+        // given
+        Order pendingOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // when
+        Order result = orderService.complete("order-1");
+
+        // then
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
+        verify(inventoryPort).confirmByOrderId("order-1");
+        verify(eventPublisher).publishOrderPaid(eq("order-1"), eq("cust-1"), any());
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 주문을 결제 완료하면 OrderNotFoundException, 저장하지 않는다")
+    void completePayment_OrderNotFound_throws() {
+        when(orderRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.complete("missing"))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("성공: 만료 처리 시 PENDING_PAYMENT 주문이 EXPIRED로 저장된다")
+    void expire_pendingOrder_marksExpired() {
+        // given
+        Order pendingOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
+
+        // when
+        orderService.expire("order-1");
+
+        // then
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.EXPIRED);
+    }
+
+    @Test
+    @DisplayName("이미 결제된 주문은 만료 처리해도 상태가 바뀌지 않는다(가드)")
+    void expire_paidOrder_doesNotChangeStatus() {
+        // given
+        Order paidOrder = Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+                Instant.now(), null, null, null, null, null, List.<OrderLine>of());
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder));
+
+        // when
+        orderService.expire("order-1");
+
+        // then
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 주문은 만료 처리를 조용히 무시한다(멱등)")
+    void expire_orderNotFound_doesNothing() {
+        when(orderRepository.findById("missing")).thenReturn(Optional.empty());
+
+        orderService.expire("missing");
+
+        verify(orderRepository, never()).save(any());
     }
 }

@@ -90,6 +90,13 @@ public class Order {
         }
     }
 
+    /** 결제 대기 중 재고 예약이 만료됐을 때(이탈/타임아웃) 리퍼가 호출한다. 이미 결제된 주문은 건드리지 않는다. */
+    public void markExpired() {
+        if (status == OrderStatus.PENDING_PAYMENT) {
+            status = OrderStatus.EXPIRED;
+        }
+    }
+
     public void updateStatus(OrderStatus newStatus) {
         this.status = newStatus;
     }

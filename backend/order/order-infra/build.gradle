@@ -9,6 +9,10 @@ dependencies {
     // 안 하면 JSON HttpMessageConverter가 없어 RestClient가 UnknownContentTypeException을 던진다.
     implementation 'org.springframework:spring-web'
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    // ReservationExpiredEventListener의 @ApplicationModuleListener용. 이벤트 발행 레지스트리
+    // 런타임 구현(JPA)은 BOOT 앱(shop-api)이 spring-modulith-starter-jpa로 이미 제공하므로,
+    // 라이브러리 모듈인 order-infra는 컴파일에 필요한 API만 있으면 된다.
+    implementation "org.springframework.modulith:spring-modulith-events-api:${springModulithVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'com.h2database:h2'

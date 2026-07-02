@@ -1,6 +1,7 @@
 package com.minicommerce.order.application;
 
 import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.ExpireOrderUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import com.minicommerce.order.application.port.out.InventoryPort;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase {
+public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase {
 
     private final ProductQueryPort productQueryPort;
     private final InventoryPort inventoryPort;
@@ -99,8 +100,17 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.markPaid();
+        order = orderRepository.save(order);
         inventoryPort.confirmByOrderId(orderId);
         eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());
         return order;
+    }
+
+    @Override
+    public void expire(String orderId) {
+        orderRepository.findById(orderId).ifPresent(order -> {
+            order.markExpired();
+            orderRepository.save(order);
+        });
     }
 }

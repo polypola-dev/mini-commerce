@@ -41,6 +41,10 @@ public class InventoryReservation {
         return id;
     }
 
+    public String getOrderId() {
+        return orderId;
+    }
+
     public ReservationStatus getStatus() {
         return status;
     }
