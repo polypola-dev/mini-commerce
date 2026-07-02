@@ -10,10 +10,10 @@ ADR-004의 단일 DB 결정을 부분 supersede).
 
 ## 현재 패키지 구조 (모듈 경계 포함)
 
-> **현 단계: S0 (MSA 착수 전)** — order/inventory는 아직 `shop-api` 프로세스에 함께 있고, order 웹
-> 계층(`OrderController`)도 shop-api에 잔류. 아래는 **지금 실제 코드** 기준이며, 아래 [MSA 목표
-> 구조](#msa-목표-구조-서비스그룹-b-전략)로 스테이지가 진행될 때마다 이 트리를 갱신한다(목표형으로
-> 미리 고치지 않는다 — 문서가 현실을 앞질러 거짓이 되지 않도록).
+> **현 단계: S2 완료, S3 착수 전** — order/inventory는 아직 `shop-api` 프로세스에 함께 있고, order 웹
+> 계층(`OrderController`)도 shop-api에 잔류(S3 대상). order-infra는 catalog를 **REST로만** 호출하도록
+> 전환됐다(S2, 컴파일 의존 제거). order 이벤트는 Kafka로 externalize 된다(S1). 아래는 **지금 실제
+> 코드** 기준이며, 스테이지가 진행될 때마다 이 트리를 갱신한다(목표형으로 미리 고치지 않는다).
 
 ```
 order/order-domain/          (Gradle 모듈 — jakarta.persistence·spring-web 의존 0)
@@ -26,17 +26,24 @@ order/order-domain/          (Gradle 모듈 — jakarta.persistence·spring-web 
 │   └── port/out/            OrderRepository, InventoryPort, ProductQueryPort, OrderEventPublisher
 └── OrderPlacedEvent, OrderPaidEvent  도메인 이벤트 (order가 소유)
 
-order/order-infra/           (Gradle 모듈 — order-domain, catalog, inventory에 의존)
+order/order-infra/           (Gradle 모듈 — order-domain, inventory에 의존. catalog는 모듈 의존 없이 REST로만 호출)
 ├── adapter/out/persistence/ OrderJpaEntity, OrderLineJpaEntity, OrderPersistenceMapper, OrderPersistenceAdapter
-├── adapter/out/catalog/     CatalogProductAdapter (ProductQueryPort 구현, catalog의 ProductReader 공개 API 경유)
+├── adapter/out/catalog/     CatalogProductAdapter (ProductQueryPort 구현, RestClient로 catalog의
+│                            /internal/products/* 호출 — S2, 컴파일 의존 없음)
 ├── adapter/out/inventory/   InventoryAdapter (InventoryPort 구현, inventory의 InventoryService 공개 API 경유)
 └── adapter/out/event/       SpringOrderEventAdapter
 
 order/order-admin/           (Gradle 모듈 — BOOT 스켈레톤만, 아직 실사용 컨트롤러 없음)
 order/order-batch/           (Gradle 모듈 — BOOT 스켈레톤만, 아직 Job 없음)
 
+catalog/                     (Gradle 모듈, shop-api에 상주)
+└── ProductInternalController /internal/products/{id}, /internal/products/options/{id} — order 전용
+                              내부 API. 스토어프론트용 ProductController와 별개(S2)
+
 shop-api/                    (BOOT 모듈 — order-domain/order-infra에 의존, order 전용이 아닌
                                범용 API 게이트웨이. cart/review/notification의 웹 계층도 여기 있음)
+├── EventExternalizationConfig  order 이벤트를 order.placed/order.paid 토픽으로 라우팅(S1)
+├── notification/OrderEventKafkaConsumer  @KafkaListener, (orderId,type) 멱등 가드(S1)
 └── adapter/in/web/          OrderController, OrderAdminController, DTO
 ```
 
@@ -141,15 +148,17 @@ stateDiagram-v2
 [GitHub Issue #2](https://github.com/polypola-dev/mini-commerce/issues/2)를 단일 소스**로 유지한다
 (이 문서에 복제하지 않음).
 
-- **S1** — Kafka(KRaft) 인프라 + `OrderPlaced`/`OrderPaid` `@Externalized`, notification을 `@KafkaListener`(멱등)로.
-- **S2** — catalog를 order의 REST read dependency로 정리(shop-api 잔류).
+- **S1 ✅** — Kafka(KRaft) 인프라 + `OrderPlaced`/`OrderPaid` externalization, notification을 `@KafkaListener`(멱등)로. docker-compose e2e로 발행→소비→알림생성+멱등 확인.
+- **S2 ✅** — catalog를 order의 REST read dependency로 정리(shop-api 잔류). `CatalogProductAdapter`가 `RestClient`로 catalog `/internal/products/*` 호출, order-infra의 catalog 모듈 컴파일 의존 제거. 단위테스트(MockRestServiceServer) + 실행 중인 앱에 curl로 200/404 왕복 확인.
 - **S3** — order-service(order+inventory) 분리 + 전용 order-db, 취소 모델 정비(`EXPIRED` 추가 등).
 - **S4** — order-admin/order-batch 배포 분리, order-batch = 미발행 이벤트 스윕 + 재고 리퍼.
 
 ## 크로스 컨텍스트 접근
 
-- `catalog`: `ProductQueryPort` → (S2 이후) **동기 REST 어댑터**를 통해서만. 가격/상품명은 주문 시점에
-  주문 라인으로 스냅샷 복사한다. `catalog`의 Repository를 직접 참조하지 않는다.
+- `catalog`: `ProductQueryPort` → **동기 REST 어댑터**(`CatalogProductAdapter` → `RestClient` →
+  catalog의 `/internal/products/*`)를 통해서만(S2 완료). 가격/상품명은 주문 시점에 주문 라인으로
+  스냅샷 복사한다. `catalog`의 Repository/도메인 클래스를 직접 참조하지 않으며, order-infra는
+  catalog 모듈에 컴파일 의존하지 않는다.
 - `inventory`: `InventoryPort` → `InventoryAdapter`를 통해서만. **order-service와 같은 프로세스·트랜잭션**
   이라 reserve 실패 시 release, 결제 성공 후 confirm이 로컬 트랜잭션으로 원자적이다(하이브리드 사가).
   자세한 계약은 [architecture/inventory.md](inventory.md) 참조.
