@@ -1,13 +1,19 @@
-// Phase 6: BOOT 모듈 스켈레톤. 실제 어드민 전용 컨트롤러/빈 조립은 후속 작업.
+// MSA S4: 관리자 전용 주문 BOOT 모듈. OrderRepository를 직접 다루므로 order-domain/order-infra만
+// 필요하다(inventory는 order-infra의 ReservationExpiredEventListener가 이벤트 타입 참조 때문에
+// 물고 있는 전이 의존 — 이 프로세스에서는 @EnableScheduling이 없어 실제로 동작하지 않는다, ADR-005 S4).
 dependencies {
     implementation project(':shared-core')
     implementation project(':shared-web')
     implementation project(':order:order-domain')
     implementation project(':order:order-infra')
-    implementation project(':catalog')
     implementation project(':inventory')
 
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

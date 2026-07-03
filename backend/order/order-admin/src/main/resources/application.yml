@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: mini-commerce-order-admin
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/orderdb}
+    username: ${DATABASE_USERNAME:minicommerce}
+    password: ${DATABASE_PASSWORD:minicommerce}
+  jpa:
+    hibernate:
+      # orderdb 스키마 소유권은 order-api 단독(ADR-005 S4, 아키텍처 리뷰 지적) — 동시 기동 시
+      # 여러 앱이 동시에 DDL(update)을 실행하는 경합을 피한다. order-api가 먼저 healthy가 되길
+      # 기다린 뒤 뜨므로(docker-compose depends_on) 스키마는 이미 준비돼 있다.
+      ddl-auto: none
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  security:
+    jwks-url: ${SUPABASE_JWKS_URL:https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json}
+    bff-secret-key: ${BFF_SECRET_KEY}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+server:
+  port: ${SERVER_PORT:8082}

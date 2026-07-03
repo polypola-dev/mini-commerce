@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * order-admin 부팅 모듈의 최소 진입점(Phase 6 스켈레톤).
- * 실제 어드민 전용 컨트롤러/빈 조립, DB·이벤트 설정은 후속 작업에서 채운다.
+ * order-admin 부팅 모듈의 진입점(MSA S4).
+ * 관리자 주문 엔드포인트(OrderAdminController)만 서빙한다. 재고 리퍼/이벤트 스윕은 order-batch 담당.
  */
 @SpringBootApplication
 public class OrderAdminApplication {
