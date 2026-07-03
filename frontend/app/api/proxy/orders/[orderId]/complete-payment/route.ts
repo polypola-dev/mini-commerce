@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.API_BASE_URL ?? "http://localhost:18080";
+// order-api 전용 호스트(MSA S3-3b, ADR-005) — shop-api(API_BASE_URL)와 분리된 서비스.
+const BACKEND_URL = process.env.ORDER_SERVICE_URL ?? "http://localhost:18081";
 const BFF_SECRET_KEY = process.env.BFF_SECRET_KEY;
 
 export async function POST(

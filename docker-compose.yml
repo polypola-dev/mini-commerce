@@ -9,6 +9,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # order-api 전용 orderdb를 볼륨 최초 초기화 시 함께 생성한다(MSA S3-3b).
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U minicommerce -d minicommerce"]
       interval: 5s
@@ -50,9 +52,13 @@ services:
       timeout: 5s
       retries: 10
 
-  backend:
+  # catalog + cart/review/notification + 스토어프론트 BFF 잔류 서비스(MSA S3-3b, ADR-005).
+  shop-api:
     build:
       context: ./backend
+      args:
+        MODULE: shop-api
+        PORT: "8080"
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/minicommerce
       DATABASE_USERNAME: minicommerce
@@ -60,6 +66,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # catalog가 재고를 order-api 내부 API로 조회/설정(ADR-005 S3-3b, 옵션 A).
+      INVENTORY_BASE_URL: http://order-api:8081
       CORS_ALLOWED_ORIGINS: http://localhost:3000
       SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
       BFF_SECRET_KEY: ${BFF_SECRET_KEY}
@@ -67,6 +75,124 @@ services:
     ports:
       - "18080:8080"
     depends_on:
+      # shop-api의 SeedData(ApplicationRunner)가 부팅 중 order-api에 재고 초기화를 동기 REST로
+      # 호출한다(ADR-005 S3-3b 옵션 A) — order-api가 응답 가능해지기 전에 shop-api가 뜨면 부팅
+      # 자체가 실패한다(실기동 중 실제로 재현, ResourceAccessException). order-api healthy를
+      # 명시적으로 기다린다.
+      order-api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  # order+inventory+주문 웹계층(고객/관리자) 분리 서비스(MSA S3-3b, ADR-005). 전용 order-db.
+  order-api:
+    build:
+      context: ./backend
+      args:
+        MODULE: order/order-api
+        PORT: "8081"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderdb
+      DATABASE_USERNAME: minicommerce
+      DATABASE_PASSWORD: minicommerce
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # order가 catalog를 REST로 조회(ADR-005 S2). order-api가 별도 프로세스이므로 shop-api의
+      # 실제 호스트를 가리킨다.
+      CATALOG_BASE_URL: http://shop-api:8080
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
+      BFF_SECRET_KEY: ${BFF_SECRET_KEY}
+      SERVER_PORT: "8081"
+    ports:
+      - "18081:8081"
+    healthcheck:
+      # /internal/inventory는 WebConfig에 필터가 안 걸려 인증 없이 호출 가능 — 배치조회는 ids 없으면
+      # 빈 Map을 200으로 반환하므로 순수 헬스 목적으로 쓰기에 적합하다.
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/internal/inventory/stocks"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  # 관리자 전용 주문 API 분리 서비스(MSA S4, ADR-005). order-api와 동일한 order-db를 공유한다.
+  order-admin:
+    build:
+      context: ./backend
+      args:
+        MODULE: order/order-admin
+        PORT: "8082"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderdb
+      DATABASE_USERNAME: minicommerce
+      DATABASE_PASSWORD: minicommerce
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # 지금은 admin이 catalog를 호출하지 않지만(OrderRepository 직결), order-infra의
+      # CatalogProductAdapter가 전이의존으로 항상 조립되므로 호스트를 명시해 향후 지뢰를 제거한다
+      # (아키텍처 리뷰 지적, MSA S4).
+      CATALOG_BASE_URL: http://shop-api:8080
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
+      BFF_SECRET_KEY: ${BFF_SECRET_KEY}
+      SERVER_PORT: "8082"
+    ports:
+      - "18082:8082"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    depends_on:
+      # orderdb 스키마 소유권은 order-api 단독(ddl-auto: none인 이 서비스는 스키마가 이미
+      # 준비돼 있어야 한다) — order-api healthy를 기다려 동시 DDL 경합을 피한다(아키텍처 리뷰 지적).
+      order-api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # 재고 만료 리퍼 + 미발행 이벤트 스윕 전담 배치 서비스(MSA S4, ADR-005). 웹 엔드포인트는 없다.
+  order-batch:
+    build:
+      context: ./backend
+      args:
+        MODULE: order/order-batch
+        PORT: "8083"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/orderdb
+      DATABASE_USERNAME: minicommerce
+      DATABASE_PASSWORD: minicommerce
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CATALOG_BASE_URL: http://shop-api:8080
+      SERVER_PORT: "8083"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    depends_on:
+      # orderdb 스키마 소유권은 order-api 단독(ddl-auto: none인 이 서비스는 스키마가 이미
+      # 준비돼 있어야 한다) — order-api healthy를 기다려 동시 DDL 경합을 피한다(아키텍처 리뷰 지적).
+      order-api:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
