@@ -1,11 +1,11 @@
 package com.minicommerce.catalog;
 
 import com.minicommerce.global.PageResult;
-import com.minicommerce.inventory.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,14 +31,14 @@ public class ProductAdminController {
 
     private final ProductRepository productRepository;
     private final ProductOptionRepository productOptionRepository;
-    private final InventoryService inventoryService;
+    private final InventoryClient inventoryClient;
 
     public ProductAdminController(ProductRepository productRepository,
                                   ProductOptionRepository productOptionRepository,
-                                  InventoryService inventoryService) {
+                                  InventoryClient inventoryClient) {
         this.productRepository = productRepository;
         this.productOptionRepository = productOptionRepository;
-        this.inventoryService = inventoryService;
+        this.inventoryClient = inventoryClient;
     }
 
     @GetMapping
@@ -51,10 +51,13 @@ public class ProductAdminController {
         String qParam = (q != null && !q.isBlank()) ? q : null;
         PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         Page<Product> productPage = productRepository.findWithFilters(active, qParam, pageable);
-        List<ProductResponse> content = productPage.getContent().stream()
+        List<Product> products = productPage.getContent();
+        Map<String, Long> stocks = inventoryClient.availableStocks(
+                products.stream().map(Product::getId).toList());
+        List<ProductResponse> content = products.stream()
                 .map(p -> ProductResponse.from(
                         p,
-                        inventoryService.availableStock(p.getId(), p.getStock()),
+                        stocks.getOrDefault(p.getId(), 0L),
                         productOptionRepository.findByProductId(p.getId())))
                 .toList();
         return new PageResult<>(content, productPage.getTotalElements(),
@@ -68,6 +71,10 @@ public class ProductAdminController {
         Product product = new Product(id, request.name(), request.description(),
                 request.price(), request.stock(), request.imageUrl());
         productRepository.save(product);
+        // 배치 재고조회(/internal/inventory/stocks)는 미존재 시 default=0으로 order-api Redis에
+        // 써버린다(write-on-read) — 여기서 먼저 seed하지 않으면 최초 목록 조회 때 재고가 0으로
+        // 고착돼 영구 품절 처리된다.
+        inventoryClient.setStock(id, request.stock());
         List<ProductOption> savedOptions = saveOptions(id, request.options());
         return ProductResponse.from(product, request.stock(), savedOptions);
     }
@@ -79,12 +86,12 @@ public class ProductAdminController {
         product.update(request.name(), request.description(), request.price(),
                 request.stock(), request.imageUrl());
         productRepository.save(product);
-        inventoryService.setStock(id, request.stock());
+        inventoryClient.setStock(id, request.stock());
         productOptionRepository.deleteByProductId(id);
         List<ProductOption> savedOptions = saveOptions(id, request.options());
         return ProductResponse.from(
                 product,
-                inventoryService.availableStock(product.getId(), request.stock()),
+                inventoryClient.availableStock(product.getId(), request.stock()),
                 savedOptions);
     }
 
@@ -119,7 +126,7 @@ public class ProductAdminController {
         productRepository.save(product);
         return ProductResponse.from(
                 product,
-                inventoryService.availableStock(product.getId(), product.getStock()),
+                inventoryClient.availableStock(product.getId(), product.getStock()),
                 productOptionRepository.findByProductId(id));
     }
 }

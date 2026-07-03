@@ -1,21 +1,23 @@
 package com.minicommerce.catalog;
 
-import com.minicommerce.inventory.InventoryService;
 import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SeedData implements ApplicationRunner {
+    private static final Logger log = LoggerFactory.getLogger(SeedData.class);
     private final ProductRepository productRepository;
     private final ProductOptionRepository productOptionRepository;
-    private final InventoryService inventoryService;
+    private final InventoryClient inventoryClient;
 
-    public SeedData(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryService inventoryService) {
+    public SeedData(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryClient inventoryClient) {
         this.productRepository = productRepository;
         this.productOptionRepository = productOptionRepository;
-        this.inventoryService = inventoryService;
+        this.inventoryClient = inventoryClient;
     }
 
     @Override
@@ -55,7 +57,15 @@ public class SeedData implements ApplicationRunner {
 
     private void seedProduct(Product product) {
         productRepository.findById(product.getId()).orElseGet(() -> productRepository.save(product));
-        inventoryService.initializeStockIfAbsent(product.getId(), product.getStock());
+        // order-api(재고)가 REST 경계(ADR-005 S3-3b 옵션 A) 너머에 있어, 부팅 순서 경합이나 일시적
+        // 장애로 응답 못 하는 경우가 있을 수 있다. 시드는 dev 편의 기능이라 이 호출 실패로 shop-api
+        // 전체 부팅이 죽는 건 과한 결합 — 로그만 남기고 계속 진행한다.
+        try {
+            inventoryClient.initializeStockIfAbsent(product.getId(), product.getStock());
+        } catch (RuntimeException e) {
+            log.warn("재고 시드 초기화 실패(productId={}), order-api 준비 여부를 확인하세요: {}",
+                    product.getId(), e.getMessage());
+        }
     }
 
     private void seedOption(ProductOption option) {

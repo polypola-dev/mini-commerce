@@ -1,6 +1,5 @@
 package com.minicommerce.global;
 
-import com.minicommerce.global.security.AdminAuthorizationFilter;
 import com.minicommerce.global.security.JwtVerificationFilter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * order-api 부팅 앱의 웹 설정 — 고객용 주문 경로만 배선한다. 관리자 주문 경로는 order-admin으로
+ * 분리됐다(ADR-005 S4). JwtVerificationFilter는 shared-web/global/security에서 재사용한다.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
     private final List<String> allowedOrigins;
@@ -40,22 +43,8 @@ public class WebConfig implements WebMvcConfigurer {
         registrationBean.setFilter(new JwtVerificationFilter(jwksUrl, bffSecretKey));
         registrationBean.addUrlPatterns(
                 "/api/orders",
-                "/api/orders/*",
-                "/api/reviews",
-                "/api/reviews/*",
-                "/api/cart",
-                "/api/cart/*",
-                "/api/notifications"
+                "/api/orders/*"
         );
-        registrationBean.setOrder(1);
-        return registrationBean;
-    }
-
-    @Bean
-    public FilterRegistrationBean<AdminAuthorizationFilter> adminAuthorizationFilter() {
-        FilterRegistrationBean<AdminAuthorizationFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new AdminAuthorizationFilter(jwksUrl, bffSecretKey));
-        registrationBean.addUrlPatterns("/api/admin/*");
         registrationBean.setOrder(1);
         return registrationBean;
     }

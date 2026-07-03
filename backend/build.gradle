@@ -8,7 +8,7 @@ allprojects {
     version = '0.1.0'
 }
 
-def bootModules = ['shop-api', 'order-admin', 'order-batch']
+def bootModules = ['shop-api', 'order-admin', 'order-batch', 'order-api']
 
 subprojects {
     apply plugin: 'java'

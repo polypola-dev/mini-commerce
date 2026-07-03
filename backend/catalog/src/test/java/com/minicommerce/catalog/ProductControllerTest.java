@@ -1,8 +1,8 @@
 package com.minicommerce.catalog;
 
-import com.minicommerce.inventory.InventoryService;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,13 +39,13 @@ class ProductControllerTest {
     private ProductOptionRepository productOptionRepository;
 
     @Mock
-    private InventoryService inventoryService;
+    private InventoryClient inventoryClient;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        ProductController controller = new ProductController(productRepository, productOptionRepository, inventoryService);
+        ProductController controller = new ProductController(productRepository, productOptionRepository, inventoryClient);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -57,7 +57,7 @@ class ProductControllerTest {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("name").ascending());
         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
         when(productRepository.findWithFilters(eq(true), isNull(), any(Pageable.class))).thenReturn(page);
-        when(inventoryService.availableStock("p1", 10L)).thenReturn(8L);
+        when(inventoryClient.availableStocks(List.of("p1"))).thenReturn(Map.of("p1", 8L));
         when(productOptionRepository.findByProductId("p1")).thenReturn(List.of());
 
         // when & then
@@ -88,7 +88,7 @@ class ProductControllerTest {
         Pageable pageable = PageRequest.of(0, 20, Sort.by("name").ascending());
         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
         when(productRepository.findWithFilters(eq(true), eq(query), any(Pageable.class))).thenReturn(page);
-        when(inventoryService.availableStock("p2", 3L)).thenReturn(3L);
+        when(inventoryClient.availableStocks(List.of("p2"))).thenReturn(Map.of("p2", 3L));
         when(productOptionRepository.findByProductId("p2")).thenReturn(List.of());
 
         // when & then

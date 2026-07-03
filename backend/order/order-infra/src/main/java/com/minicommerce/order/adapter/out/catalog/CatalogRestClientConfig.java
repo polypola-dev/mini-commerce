@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 /**
- * catalog 내부 API 호출용 {@link RestClient}. base-url은 지금(S2, 같은 프로세스) 기본값이
- * 로컬 루프백이고, order-service가 별도 프로세스로 분리되면(S3) catalog의 실제 호스트로 바뀐다.
+ * catalog 내부 API 호출용 {@link RestClient}. order-api가 별도 프로세스로 분리된 지금(ADR-005
+ * S3-3b) base-url은 catalog(shop-api)의 실제 호스트를 가리킨다(docker-compose 배선).
  */
 @Configuration
 class CatalogRestClientConfig {

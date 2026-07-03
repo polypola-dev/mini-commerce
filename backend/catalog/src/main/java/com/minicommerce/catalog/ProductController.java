@@ -1,9 +1,9 @@
 package com.minicommerce.catalog;
 
 import com.minicommerce.global.PageResult;
-import com.minicommerce.inventory.InventoryService;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
     private final ProductRepository productRepository;
     private final ProductOptionRepository productOptionRepository;
-    private final InventoryService inventoryService;
+    private final InventoryClient inventoryClient;
 
-    public ProductController(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryService inventoryService) {
+    public ProductController(ProductRepository productRepository, ProductOptionRepository productOptionRepository, InventoryClient inventoryClient) {
         this.productRepository = productRepository;
         this.productOptionRepository = productOptionRepository;
-        this.inventoryService = inventoryService;
+        this.inventoryClient = inventoryClient;
     }
 
     @GetMapping
@@ -35,10 +35,13 @@ public class ProductController {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         Page<Product> productPage = productRepository.findWithFilters(true, qParam, pageable);
 
-        List<ProductResponse> content = productPage.getContent().stream()
+        List<Product> products = productPage.getContent();
+        Map<String, Long> stocks = inventoryClient.availableStocks(
+                products.stream().map(Product::getId).toList());
+        List<ProductResponse> content = products.stream()
                 .map(product -> ProductResponse.from(
                         product,
-                        inventoryService.availableStock(product.getId(), product.getStock()),
+                        stocks.getOrDefault(product.getId(), 0L),
                         productOptionRepository.findByProductId(product.getId())))
                 .toList();
 
@@ -52,7 +55,7 @@ public class ProductController {
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         return ProductResponse.from(
                 product,
-                inventoryService.availableStock(product.getId(), product.getStock()),
+                inventoryClient.availableStock(product.getId(), product.getStock()),
                 productOptionRepository.findByProductId(product.getId()));
     }
 }

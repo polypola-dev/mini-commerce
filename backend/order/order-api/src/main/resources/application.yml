@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: mini-commerce-order-api
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/orderdb}
+    username: ${DATABASE_USERNAME:minicommerce}
+    password: ${DATABASE_PASSWORD:minicommerce}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  modulith:
+    # 미발행 이벤트 재시도는 order-batch 단독 책임(ADR-005 S4) — order-api에서 켜두면 재시작 시
+    # order-batch가 처리 중이던 미완료 이벤트를 이 프로세스가 가로채 재처리할 수 있다(아키텍처
+    # 리뷰에서 지적, IncompleteEventSweeper와 책임 중복).
+    republish-outstanding-events-on-restart: false
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+
+app:
+  catalog:
+    # order-api가 별도 프로세스이므로 catalog(shop-api)의 실제 호스트를 가리켜야 한다.
+    base-url: ${CATALOG_BASE_URL:http://localhost:8080}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  security:
+    jwks-url: ${SUPABASE_JWKS_URL:https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json}
+    bff-secret-key: ${BFF_SECRET_KEY}
+
+server:
+  port: ${SERVER_PORT:8081}

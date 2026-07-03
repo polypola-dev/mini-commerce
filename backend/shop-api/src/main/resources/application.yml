@@ -21,9 +21,8 @@ spring:
         enabled: ${REDIS_SSL:false}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    # order 이벤트 발행(producer)은 order-api로 이관됐다(ADR-005 S3-3b) — shop-api는 이제
+    # notification 컨슈머로만 Kafka를 쓴다.
     consumer:
       group-id: notification
       auto-offset-reset: earliest
@@ -37,11 +36,10 @@ spring:
           enabled: true
 
 app:
-  catalog:
-    # order가 catalog를 REST로 조회하는 base-url(ADR-005 S2). 지금은 order/catalog가 같은
-    # 프로세스(shop-api)라 로컬 루프백. order-service가 별도 프로세스로 분리되면(S3) catalog의
-    # 실제 호스트로 교체한다.
-    base-url: ${CATALOG_BASE_URL:http://localhost:8080}
+  inventory:
+    # catalog가 재고를 order-api 내부 API로 조회/설정하는 base-url(ADR-005 S3-3b). order-api가
+    # 별도 프로세스이므로 그 실제 호스트(로컬 기본 8081)를 가리킨다.
+    base-url: ${INVENTORY_BASE_URL:http://localhost:8081}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:

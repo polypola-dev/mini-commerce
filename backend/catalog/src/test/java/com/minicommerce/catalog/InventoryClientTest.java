@@ -1,0 +1,97 @@
+package com.minicommerce.catalog;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+
+class InventoryClientTest {
+
+    private MockRestServiceServer server;
+    private InventoryClient client;
+
+    @BeforeEach
+    void setUp() {
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://inventory.internal");
+        server = MockRestServiceServer.bindTo(builder).build();
+        client = new InventoryClient(builder.build());
+    }
+
+    @Test
+    void availableStocks_returns_map_from_batch_endpoint() {
+        server.expect(requestTo("http://inventory.internal/internal/inventory/stocks?ids=p1&ids=p2"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"p1\":8,\"p2\":3}", MediaType.APPLICATION_JSON));
+
+        Map<String, Long> result = client.availableStocks(List.of("p1", "p2"));
+
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(Map.of("p1", 8L, "p2", 3L));
+        server.verify();
+    }
+
+    @Test
+    void availableStocks_returns_empty_without_calling_server_when_ids_empty() {
+        Map<String, Long> result = client.availableStocks(List.of());
+
+        assertThat(result).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void availableStock_single_delegates_to_batch_endpoint() {
+        server.expect(requestTo("http://inventory.internal/internal/inventory/stocks?ids=p1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"p1\":8}", MediaType.APPLICATION_JSON));
+
+        long result = client.availableStock("p1", 99L);
+
+        assertThat(result).isEqualTo(8L);
+        server.verify();
+    }
+
+    @Test
+    void availableStock_single_falls_back_to_default_when_absent_from_response() {
+        server.expect(requestTo("http://inventory.internal/internal/inventory/stocks?ids=p1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        long result = client.availableStock("p1", 99L);
+
+        assertThat(result).isEqualTo(99L);
+        server.verify();
+    }
+
+    @Test
+    void setStock_sends_put_with_stock_body() {
+        server.expect(requestTo("http://inventory.internal/internal/inventory/stock/p1"))
+                .andExpect(method(HttpMethod.PUT))
+                .andExpect(content().json("{\"stock\":50}"))
+                .andRespond(withSuccess("50", MediaType.APPLICATION_JSON));
+
+        client.setStock("p1", 50L);
+
+        server.verify();
+    }
+
+    @Test
+    void initializeStockIfAbsent_sends_post_with_default_stock_body() {
+        server.expect(requestTo("http://inventory.internal/internal/inventory/stock/p1/init"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json("{\"defaultStock\":100}"))
+                .andRespond(withSuccess("100", MediaType.APPLICATION_JSON));
+
+        client.initializeStockIfAbsent("p1", 100L);
+
+        server.verify();
+    }
+}
