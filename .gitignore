@@ -42,4 +42,7 @@ skills-lock.json
 
 # ===== TypeScript =====
 tsconfig.tsbuildinfo
+
+# ===== Java IDE 빌드 산출물 (멀티모듈 전 구조는 backend/bin/, 이후엔 각 모듈 하위) =====
 backend/bin/
+backend/**/bin/
