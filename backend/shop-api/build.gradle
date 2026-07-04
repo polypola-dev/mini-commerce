@@ -1,3 +1,12 @@
+// Micrometer 브릿지 대신 OTel 공식 스타터로 스파이크 검증 중(GH #7 후속) — Trace/Metric/Log를
+// 한 벤더 패키지로 통일하기 위함. Micrometer 브릿지와 병행하면 OTel SDK 오토컨피그가 충돌하므로
+// 공존 금지, shop-api에서만 우선 검증한다.
+dependencyManagement {
+    imports {
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.29.0'
+    }
+}
+
 dependencies {
     implementation project(':shared-core')
     implementation project(':shared-web')
@@ -14,8 +23,7 @@ dependencies {
     implementation 'com.auth0:jwks-rsa:0.22.1'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
     implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"
     implementation "org.springframework.modulith:spring-modulith-starter-jpa:${springModulithVersion}"
     implementation "org.springframework.modulith:spring-modulith-events-kafka:${springModulithVersion}"

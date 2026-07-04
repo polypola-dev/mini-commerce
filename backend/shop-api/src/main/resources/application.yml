@@ -55,13 +55,23 @@ app:
     url: ${SUPABASE_URL:https://wzdifkwupleogfixibiv.supabase.co}
     service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
 
+# OTel 공식 스타터 스파이크(GH #7 후속, Micrometer 브릿지 대체 검증). endpoint는 시그널별
+# 경로(/v1/traces 등)를 스타터가 자동으로 붙이므로 base URL만 준다(Micrometer 방식과 다름).
+# metrics/logs는 이번 스파이크 스코프 밖이라 명시적으로 꺼서 Tempo에 안 맞는 신호를 안 보낸다.
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME:mini-commerce-backend}
+  exporter:
+    otlp:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318}
+  traces:
+    sampler: parentbased_always_on
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+
 management:
-  otlp:
-    tracing:
-      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318/v1/traces}
-  tracing:
-    sampling:
-      probability: 1.0
   # 이 서비스의 docker-compose healthcheck는 actuator를 쓰지 않으므로(shop-api는 healthcheck 없음)
   # 어떤 actuator 엔드포인트도 웹에 노출하지 않는다. tracing은 엔드포인트 노출과 무관하게 동작한다.
   endpoints:
