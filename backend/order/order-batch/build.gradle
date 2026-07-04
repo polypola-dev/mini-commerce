@@ -11,6 +11,8 @@ dependencies {
     // 컨트롤러는 없지만 docker-compose 헬스체크용 actuator 노출에 서블릿 컨테이너가 필요하다.
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"

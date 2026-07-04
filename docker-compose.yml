@@ -200,5 +200,37 @@ services:
       kafka:
         condition: service_healthy
 
+  # 분산 트레이싱 백엔드(로컬 전용, GH #7). OTLP 수신 후 로컬 스토리지에 저장.
+  # 4317/4318을 host에 노출해 host에서 next dev로 구동하는 BFF도 OTLP export 가능.
+  tempo:
+    image: grafana/tempo:2.7.2
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "3200:3200"
+
+  # 트레이스 조회 UI(로컬 전용, GH #7). Tempo datasource 자동 프로비저닝.
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      # 조직명을 고정해 GF_AUTH_ANONYMOUS_ORG_NAME과 항상 일치시킨다 — 미지정 시 Grafana가
+      # 프로젝트 디렉토리명 기반으로 조직명을 자동 생성해(예: "Mini-Commerce Org.") 옛 기본값
+      # "Main Org."를 찾는 익명 인증이 org.notFound로 실패하는 문제가 있었다.
+      GF_ORGANIZATION_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - tempo
+
 volumes:
   postgres-data:
+  tempo-data:

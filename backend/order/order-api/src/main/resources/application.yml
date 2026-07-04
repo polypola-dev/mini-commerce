@@ -21,6 +21,12 @@ spring:
         enabled: ${REDIS_SSL:false}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    # Kafka producer/consumer observation 자동계측 실험(Issue #7 Step 6) — Modulith
+    # events-kafka 외부화 경로에도 trace 전파가 붙는지 확인용.
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -46,3 +52,22 @@ app:
 
 server:
   port: ${SERVER_PORT:8081}
+
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318/v1/traces}
+  tracing:
+    sampling:
+      probability: 1.0
+  # 이 서비스의 docker-compose healthcheck는 actuator를 쓰지 않으므로(order-api는
+  # /internal/inventory/stocks를 호출) 어떤 actuator 엔드포인트도 웹에 노출하지 않는다.
+  # tracing은 엔드포인트 노출과 무관하게 동작한다.
+  endpoints:
+    web:
+      exposure:
+        include: ""
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

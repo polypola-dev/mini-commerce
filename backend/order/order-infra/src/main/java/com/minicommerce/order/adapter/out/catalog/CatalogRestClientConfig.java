@@ -12,8 +12,11 @@ import org.springframework.web.client.RestClient;
 @Configuration
 class CatalogRestClientConfig {
 
+    // 정적 RestClient.builder() 대신 오토컨피그된 RestClient.Builder 빈을 주입받아야
+    // ObservationRestClientCustomizer가 적용돼 분산 트레이스 자동계측이 붙는다(Issue #7).
     @Bean
-    RestClient catalogRestClient(@Value("${app.catalog.base-url:http://localhost:8080}") String baseUrl) {
-        return RestClient.builder().baseUrl(baseUrl).build();
+    RestClient catalogRestClient(RestClient.Builder builder,
+                                 @Value("${app.catalog.base-url:http://localhost:8080}") String baseUrl) {
+        return builder.baseUrl(baseUrl).build();
     }
 }

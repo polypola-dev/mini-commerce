@@ -21,6 +21,12 @@ spring:
         enabled: ${REDIS_SSL:false}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    # Kafka producer/consumer observation 자동계측 실험(Issue #7 Step 6) — Modulith
+    # events-kafka 외부화 경로에도 trace 전파가 붙는지 확인용.
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
     # order 이벤트 발행(producer)은 order-api로 이관됐다(ADR-005 S3-3b) — shop-api는 이제
     # notification 컨슈머로만 Kafka를 쓴다.
     consumer:
@@ -48,3 +54,21 @@ app:
   supabase:
     url: ${SUPABASE_URL:https://wzdifkwupleogfixibiv.supabase.co}
     service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318/v1/traces}
+  tracing:
+    sampling:
+      probability: 1.0
+  # 이 서비스의 docker-compose healthcheck는 actuator를 쓰지 않으므로(shop-api는 healthcheck 없음)
+  # 어떤 actuator 엔드포인트도 웹에 노출하지 않는다. tracing은 엔드포인트 노출과 무관하게 동작한다.
+  endpoints:
+    web:
+      exposure:
+        include: ""
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

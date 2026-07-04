@@ -13,6 +13,9 @@ dependencies {
     // 필요하다(shared-web는 implementation 스코프라 전이적으로 안 보임 — 명시 필요).
     implementation 'com.auth0:jwks-rsa:0.22.1'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"
     implementation "org.springframework.modulith:spring-modulith-starter-jpa:${springModulithVersion}"
     implementation "org.springframework.modulith:spring-modulith-events-kafka:${springModulithVersion}"

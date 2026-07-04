@@ -46,6 +46,12 @@ app:
     base-url: ${CATALOG_BASE_URL:http://localhost:8080}
 
 management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318/v1/traces}
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
@@ -54,6 +60,10 @@ management:
     health:
       probes:
         enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
 
 server:
   port: ${SERVER_PORT:8083}

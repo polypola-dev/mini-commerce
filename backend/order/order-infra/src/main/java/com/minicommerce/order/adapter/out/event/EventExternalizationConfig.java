@@ -15,6 +15,13 @@ import org.springframework.modulith.events.RoutingTarget;
  * {@code event_publication} 테이블이 아웃박스 역할을 하며, order-api(발행)와 order-batch(미발행분
  * 재시도 스윕, ADR-005 S4) 양쪽 부팅 앱이 동일한 라우팅 규칙을 알아야 하므로 order-infra에 둔다.
  */
+// Issue #7 Kafka trace 전파: order-api/shop-api yml에 spring.kafka.{template,listener}.
+// observation-enabled=true를 배치해 자동계측을 시도한다. 다만 이 아웃박스(event_publication)
+// 발행은 원 요청 스레드가 아닌 별도 시점/스레드에서 일어나므로 발행 스레드에 trace 컨텍스트가
+// 없으면 producer span이 부모 없는 root로 고아화될 수 있고, order-batch 재시도 스윕은 별도
+// 프로세스라 원천적으로 전파 불가하다. 자동계측으로 안 붙으면 수동 traceparent 전파는 하지
+// 않는다(계획 F2로 분리). 런타임 producer→consumer traceId 공유 여부는 docker-compose 통합
+// 검증 단계에서 확인.
 @Configuration
 public class EventExternalizationConfig {
 
