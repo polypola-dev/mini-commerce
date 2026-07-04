@@ -1,0 +1,6 @@
+global:
+  scrape_interval: 15s
+
+# 메트릭 축(GH #8): 앱이 --web.enable-otlp-receiver 엔드포인트(/api/v1/otlp/v1/metrics)로
+# OTLP push하는 방식이라 scrape 타깃이 따로 없다.
+scrape_configs: []

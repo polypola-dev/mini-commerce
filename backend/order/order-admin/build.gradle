@@ -1,6 +1,15 @@
 // MSA S4: 관리자 전용 주문 BOOT 모듈. OrderRepository를 직접 다루므로 order-domain/order-infra만
 // 필요하다(inventory는 order-infra의 ReservationExpiredEventListener가 이벤트 타입 참조 때문에
 // 물고 있는 전이 의존 — 이 프로세스에서는 @EnableScheduling이 없어 실제로 동작하지 않는다, ADR-005 S4).
+// Micrometer 브릿지 대신 OTel 공식 스타터로 전환(GH #8) — Trace/Metric/Log를 한 벤더 패키지로 통일.
+dependencyManagement {
+    imports {
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.29.0'
+        // logback appender는 alpha 계열로만 배포되어 안정 BOM에 버전이 없다(GH #8).
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:2.29.0-alpha'
+    }
+}
+
 dependencies {
     implementation project(':shared-core')
     implementation project(':shared-web')
@@ -10,8 +19,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'

@@ -53,13 +53,28 @@ app:
 server:
   port: ${SERVER_PORT:8081}
 
+# OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
+# 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal
+# endpoint는 (공용 endpoint와 달리) 경로를 자동으로 안 붙여주므로 각자 실제 수신 경로까지 적는다.
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME:mini-commerce-order-api}
+  exporter:
+    otlp:
+      traces:
+        endpoint: ${OTLP_TRACES_ENDPOINT:http://tempo:4318/v1/traces}
+      metrics:
+        endpoint: ${OTLP_METRICS_ENDPOINT:http://prometheus:9090/api/v1/otlp/v1/metrics}
+      logs:
+        endpoint: ${OTLP_LOGS_ENDPOINT:http://loki:3100/otlp/v1/logs}
+  traces:
+    sampler: parentbased_always_on
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+
 management:
-  otlp:
-    tracing:
-      endpoint: ${OTLP_TRACING_ENDPOINT:http://tempo:4318/v1/traces}
-  tracing:
-    sampling:
-      probability: 1.0
   # 이 서비스의 docker-compose healthcheck는 actuator를 쓰지 않으므로(order-api는
   # /internal/inventory/stocks를 호출) 어떤 actuator 엔드포인트도 웹에 노출하지 않는다.
   # tracing은 엔드포인트 노출과 무관하게 동작한다.

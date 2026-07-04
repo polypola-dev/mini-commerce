@@ -213,7 +213,31 @@ services:
       - "4318:4318"
       - "3200:3200"
 
-  # 트레이스 조회 UI(로컬 전용, GH #7). Tempo datasource 자동 프로비저닝.
+  # 로그 백엔드(로컬 전용, GH #8). Collector 없이 앱→Loki 직접 OTLP export(네이티브 수신).
+  loki:
+    image: grafana/loki:3.3.2
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  # 메트릭 백엔드(로컬 전용, GH #8). scrape 없이 OTLP push만 수신. v2.55.1에는 아직
+  # --web.enable-otlp-receiver가 stable 플래그로 승격되지 않아(v3.x 대상) experimental
+  # feature flag(otlp-write-receiver)로 활성화한다 — 엔드포인트는 동일하게 /api/v1/otlp/v1/metrics.
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --enable-feature=otlp-write-receiver
+    volumes:
+      - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  # 트레이스/로그/메트릭 조회 UI(로컬 전용, GH #7/#8). Tempo/Loki/Prometheus datasource 자동 프로비저닝.
   grafana:
     image: grafana/grafana:latest
     environment:
@@ -230,7 +254,11 @@ services:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - tempo
+      - loki
+      - prometheus
 
 volumes:
   postgres-data:
   tempo-data:
+  loki-data:
+  prometheus-data:

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+    <!-- Log 축(GH #8): 콘솔 출력(logging.pattern.level 반영)은 그대로 두고, 같은 로그 레코드를
+         OpenTelemetryAppender로 복제 전송한다. captureMdcAttributes로 traceId/spanId 등 MDC 값을
+         로그 속성에 실어 Loki-Tempo trace-to-logs 연동의 기반이 된다. -->
+    <appender name="OpenTelemetry"
+        class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <captureExperimentalAttributes>false</captureExperimentalAttributes>
+        <captureCodeAttributes>false</captureCodeAttributes>
+        <captureMdcAttributes>*</captureMdcAttributes>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="OpenTelemetry" />
+    </root>
+</configuration>

@@ -2,6 +2,15 @@
 // (inventory.ExpiredReservationReleaser, @Scheduled)와 그 리스너
 // (order-infra.ReservationExpiredEventListener, @ApplicationModuleListener)를 전담 실행하고,
 // order-api가 발행한 미발행(outstanding) 이벤트를 스윕해 Kafka로 재시도 발행한다.
+// Micrometer 브릿지 대신 OTel 공식 스타터로 전환(GH #8) — Trace/Metric/Log를 한 벤더 패키지로 통일.
+dependencyManagement {
+    imports {
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.29.0'
+        // logback appender는 alpha 계열로만 배포되어 안정 BOM에 버전이 없다(GH #8).
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:2.29.0-alpha'
+    }
+}
+
 dependencies {
     implementation project(':shared-core')
     implementation project(':order:order-domain')
@@ -11,8 +20,8 @@ dependencies {
     // 컨트롤러는 없지만 docker-compose 헬스체크용 actuator 노출에 서블릿 컨테이너가 필요하다.
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    runtimeOnly 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"
