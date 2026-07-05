@@ -71,9 +71,10 @@ public class ProductAdminController {
         Product product = new Product(id, request.name(), request.description(),
                 request.price(), request.stock(), request.imageUrl());
         productRepository.save(product);
-        // 배치 재고조회(/internal/inventory/stocks)는 미존재 시 default=0으로 order-api Redis에
-        // 써버린다(write-on-read) — 여기서 먼저 seed하지 않으면 최초 목록 조회 때 재고가 0으로
-        // 고착돼 영구 품절 처리된다.
+        // 재고 초기화는 상품 생성 시점에만 명시적으로 수행한다(조회는 순수 read-only, GH #6).
+        // 여기서 seed하지 않으면 최초 조회 시 order-api가 재고 미존재를 default=0으로 간주해
+        // 품절로 표시한다 — Redis에 값을 쓰지는 않으니 고착되지는 않지만, 실제 재고와 다르게
+        // 보이는 창구가 생기므로 생성 시점에 반드시 seed한다.
         inventoryClient.setStock(id, request.stock());
         List<ProductOption> savedOptions = saveOptions(id, request.options());
         return ProductResponse.from(product, request.stock(), savedOptions);

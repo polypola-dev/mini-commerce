@@ -69,8 +69,8 @@ class InventoryServiceTest {
     }
 
     @Test
-    @DisplayName("availableStock: Redis에 값이 없으면 기본값으로 초기화 후 기본값 반환")
-    void availableStock_whenKeyMissing_initializesAndReturnsDefault() {
+    @DisplayName("availableStock: Redis에 값이 없으면 기본값을 반환하되 Redis에 쓰지 않음(read-only)")
+    void availableStock_whenKeyMissing_returnsDefaultWithoutWriting() {
         // given
         when(valueOps.get("stock:prod-1")).thenReturn(null);
 
@@ -79,7 +79,25 @@ class InventoryServiceTest {
 
         // then
         assertThat(stock).isEqualTo(100L);
-        verify(valueOps).setIfAbsent("stock:prod-1", "100");
+        // 조회는 부작용을 남기지 않는다 — 초기화는 별도로 명시 호출해야 한다
+        verify(valueOps, never()).setIfAbsent(any(), any());
+        verify(valueOps, never()).set(any(), any());
+    }
+
+    @Test
+    @DisplayName("availableStock: 키가 없는 상태로 반복 조회해도 이전 defaultStock에 고착되지 않음(회귀)")
+    void availableStock_whenKeyMissing_repeatedCallsDoNotStickToStaleDefault() {
+        // given — 상품이 아직 seed되지 않아 Redis에 키가 없는 상태를 재현
+        when(valueOps.get("stock:prod-1")).thenReturn(null);
+
+        // when — 배치 조회(default=0)가 먼저 들어오고, 이어서 실제 재고로 조회되는 시나리오
+        long firstRead = inventoryService.availableStock("prod-1", 0L);
+        long secondRead = inventoryService.availableStock("prod-1", 100L);
+
+        // then — 첫 조회가 0을 반환했다고 해서 두 번째 조회가 0으로 고착되지 않는다
+        assertThat(firstRead).isEqualTo(0L);
+        assertThat(secondRead).isEqualTo(100L);
+        verify(valueOps, never()).setIfAbsent(any(), any());
     }
 
     // ----------------------------------------------------------------

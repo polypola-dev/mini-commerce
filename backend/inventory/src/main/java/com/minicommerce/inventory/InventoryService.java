@@ -86,7 +86,6 @@ public class InventoryService {
     public long availableStock(String productId, long defaultStock) {
         String value = redisTemplate.opsForValue().get(stockKey(productId));
         if (value == null) {
-            initializeStockIfAbsent(productId, defaultStock);
             return defaultStock;
         }
         return Long.parseLong(value);

@@ -44,6 +44,21 @@ in-process로 호출한다. `InventoryApiExceptionHandler`(`OutOfStockException`
   `InventoryPort`로 감싸 호출하므로 order 자체는 안전하나, inventory 내부는 계층 분리 없음).
 - `OutOfStockException`이 `global.BusinessException` 체계에 편입되지 않음.
 
+## `availableStock()` write-on-read 제거 (GH #6, 해결됨)
+
+과거 `availableStock(productId, defaultStock)`은 Redis에 키가 없으면 `defaultStock`을
+그대로 **써버리는**(write-on-read) 구조였다 — 신규 상품이 재고 seed 전에 조회당하면(catalog의
+배치조회 `/internal/inventory/stocks`는 미존재 시 default=0을 넘김) 재고가 0으로 영구 고착됐다.
+`ProductAdminController.create()`에서 생성 시점에 `setStock`을 먼저 호출해 우회했었지만,
+"조회가 부작용을 낸다"는 설계 자체는 남아 있었다.
+
+현재는 `availableStock()`이 **순수 read-only**로 바뀌었다 — 키가 없으면 `defaultStock`을
+반환만 하고 Redis에는 쓰지 않는다. 재고 초기화 책임은 `initializeStockIfAbsent`/`setStock`
+호출부(상품 생성/시딩 경로: `ProductAdminController.create()`, `SeedData`)에만 있다.
+"미초기화 상태"와 "재고 0"을 Redis 레벨에서 별도 구분(null/미정 상태 도입)하지는 않기로
+결정했다 — DB의 `Product.stock`이 이미 선언적 소스이고, 호출부가 항상 그 값을 `defaultStock`으로
+넘기므로 조회 시점에 모호함이 생기지 않는다(과도한 설계로 판단).
+
 ## 하이브리드 재고 사가 계약 (ADR-005)
 
 Redis 선예약(동시성/오버셀 방지)과 사가(예약-확정-복원 조율)는 **직교**한다 — Redis는 예약 저장소일
