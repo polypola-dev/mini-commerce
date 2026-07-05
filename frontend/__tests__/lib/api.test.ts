@@ -141,14 +141,15 @@ describe('completeFakePayment', () => {
 // getReviews
 // ----------------------------------------------------------------
 describe('getReviews', () => {
-  test('GET /api/proxy/products/{productId}/reviews 로 요청 전송', async () => {
+  // 리뷰 조회는 BFF 프록시가 아니라 공개 백엔드 경로를 직접 호출한다 (ROADMAP B8에서 재검토 예정)
+  test('GET {PUBLIC_API_BASE_URL}/api/products/{productId}/reviews 로 요청 전송', async () => {
     const reviewResp = { reviews: [], averageRating: 0, totalCount: 0 }
     mockOk(reviewResp)
 
     const result = await getReviews('prod-1')
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/proxy/products/prod-1/reviews',
+      'http://localhost:18080/api/products/prod-1/reviews',
       expect.any(Object),
     )
     expect(result).toEqual(reviewResp)
