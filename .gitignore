@@ -3,6 +3,8 @@ build/
 .gradle/
 *.class
 *.jar
+# Gradle wrapper jar는 빌드 재현성을 위해 커밋한다 (CI가 ./gradlew로 빌드)
+!**/gradle/wrapper/gradle-wrapper.jar
 *.war
 /out/
 target/
