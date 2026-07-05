@@ -26,6 +26,7 @@ subprojects {
 
     ext {
         set('springModulithVersion', '1.3.4')
+        set('shedlockVersion', '6.6.0')
     }
 
     dependencyManagement {

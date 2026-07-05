@@ -3,6 +3,9 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // ExpiredReservationReleaser(@Scheduled)에 @SchedulerLock을 붙이기 위한 애너테이션 의존성.
+    // 실제 LockProvider(Redis) 설정은 이 빈을 활성화하는 order-batch가 소유한다.
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

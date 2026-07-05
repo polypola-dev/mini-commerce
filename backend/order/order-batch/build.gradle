@@ -24,6 +24,10 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // order-batch를 replica 2개 이상으로 스케일 아웃해도 @Scheduled 작업이 인스턴스마다
+    // 중복 실행되지 않도록 Redis 기반 분산 락을 건다(아키텍처 리뷰 지적사항).
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedlockVersion}"
     implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"
     // event_publication 아웃박스 registry 런타임 구현(JPA) — order-api와 같은 orderdb 스키마를 공유한다.
     implementation "org.springframework.modulith:spring-modulith-starter-jpa:${springModulithVersion}"
