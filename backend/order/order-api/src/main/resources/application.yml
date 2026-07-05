@@ -29,7 +29,10 @@ spring:
       observation-enabled: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Modulith events-kafka(KafkaJacksonConfiguration)가 이벤트를 ByteArrayJsonMessageConverter로
+      # JSON byte[]로 변환해 넘기므로, value-serializer는 그 byte[]를 그대로 통과시켜야 한다.
+      # StringSerializer로 두면 byte[]를 String으로 캐스팅하려다 SerializationException이 난다.
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
   modulith:
     # 미발행 이벤트 재시도는 order-batch 단독 책임(ADR-005 S4) — order-api에서 켜두면 재시작 시
     # order-batch가 처리 중이던 미완료 이벤트를 이 프로세스가 가로채 재처리할 수 있다(아키텍처

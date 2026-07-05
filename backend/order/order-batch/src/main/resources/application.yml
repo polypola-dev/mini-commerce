@@ -26,7 +26,9 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # order-api와 동일한 이유(Modulith ByteArrayJsonMessageConverter가 byte[]를 넘김) —
+      # 미발행 이벤트 재시도 스윕(IncompleteEventSweeper)도 같은 externalizer를 타므로 동일하게 맞춘다.
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
   modulith:
     republish-outstanding-events-on-restart: true
     events:

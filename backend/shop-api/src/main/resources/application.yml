@@ -33,7 +33,9 @@ spring:
       group-id: notification
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # producer(order-api/order-batch)가 Modulith ByteArrayJsonMessageConverter를 통해 byte[]로
+      # 발행하므로, 수신측도 byte[]로 받아야 같은 컨버터가 타입 헤더 없이 선언 타입으로 역직렬화한다.
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   modulith:
     republish-outstanding-events-on-restart: true
     events:
