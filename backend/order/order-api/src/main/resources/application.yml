@@ -10,8 +10,15 @@ spring:
     password: ${DATABASE_PASSWORD:minicommerce}
   jpa:
     hibernate:
-      ddl-auto: update
+      # Flyway 도입(GH #11). orderdb 스키마는 order-api가 단독 소유(Flyway 마이그레이션),
+      # Hibernate는 validate만 수행. event_publication은 JPA 엔티티가 아니라 validate 대상 아님.
+      ddl-auto: validate
     open-in-view: false
+  flyway:
+    # orderdb 스키마는 order-api가 단독 소유(GH #11). order-admin/order-batch는 validate-only.
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -41,7 +48,8 @@ spring:
     events:
       jdbc:
         schema-initialization:
-          enabled: true
+          # event_publication 테이블은 Flyway baseline이 소유(GH #11) — Modulith 자체 초기화 끔.
+          enabled: false
 
 app:
   catalog:

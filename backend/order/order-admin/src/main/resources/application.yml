@@ -10,11 +10,14 @@ spring:
     password: ${DATABASE_PASSWORD:minicommerce}
   jpa:
     hibernate:
-      # orderdb 스키마 소유권은 order-api 단독(ADR-005 S4, 아키텍처 리뷰 지적) — 동시 기동 시
-      # 여러 앱이 동시에 DDL(update)을 실행하는 경합을 피한다. order-api가 먼저 healthy가 되길
-      # 기다린 뒤 뜨므로(docker-compose depends_on) 스키마는 이미 준비돼 있다.
-      ddl-auto: none
+      # orderdb 스키마 소유권은 order-api 단독(ADR-005 S4). Flyway 도입(GH #11) 후에도 마이그레이션은
+      # order-api만 소유하고, 이 앱은 Flyway 비활성 + validate로 기존 스키마 일치만 확인한다.
+      # order-api가 먼저 healthy가 되길 기다린 뒤 뜨므로(docker-compose depends_on) 스키마는 이미 준비돼 있다.
+      ddl-auto: validate
     open-in-view: false
+  flyway:
+    # orderdb 마이그레이션은 order-api 단독 소유(GH #11) — 이 앱은 스키마를 만들지 않는다.
+    enabled: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}

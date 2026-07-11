@@ -65,6 +65,13 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 ## MSA 전환 대비 규율 (지금부터 지킬 것)
 
 - **모듈은 자기 테이블만 소유.** 크로스 컨텍스트 FK·조인 금지 → 추후 도메인별 DB 분리 가능하게.
+- **스키마 마이그레이션 소유권(GH #11, Flyway).** DB별로 **단일 앱**이 마이그레이션을 소유한다:
+  `minicommerce` DB → `shop-api`, `orderdb` DB → `order-api`. 같은 DB를 공유하는 다른 앱
+  (`order-admin`/`order-batch`)은 Flyway를 끄고 `ddl-auto: validate`로 **스키마 일치만 검증**한다.
+  전 모듈 `ddl-auto`는 `validate`(스키마는 Flyway가 소유, Hibernate는 생성하지 않음). Modulith
+  `event_publication` 테이블도 Flyway baseline이 소유(모듈의 `schema-initialization`은 끔).
+  DB 자체 생성(`CREATE DATABASE orderdb`)은 Flyway 범위 밖 — 인프라 초기화 스크립트
+  (`docker/postgres-init/`, 추후 k8s)가 담당한다.
 - **단일 트랜잭션으로 두 컨텍스트를 동시에 commit하지 않는다.** 크로스 컨텍스트 상태 변경은
   동기 호출 + 보상(saga) 형태로. (예: inventory `reserve` → 실패 시 `release`, 성공 후 `confirm`.)
 - 이벤트를 모듈 간 통합 계약으로 사용 → 추후 브로커(Kafka) 외부화 시 발행자 코드 무변경.
