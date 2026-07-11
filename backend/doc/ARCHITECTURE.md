@@ -72,6 +72,10 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
   `event_publication` 테이블도 Flyway baseline이 소유(모듈의 `schema-initialization`은 끔).
   DB 자체 생성(`CREATE DATABASE orderdb`)은 Flyway 범위 밖 — 인프라 초기화 스크립트
   (`docker/postgres-init/`, 추후 k8s)가 담당한다.
+- **Supabase 전용 보안 설정(GH #12, RLS/롤/Auth)** 도 Flyway 범위 밖 — `anon`/`authenticated`/
+  `service_role` 등 Supabase 롤에 의존해 로컬 docker에서 재현 불가하므로 `backend/db/supabase/`에서
+  별도 관리한다. 현재 태세: public 테이블은 백엔드 전용(백엔드는 `postgres`=BYPASSRLS 접속, 프론트는
+  auth 전용)이라 RLS enabled+정책 미생성=deny-all이 의도된 상태다.
 - **단일 트랜잭션으로 두 컨텍스트를 동시에 commit하지 않는다.** 크로스 컨텍스트 상태 변경은
   동기 호출 + 보상(saga) 형태로. (예: inventory `reserve` → 실패 시 `release`, 성공 후 `confirm`.)
 - 이벤트를 모듈 간 통합 계약으로 사용 → 추후 브로커(Kafka) 외부화 시 발행자 코드 무변경.
