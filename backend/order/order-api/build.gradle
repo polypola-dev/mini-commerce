@@ -26,6 +26,10 @@ dependencies {
     // Logback → OTel Log 축 연결(GH #8). 스타터가 부팅 후 GlobalOpenTelemetry로 자동 install한다.
     implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Flyway 스키마 마이그레이션(GH #11). orderdb 스키마는 order-api가 단독 소유한다
+    // (order-admin/order-batch는 validate-only). Flyway 10+ Postgres 지원은 분리 모듈.
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     // WebConfig가 new JwtVerificationFilter(String, String)을 호출하는데, 이 클래스에

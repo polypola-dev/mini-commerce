@@ -10,8 +10,17 @@ spring:
     password: ${DATABASE_PASSWORD:minicommerce}
   jpa:
     hibernate:
-      ddl-auto: update
+      # Flyway 도입(GH #11). 스키마 생성/변경은 Flyway 마이그레이션이 소유하고, Hibernate는
+      # 엔티티 매핑과 실제 스키마의 일치만 검증한다(update → validate). event_publication은
+      # JPA 엔티티가 아니라 validate 대상이 아니다.
+      ddl-auto: validate
     open-in-view: false
+  flyway:
+    # minicommerce DB 스키마는 shop-api가 소유(GH #11). classpath:db/migration 기본 위치 사용.
+    enabled: true
+    # 이미 데이터가 있는 기존 볼륨에서도 전환 가능하도록 baseline 허용(clean 볼륨은 V1부터 정상 실행).
+    baseline-on-migrate: true
+    baseline-version: 0
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -41,7 +50,9 @@ spring:
     events:
       jdbc:
         schema-initialization:
-          enabled: true
+          # event_publication 테이블도 Flyway baseline이 소유한다(GH #11) — Modulith 자체
+          # 스키마 초기화는 끈다(소유권 단일화, validate 경로와 무충돌).
+          enabled: false
 
 app:
   inventory:

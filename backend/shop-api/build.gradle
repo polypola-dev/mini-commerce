@@ -17,6 +17,10 @@ dependencies {
     implementation project(':order:order-domain')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Flyway 스키마 마이그레이션(GH #11). minicommerce DB 스키마는 shop-api가 소유한다.
+    // Flyway 10+부터 Postgres 지원은 flyway-database-postgresql로 분리됐다(별도 명시 필수).
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     // WebConfig가 new JwtVerificationFilter(String, String)을 호출하는데, 이 클래스에
     // (JwkProvider, String) 오버로드 생성자도 있어 오버로드 해소 시 JwkProvider 타입 resolve가
