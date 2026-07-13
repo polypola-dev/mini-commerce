@@ -1,0 +1,134 @@
+# order-admin — 관리자 전용 주문 API. orderdb 공유하되 flyway 미실행(validate만),
+# Kafka 미사용 — KAFKA_BOOTSTRAP_SERVERS 없음 (backend/doc/CONFIGURATION.md) (G3)
+# CATALOG_BASE_URL은 현재 미호출이지만 order-infra 전이의존으로 조립되므로 명시 유지.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-admin
+  labels:
+    app.kubernetes.io/name: order-admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: order-admin
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: order-admin
+    spec:
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: order-admin
+          image: mini-commerce/order-admin
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8082
+          env:
+            - name: SERVER_PORT
+              value: "8082"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ORDER_DATABASE_URL
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_PASSWORD
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_PORT
+            - name: REDIS_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_SSL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_PASSWORD
+            - name: CATALOG_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: CATALOG_BASE_URL
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: CORS_ALLOWED_ORIGINS
+            - name: SUPABASE_JWKS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: SUPABASE_JWKS_URL
+            - name: BFF_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: BFF_SECRET_KEY
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 100m # 관리 트래픽 소량 (CONFIGURATION.md 산정표)
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-admin
+  labels:
+    app.kubernetes.io/name: order-admin
+spec:
+  selector:
+    app.kubernetes.io/name: order-admin
+  ports:
+    - name: http
+      port: 8082
+      targetPort: http

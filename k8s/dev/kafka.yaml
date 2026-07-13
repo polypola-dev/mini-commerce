@@ -1,0 +1,77 @@
+# [G3 검증용 임시 Kafka — G5(Strimzi vs 단일 StatefulSet)에서 대체 예정]
+# compose의 단일 브로커 KRaft 구성을 승계. 데이터 emptyDir(휘발).
+# 적용: kubectl apply -f k8s/dev/kafka.yaml
+#
+# 주의(G3에서 발견): shop-api의 Kafka consumer(notification 리스너)는 부팅 시
+# 리스너 컨테이너를 즉시 시작하므로 KAFKA_BOOTSTRAP_SERVERS의 "DNS가 해석"돼야
+# 기동한다 — 브로커 다운은 재시도로 버티지만(F1) DNS 부재는 크래시. 즉 Service
+# `kafka`의 존재 자체가 shop-api의 기동 전제다(G5에서도 Service 이름 kafka:9092 유지 필수).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: mini-commerce
+  labels:
+    app.kubernetes.io/name: kafka
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # 단일 브로커 + emptyDir — 롤링 무의미
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: apache/kafka:3.9.0
+          env:
+            - name: KAFKA_NODE_ID
+              value: "1"
+            - name: KAFKA_PROCESS_ROLES
+              value: broker,controller
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: 1@localhost:9093 # 단일 파드 내 컨트롤러 — 자기 자신
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://:9092,CONTROLLER://:9093
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka:9092 # 클러스터 내부 Service DNS로 광고
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: PLAINTEXT
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: CONTROLLER
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+              value: "0"
+          ports:
+            - name: kafka
+              containerPort: 9092
+          readinessProbe:
+            tcpSocket:
+              port: kafka
+            periodSeconds: 5
+            timeoutSeconds: 3
+            initialDelaySeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: mini-commerce
+spec:
+  selector:
+    app.kubernetes.io/name: kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: kafka

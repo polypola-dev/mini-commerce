@@ -1,0 +1,155 @@
+# shop-api — catalog/cart/review/notification + 스토어프론트 BFF 백엔드 (G3)
+# probe(F2)·리소스(F6)·graceful 시간 사슬(F4)의 입력값: backend/doc/CONFIGURATION.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-api
+  labels:
+    app.kubernetes.io/name: shop-api
+spec:
+  replicas: 1 # 운영 레플리카·HPA(G7)는 prod 오버레이 소관 (ADR-009)
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shop-api
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0 # 롤링 무중단 — graceful shutdown(F4)과 한 세트
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: shop-api
+    spec:
+      # preStop(5s) + 앱 graceful 유예(30s) + 여유 = 40s. 앱 유예보다 짧아지면
+      # graceful이 SIGKILL로 무효화된다 (CONFIGURATION.md 시간 사슬)
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: shop-api
+          image: mini-commerce/shop-api # 실제 이름·태그는 오버레이 images 트랜스포머가 결정
+          imagePullPolicy: IfNotPresent # local은 kind load 주입 이미지 — pull 시도하면 실패한다
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: SHOP_DATABASE_URL
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_PASSWORD
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_PORT
+            - name: REDIS_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_SSL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_PASSWORD
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: INVENTORY_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: INVENTORY_BASE_URL
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: CORS_ALLOWED_ORIGINS
+            - name: SUPABASE_JWKS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: SUPABASE_JWKS_URL
+            - name: SUPABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: SUPABASE_URL
+            - name: BFF_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: BFF_SECRET_KEY
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30 # 부팅 예산 60s — 이후부터 liveness가 이어받는다
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 3
+          readinessProbe:
+            # readinessState만 포함(외부 의존 미포함) — 외부 순단 시 전 레플리카가
+            # 동시에 LB에서 빠지는 연쇄를 막는다 (GH #15 F2)
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          lifecycle:
+            preStop:
+              exec:
+                # Endpoint 제거가 kube-proxy/Ingress에 전파되는 동안 신규 요청 수신 커버
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              # request=limit(Guaranteed 준) — JVM이 limit 기준으로 힙을 잡으므로(F6).
+              # CPU limit 없음 — 부팅 JIT burst 스로틀 방지
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-api
+  labels:
+    app.kubernetes.io/name: shop-api
+spec:
+  selector:
+    app.kubernetes.io/name: shop-api
+  ports:
+    - name: http
+      port: 8080 # compose 시절 URL(http://shop-api:8080)과 동일 — CATALOG_BASE_URL 계약 불변
+      targetPort: http

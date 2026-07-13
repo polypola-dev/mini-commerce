@@ -1,0 +1,107 @@
+# order-batch — 재고 만료 리퍼 + 미발행 이벤트 스윕 배치. 웹 API 없음 → Service 없음
+# (probe는 kubelet이 파드에 직접). HPA 제외 대상, 고정 replica — 다중 replica 안전성은
+# ShedLock이 보장(F7). 롤링 중 일시 2개 공존도 ShedLock으로 안전해 기본 전략 유지 (G3)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-batch
+  labels:
+    app.kubernetes.io/name: order-batch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: order-batch
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: order-batch
+    spec:
+      # 스케줄 작업 완료 대기(await-termination 25s) < 앱 유예 30s < 40s (F4)
+      terminationGracePeriodSeconds: 40
+      containers:
+        - name: order-batch
+          image: mini-commerce/order-batch
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8083 # actuator 전용
+          env:
+            - name: SERVER_PORT
+              value: "8083"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: ORDER_DATABASE_URL
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_USERNAME
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: DATABASE_PASSWORD
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_PORT
+            - name: REDIS_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: REDIS_SSL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: REDIS_PASSWORD
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: CATALOG_BASE_URL # order-infra 전이의존 조립용 (CONFIGURATION.md)
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: CATALOG_BASE_URL
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
