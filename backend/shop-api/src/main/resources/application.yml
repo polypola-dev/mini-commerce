@@ -1,6 +1,12 @@
 spring:
   application:
     name: mini-commerce-backend
+  # Graceful shutdown 유예 계약(F4). Spring Boot 3.4+는 server.shutdown=graceful이 기본이지만,
+  # 이 값과 컨테이너 종료 유예(compose stop_grace_period, k8s terminationGracePeriodSeconds)가
+  # "명시적으로" 정렬돼야 하는 계약이라 기본값에 숨기지 않고 고정한다. 유예 30s < 컨테이너
+  # 유예 35s — 컨테이너가 SIGKILL을 보내기 전에 앱이 스스로 종료를 마치는 순서가 보장돼야 한다.
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   threads:
     virtual:
       enabled: true
@@ -105,6 +111,13 @@ management:
     health:
       probes:
         enabled: true
+
+server:
+  # 롤링 업데이트 중 처리 중이던 요청(주문 등)의 유실 방지(F4) — 새 요청 수신을 먼저 끊고
+  # 진행 중 요청을 spring.lifecycle.timeout-per-shutdown-phase 안에서 완료시킨다. Kafka
+  # notification 컨슈머도 같은 graceful 단계에서 리스너 컨테이너(SmartLifecycle)가 현재 poll분
+  # 처리를 마치고 정지한 뒤 컨텍스트가 닫힌다. Boot 3.4+ 기본값이지만 계약이므로 명시(위 lifecycle 주석).
+  shutdown: graceful
 
 logging:
   pattern:

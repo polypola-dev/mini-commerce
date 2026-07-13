@@ -76,6 +76,13 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     ports:
       - "18080:8080"
+    # k8s resources.limits.memory의 예행연습(F6) — 이미지의 -XX:MaxRAMPercentage=75.0이 이 limit에
+    # 비례해 힙을 잡는지(768MiB)를 로컬에서 상시 검증한다. CPU limit은 두지 않는다: JIT 컴파일이
+    # 몰리는 부팅 구간의 burst를 막으면 기동/readiness만 느려진다(k8s에서도 CPU는 request만, G3).
+    mem_limit: 1g
+    # graceful shutdown 유예 계약(F4) — 앱의 timeout-per-shutdown-phase(30s)보다 길어야
+    # 진행 중 요청 완료 전에 SIGKILL(compose 기본 10s)로 끊기지 않는다.
+    stop_grace_period: 35s
     healthcheck:
       # actuator readiness probe(GH #15 F2) — k8s readinessProbe의 예행연습. readiness 그룹은
       # readinessState만 포함하므로(외부 의존 미포함, application.yml 주석 참고) "앱이 부팅을
@@ -115,6 +122,9 @@ services:
       SERVER_PORT: "8081"
     ports:
       - "18081:8081"
+    # F6/F4 — shop-api의 mem_limit/stop_grace_period 주석 참고.
+    mem_limit: 1g
+    stop_grace_period: 35s
     healthcheck:
       # actuator readiness probe(GH #15 F2) — 비즈니스 API(/internal/inventory/stocks)를 찌르던
       # 편법을 제거하고 전용 probe 엔드포인트로 교체했다.
@@ -153,6 +163,9 @@ services:
       SERVER_PORT: "8082"
     ports:
       - "18082:8082"
+    # F6/F4 — shop-api의 mem_limit/stop_grace_period 주석 참고.
+    mem_limit: 1g
+    stop_grace_period: 35s
     healthcheck:
       # readiness probe로 교체(GH #15 F2). 이전의 /actuator/health는 DB/Redis 인디케이터를
       # 집계하므로 외부 의존 순단 시 unhealthy가 됐다 — readiness 그룹(readinessState만)은
@@ -184,6 +197,10 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CATALOG_BASE_URL: http://shop-api:8080
       SERVER_PORT: "8083"
+    # F6/F4 — shop-api의 mem_limit/stop_grace_period 주석 참고. 배치는 트래픽이 없어 limit을
+    # 낮춰도 되지만(산정표: backend/doc/CONFIGURATION.md), 로컬은 검증 단순화를 위해 통일한다.
+    mem_limit: 1g
+    stop_grace_period: 35s
     healthcheck:
       # readiness probe로 교체(GH #15 F2, order-admin과 동일한 사유).
       test: ["CMD", "curl", "-sf", "http://localhost:8083/actuator/health/readiness"]

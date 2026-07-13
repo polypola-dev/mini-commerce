@@ -1,6 +1,10 @@
 spring:
   application:
     name: mini-commerce-order-api
+  # Graceful shutdown 유예 계약(F4) — shop-api application.yml의 lifecycle 주석 참고.
+  # 유예 30s < 컨테이너 종료 유예 35s(compose stop_grace_period, k8s terminationGracePeriodSeconds).
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   threads:
     virtual:
       enabled: true
@@ -63,6 +67,11 @@ app:
 
 server:
   port: ${SERVER_PORT:8081}
+  # 롤링 업데이트 중 처리 중이던 주문 요청 유실 방지(F4) — 새 요청을 먼저 끊고 진행 중 요청을
+  # 유예 내 완료. 주문 확정 후 이벤트 발행은 아웃박스(event_publication)에 커밋되므로 프로세스가
+  # 내려가도 order-batch 스윕이 재발행한다 — graceful은 "HTTP 응답까지"의 보호 장치.
+  # Boot 3.4+ 기본값이지만 계약이므로 명시(위 lifecycle 주석).
+  shutdown: graceful
 
 # OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
 # 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal

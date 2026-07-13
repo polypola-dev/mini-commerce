@@ -1,6 +1,10 @@
 spring:
   application:
     name: mini-commerce-order-admin
+  # Graceful shutdown 유예 계약(F4) — shop-api application.yml의 lifecycle 주석 참고.
+  # 유예 30s < 컨테이너 종료 유예 35s(compose stop_grace_period, k8s terminationGracePeriodSeconds).
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   threads:
     virtual:
       enabled: true
@@ -78,3 +82,6 @@ logging:
 
 server:
   port: ${SERVER_PORT:8082}
+  # 롤링 업데이트 중 처리 중이던 관리자 요청(주문 상태 변경 등) 유실 방지(F4).
+  # Boot 3.4+ 기본값이지만 계약이므로 명시(위 lifecycle 주석).
+  shutdown: graceful

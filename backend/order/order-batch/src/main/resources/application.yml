@@ -1,6 +1,20 @@
 spring:
   application:
     name: mini-commerce-order-batch
+  # Graceful shutdown 유예 계약(F4) — shop-api application.yml의 lifecycle 주석 참고.
+  # 유예 30s < 컨테이너 종료 유예 35s(compose stop_grace_period, k8s terminationGracePeriodSeconds).
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  task:
+    scheduling:
+      shutdown:
+        # 실행 중인 스케줄 작업(재고 만료 리퍼, 미발행 이벤트 스윕)이 있으면 종료 전에 완료를
+        # 기다린다(F4). 기본값은 대기 없이 즉시 끊는다 — 스윕이 Kafka 발행 도중 끊기면 해당
+        # 이벤트는 다음 스윕 주기까지 지연되고(유실은 아웃박스가 방지), 리퍼가 예약 해제 도중
+        # 끊기면 만료 예약이 한 주기 더 잔류한다. 둘 다 치명적이진 않지만 롤링 업데이트마다
+        # 반복될 동작이라 정상 완료를 기본으로 한다. ShedLock 락도 정상 해제된다.
+        await-termination: true
+        await-termination-period: 25s
   threads:
     virtual:
       enabled: true
@@ -93,3 +107,6 @@ logging:
 
 server:
   port: ${SERVER_PORT:8083}
+  # 웹 표면은 actuator probe뿐이지만 graceful 단계에서 스케줄러 종료 대기(위 task.scheduling.shutdown)와
+  # Kafka producer flush가 함께 이뤄지므로 다른 모듈과 동일하게 명시한다(F4).
+  shutdown: graceful
