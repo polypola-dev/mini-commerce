@@ -97,7 +97,7 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| G1 | P0 | 로컬 클러스터 선택·구축 — **kind 권장**(멀티노드 시뮬레이션, CI 재사용 가능) vs minikube/k3d, ADR 기록. **운영 클러스터는 OKE Basic(폴백 k3s)로 확정(ADR-007)** — 여기서는 로컬만 결정 | 학습 목적이므로 결정 근거 문서화 |
+| G1 | P0 | ✅ **완료(2026-07-13)** — 로컬 클러스터 **kind 확정(ADR-008, `k8s/doc/`)**: 표준 k8s(kubeadm)로 OKE와 동일 계열, GitHub Actions 재사용(G11 직결), arm64 네이티브. `k8s/kind/cluster.yaml`(control-plane 1 + worker 2, ingress-ready 라벨 + 80/443 매핑) 커밋, v1.34.0 클러스터 기동·워커 분산 스케줄링 스모크 검증 완료. **운영 클러스터는 OKE Basic(폴백 k3s)로 확정(ADR-007)** | G3 검증 시 compose 스택과 Docker VM 메모리(8G) 공유 주의 |
 | G2 | P0 | 매니페스트 관리 방식 결정 — **Kustomize(base/overlays: local(kind)→prod(OKE)) 권장**, Helm은 외부 차트 소비용 | 자작 서비스 4개엔 Kustomize가 가볍다 |
 | G3 | P0 | 4개 서비스(shop-api/order-api/order-admin/order-batch) Deployment+Service 작성 — probe(F2), 리소스(F6), env(F5) 반영 | |
 | G4 | P0 | Postgres/Redis 배치 결정 — **운영은 Supabase/Upstash 유지로 확정(ADR-007)**. 남은 결정은 로컬 배치(Bitnami 차트 or 단순 StatefulSet+PVC)뿐 | 운영 상태ful 직접 운영 안 함 확정 |
