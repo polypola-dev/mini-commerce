@@ -86,7 +86,7 @@
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
 | F1 | P0 | ✅ **완료(2026-07-13, GH #14)** — 기동 순서 의존 완전 제거. order-admin/order-batch → order-api 앱간 `depends_on` 제거(DDL 경합 없음이 확인돼 근거 자체가 무효), 두 서비스에 Hikari `initialization-fail-timeout: -1` 추가. Kafka/Redis는 4개 서비스 전부 lazy 연결로 이미 안전함을 코드 조사로 확인. docker-compose에서 postgres를 껐다 켜며 order-admin/order-batch가 부팅 성공 후 자동 복구되는 걸 실증(e2e) | shop-api/order-api의 Postgres 의존만 Flyway 소유권에 따른 정당한 hard dependency로 유지 |
-| F2 | P0 | Actuator health group 구성 — `liveness`/`readiness` 분리 노출, order-api 헬스체크의 `/internal/inventory/stocks` 편법 제거 | probe의 근간. B3와 맞물림 |
+| F2 | P0 | ✅ **완료(2026-07-13, GH #15)** — 4개 모듈 전부 `management.endpoint.health.probes.enabled: true` + health 노출로 `/actuator/health/liveness`·`/readiness` 분리 활성화(compose는 k8s가 아니라 자동 활성화 안 됨 → 명시). readiness는 기본 `readinessState`만 포함(DB/Redis/Kafka 미포함) — 외부 의존 순단 시 전 레플리카 동시 이탈(연쇄 장애) 방지, F1 독립 부팅 원칙의 연장. order-api의 `/internal/inventory/stocks` 편법 healthcheck 제거, compose healthcheck 4개 전부 `/actuator/health/readiness`로 교체(shop-api는 신규 추가). 실컨테이너 재빌드 후 4개 모듈 probe 200 UP + 전 서비스 healthy 수렴 검증 | 인증 필터가 URL 패턴 화이트리스트 방식(`/api/**`만 등록)이라 `/actuator/**`는 무인증 — B3 도입 시에도 probe 경로 분리 요건 자동 충족 |
 | F3 | P0 | 스키마 소유권 재설계 — "order-api가 ddl-auto로 스키마 생성, admin/batch는 none" 구조를 **Flyway 마이그레이션 Job/initContainer**로 대체 (D1 실행분) | 현재 구조는 order-api 선기동 강제의 원인 |
 | F4 | P1 | Graceful shutdown — `server.shutdown: graceful` + Kafka consumer 정상 종료 + preStop 유예, 롤링 업데이트 중 주문 유실 방지 | |
 | F5 | P1 | 설정 외부화 정리 — 환경변수 계약 문서화, Spring profile(`local`/`k8s`/`prod`) 정비 → ConfigMap/Secret 매핑 표 작성 | compose environment 블록이 사실상의 계약 |

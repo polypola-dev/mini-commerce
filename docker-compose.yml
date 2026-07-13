@@ -76,6 +76,15 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     ports:
       - "18080:8080"
+    healthcheck:
+      # actuator readiness probe(GH #15 F2) — k8s readinessProbe의 예행연습. readiness 그룹은
+      # readinessState만 포함하므로(외부 의존 미포함, application.yml 주석 참고) "앱이 부팅을
+      # 마치고 트래픽을 받을 수 있다"는 신호다.
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
     depends_on:
       # order-api는 더 이상 부팅 순서 의존이 아니다(GH #14 A6) — shop-api 부팅 중 order-api를
       # 동기 호출하던 SeedData를 제거했다. Kafka(consumer)/Redis(코드상 미사용)도 순서를 강제할
@@ -107,9 +116,9 @@ services:
     ports:
       - "18081:8081"
     healthcheck:
-      # /internal/inventory는 WebConfig에 필터가 안 걸려 인증 없이 호출 가능 — 배치조회는 ids 없으면
-      # 빈 Map을 200으로 반환하므로 순수 헬스 목적으로 쓰기에 적합하다.
-      test: ["CMD", "curl", "-sf", "http://localhost:8081/internal/inventory/stocks"]
+      # actuator readiness probe(GH #15 F2) — 비즈니스 API(/internal/inventory/stocks)를 찌르던
+      # 편법을 제거하고 전용 probe 엔드포인트로 교체했다.
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 15
@@ -145,7 +154,10 @@ services:
     ports:
       - "18082:8082"
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+      # readiness probe로 교체(GH #15 F2). 이전의 /actuator/health는 DB/Redis 인디케이터를
+      # 집계하므로 외부 의존 순단 시 unhealthy가 됐다 — readiness 그룹(readinessState만)은
+      # F1의 독립 부팅 원칙과 일관되게 앱 자체의 준비 상태만 본다.
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 15
@@ -173,7 +185,8 @@ services:
       CATALOG_BASE_URL: http://shop-api:8080
       SERVER_PORT: "8083"
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8083/actuator/health"]
+      # readiness probe로 교체(GH #15 F2, order-admin과 동일한 사유).
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 15

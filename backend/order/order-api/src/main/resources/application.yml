@@ -86,13 +86,19 @@ otel:
     exporter: otlp
 
 management:
-  # 이 서비스의 docker-compose healthcheck는 actuator를 쓰지 않으므로(order-api는
-  # /internal/inventory/stocks를 호출) 어떤 actuator 엔드포인트도 웹에 노출하지 않는다.
-  # tracing은 엔드포인트 노출과 무관하게 동작한다.
+  # health만 노출한다(GH #15 F2) — 이전의 /internal/inventory/stocks 편법 healthcheck를
+  # actuator probe로 대체했다. probes.enabled로 /actuator/health/liveness·/readiness 그룹을
+  # 활성화한다(k8s 밖에서는 자동 활성화되지 않으므로 명시 필요).
+  # readiness에 DB/Redis/Kafka 인디케이터는 의도적으로 넣지 않는다(기본 readinessState만) —
+  # 외부 의존 순단 시 연쇄 장애 방지, GH #14 F1 원칙의 연장.
   endpoints:
     web:
       exposure:
-        include: ""
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
 
 logging:
   pattern:
