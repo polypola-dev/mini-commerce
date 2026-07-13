@@ -42,6 +42,53 @@ kubectl get pods -n mini-commerce -w
 
 매니페스트 빌드 결과만 보려면 `kubectl kustomize k8s/overlays/local`.
 
+## 로컬 클러스터 확인·모니터링
+
+kind 자체에는 대시보드가 없다. Docker Desktop의 Kubernetes 탭은 내장 클러스터 전용이라
+이 클러스터는 안 보인다(Containers 탭에 노드 컨테이너 3개로만 나타남). 메트릭·로그까지
+포함한 정식 모니터링(Grafana, kube-prometheus-stack)은 H계열에서 도입한다.
+
+### k9s (터미널 TUI, 설치됨)
+
+별도 pane에서 실행 — 파드 상태·로그·이벤트를 실시간 탐색:
+
+```bash
+k9s -n mini-commerce
+```
+
+| 키 | 동작 |
+|---|---|
+| `Enter` / `l` | 파드 진입 / 로그 보기 |
+| `d` | describe (probe 상태·이벤트) |
+| `:svc` `:deploy` `:events` | 리소스 종류 전환 |
+| `0` | 전체 네임스페이스 |
+| `Ctrl+d` | 파드 삭제 (graceful shutdown → 재생성 관찰용) |
+| `?` / `:q` | 도움말 / 종료 |
+
+### kubectl 원라이너
+
+```bash
+# 앱 파드 상태 (READY/RESTARTS가 첫 확인 지점)
+kubectl get pods -n mini-commerce
+
+# 최근 이벤트 시간순 — 스케줄링 실패·probe 실패·OOMKill이 여기 먼저 나타난다
+kubectl get events -n mini-commerce --sort-by=.lastTimestamp | tail -20
+
+# 특정 서비스 로그 추적 / 직전 크래시 로그
+kubectl logs -n mini-commerce deploy/shop-api -f
+kubectl logs -n mini-commerce deploy/shop-api --previous
+
+# probe 실패 원인 등 파드 상세
+kubectl describe pod -n mini-commerce -l app.kubernetes.io/name=shop-api
+
+# 호스트에서 API 직접 호출 (포트포워딩)
+kubectl port-forward -n mini-commerce svc/shop-api 18080:8080
+curl http://localhost:18080/actuator/health/readiness
+
+# 노드별 파드 배치 확인 (멀티노드 스케줄링)
+kubectl get pods -n mini-commerce -o wide
+```
+
 ## 로컬 클러스터
 
 ```bash
