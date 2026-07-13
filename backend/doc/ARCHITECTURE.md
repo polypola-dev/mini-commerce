@@ -79,6 +79,15 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
   두지 않는다** — 서비스별로 자기 DB/캐시에만 쓰고, 상대 서비스가 없어도 부팅이 막히지 않아야 한다
   (예: shop-api SeedData가 order-api Redis 재고를 REST로 초기화하던 방식은 부팅 순서 결합을 만들어
   제거했다; 필요하면 어드민 API로 수동 설정).
+- **앱 간 기동 순서 의존을 두지 않는다(GH #14 F1).** k8s는 Pod 기동 순서를 보장하지 않으므로,
+  compose `depends_on`에 다른 애플리케이션 서비스(예: order-admin/order-batch → order-api)를
+  거는 방식은 금지한다 — 옮길 수 없는 결합이다. 자기 인프라(Postgres/Redis/Kafka)에 한해서만
+  다음 원칙을 따른다: Flyway로 스키마를 소유하는 앱(shop-api/order-api)만 Postgres를 정당한
+  hard dependency로 두고(compose `depends_on: postgres: service_healthy` 유지), 스키마를
+  소유하지 않는 앱(order-admin/order-batch, `ddl-auto: validate`만 사용)은 Hikari
+  `initialization-fail-timeout: -1`로 커넥션 풀 생성을 항상 성공시켜 DB가 늦게 준비돼도 재시도로
+  흡수한다. Kafka(consumer/producer)와 Redis(Lettuce)는 기본이 lazy 연결이라 별도 설정·
+  `depends_on` 없이도 안전하다.
 - **Supabase 전용 보안 설정(GH #12, RLS/롤/Auth)** 도 Flyway 범위 밖 — `anon`/`authenticated`/
   `service_role` 등 Supabase 롤에 의존해 로컬 docker에서 재현 불가하므로 `backend/db/supabase/`에서
   별도 관리한다. 현재 태세: public 테이블은 백엔드 전용(백엔드는 `postgres`=BYPASSRLS 접속, 프론트는

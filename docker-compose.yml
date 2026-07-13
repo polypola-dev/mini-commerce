@@ -77,13 +77,10 @@ services:
     ports:
       - "18080:8080"
     depends_on:
-      # order-api는 더 이상 부팅 순서 의존이 아니다(GH #14) — shop-api 부팅 중 order-api를
-      # 동기 호출하던 SeedData를 제거했다. 남은 의존은 shop-api 자신의 DB/캐시/브로커뿐이다.
+      # order-api는 더 이상 부팅 순서 의존이 아니다(GH #14 A6) — shop-api 부팅 중 order-api를
+      # 동기 호출하던 SeedData를 제거했다. Kafka(consumer)/Redis(코드상 미사용)도 순서를 강제할
+      # 필요가 없어 뺐다(GH #14 F1) — Postgres만 Flyway가 소유하는 정당한 hard dependency로 남긴다.
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
 
   # order+inventory+주문 웹계층(고객/관리자) 분리 서비스(MSA S3-3b, ADR-005). 전용 order-db.
@@ -118,11 +115,10 @@ services:
       retries: 15
       start_period: 20s
     depends_on:
+      # Kafka(consumer)/Redis(inventory 모듈, 런타임에만 접근)는 기동을 막지 않는다(GH #14 F1) —
+      # Lettuce/Kafka consumer 모두 lazy 연결이라 compose에 순서를 강제할 필요가 없다. Postgres만
+      # Flyway가 스키마를 소유하는 정당한 hard dependency로 남긴다.
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
         condition: service_healthy
 
   # 관리자 전용 주문 API 분리 서비스(MSA S4, ADR-005). order-api와 동일한 order-db를 공유한다.
@@ -154,15 +150,11 @@ services:
       timeout: 3s
       retries: 15
       start_period: 20s
-    depends_on:
-      # orderdb 스키마 소유권은 order-api 단독(ddl-auto: none인 이 서비스는 스키마가 이미
-      # 준비돼 있어야 한다) — order-api healthy를 기다려 동시 DDL 경합을 피한다(아키텍처 리뷰 지적).
-      order-api:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    # depends_on 없음(GH #14 F1) — order-api healthy를 기다리던 이전 방식은 k8s에 옮길 수 없는
+    # 앱간 순서 보장이었다. 이 서비스는 flyway.enabled=false라 DDL을 실행하지 않으므로 order-api와의
+    # "동시 DDL 경합"은 애초에 없고, orderdb 스키마가 아직 없을 때는 Hikari
+    # initialization-fail-timeout: -1(application.yml)로 풀 생성은 성공시키고 커넥션 획득
+    # 시점에 재시도한다. Redis도 Lettuce lazy 연결이라 순서를 강제할 필요가 없다.
 
   # 재고 만료 리퍼 + 미발행 이벤트 스윕 전담 배치 서비스(MSA S4, ADR-005). 웹 엔드포인트는 없다.
   order-batch:
@@ -186,17 +178,9 @@ services:
       timeout: 3s
       retries: 15
       start_period: 20s
-    depends_on:
-      # orderdb 스키마 소유권은 order-api 단독(ddl-auto: none인 이 서비스는 스키마가 이미
-      # 준비돼 있어야 한다) — order-api healthy를 기다려 동시 DDL 경합을 피한다(아키텍처 리뷰 지적).
-      order-api:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
+    # depends_on 없음(GH #14 F1, order-admin과 동일한 사유) — order-api/postgres/redis/kafka
+    # 전부 순서를 강제하지 않는다. orderdb 스키마 미준비는 Hikari initialization-fail-timeout: -1로,
+    # Kafka(producer, IncompleteEventSweeper)/Redis(inventory, ShedLock)는 lazy 연결로 흡수한다.
 
   # 분산 트레이싱 백엔드(로컬 전용, GH #7). OTLP 수신 후 로컬 스토리지에 저장.
   # 4317/4318을 host에 노출해 host에서 next dev로 구동하는 BFF도 OTLP export 가능.

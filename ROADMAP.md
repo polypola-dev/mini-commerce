@@ -85,7 +85,7 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| F1 | P0 | 기동 순서 의존 완전 제거 — A6(SeedData, ✅ 완료) 외 잔여 범위: 모든 서비스가 의존 서비스 부재 시에도 부팅 후 재시도하도록 (Kafka/DB 연결 재시도 포함) 전 모듈 점검, compose 역순 기동 검증 | k8s는 Pod 기동 순서를 보장하지 않음 |
+| F1 | P0 | ✅ **완료(2026-07-13, GH #14)** — 기동 순서 의존 완전 제거. order-admin/order-batch → order-api 앱간 `depends_on` 제거(DDL 경합 없음이 확인돼 근거 자체가 무효), 두 서비스에 Hikari `initialization-fail-timeout: -1` 추가. Kafka/Redis는 4개 서비스 전부 lazy 연결로 이미 안전함을 코드 조사로 확인. docker-compose에서 postgres를 껐다 켜며 order-admin/order-batch가 부팅 성공 후 자동 복구되는 걸 실증(e2e) | shop-api/order-api의 Postgres 의존만 Flyway 소유권에 따른 정당한 hard dependency로 유지 |
 | F2 | P0 | Actuator health group 구성 — `liveness`/`readiness` 분리 노출, order-api 헬스체크의 `/internal/inventory/stocks` 편법 제거 | probe의 근간. B3와 맞물림 |
 | F3 | P0 | 스키마 소유권 재설계 — "order-api가 ddl-auto로 스키마 생성, admin/batch는 none" 구조를 **Flyway 마이그레이션 Job/initContainer**로 대체 (D1 실행분) | 현재 구조는 order-api 선기동 강제의 원인 |
 | F4 | P1 | Graceful shutdown — `server.shutdown: graceful` + Kafka consumer 정상 종료 + preStop 유예, 롤링 업데이트 중 주문 유실 방지 | |
