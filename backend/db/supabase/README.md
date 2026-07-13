@@ -30,19 +30,23 @@ baseline에 넣을 수 없어(로컬 docker에는 이 롤이 없다), 여기서 
 향후 프론트엔드가 특정 테이블을 Data API로 직접 읽어야 하는 요구가 생기면, 그때 해당 테이블에
 한해 세분화 정책(예: `products` authenticated read)을 설계한다.
 
-## 적용 방법
+## 적용 이력
 
-`rls_hardening.sql`은 **미적용 상태**다(2026-07-11, 사용자 보류 결정). 적용 시:
+- **2026-07-13**: `rls_hardening.sql`의 `REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() ...`를
+  MCP `apply_migration`으로 프로덕션에 적용 완료. Security advisor 재검증 결과
+  `anon/authenticated_security_definer_function_executable` (WARN) 2건 해소 확인.
 
-1. Supabase Dashboard > SQL Editor에 `rls_hardening.sql` 붙여넣기 실행, 또는 MCP
-   `apply_migration`으로 적용.
-2. 적용 후 security advisor 재실행 → `anon/authenticated_security_definer_function_executable`
-   (WARN) 2건이 사라지는지 확인.
-3. (별건) Dashboard > Authentication에서 **Leaked Password Protection** 토글 켜기(WARN 해소, SQL 불가).
+## Leaked Password Protection — 적용 불가 (플랜 제약)
 
-## 잔여 advisor 요약 (적용 전 기준)
+Dashboard/MCP로 활성화 시도 시 다음 오류로 거부됨:
+`Configuring leaked password protection via HaveIBeenPwned.org is available on Pro Plans and up.`
+
+무료(Free) 티어에서는 설정 자체가 노출되지 않는 Pro 전용 기능이라 **현재는 액션 불가** 상태다.
+Pro 플랜으로 업그레이드하기 전까지는 해소할 수 없는 잔여 WARN으로 남겨두고 방치한다(critical 아님).
+
+## 잔여 advisor 요약 (2026-07-13 기준)
 
 - `rls_enabled_no_policy` (INFO) × 12 — 의도된 deny-all, 방치.
-- `anon/authenticated_security_definer_function_executable` (WARN) × 2 — `rls_hardening.sql`로 해소.
-- `auth_leaked_password_protection` (WARN) × 1 — 대시보드 토글(사용자 액션).
+- `anon/authenticated_security_definer_function_executable` (WARN) × 2 — **해소 완료** (REVOKE 적용).
+- `auth_leaked_password_protection` (WARN) × 1 — **Pro 플랜 전용 기능, 현재 플랜에서 액션 불가** — 방치.
 - **critical: 0건** (완료 조건 이미 충족).
