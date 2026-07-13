@@ -1,0 +1,8 @@
+# prod(OKE) 오버레이 — ADR-007 운영 클러스터 대상 (ADR-009)
+# 적용: kubectl apply -k k8s/overlays/prod  (G11에서 Argo CD로 대체 예정)
+# G3+: GHCR arm64 이미지 태그(E4 파이프라인), 운영 레플리카/리소스 patch가 여기 추가된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base

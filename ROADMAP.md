@@ -98,7 +98,7 @@
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
 | G1 | P0 | ✅ **완료(2026-07-13)** — 로컬 클러스터 **kind 확정(ADR-008, `k8s/doc/`)**: 표준 k8s(kubeadm)로 OKE와 동일 계열, GitHub Actions 재사용(G11 직결), arm64 네이티브. `k8s/kind/cluster.yaml`(control-plane 1 + worker 2, ingress-ready 라벨 + 80/443 매핑) 커밋, v1.34.0 클러스터 기동·워커 분산 스케줄링 스모크 검증 완료. **운영 클러스터는 OKE Basic(폴백 k3s)로 확정(ADR-007)** | G3 검증 시 compose 스택과 Docker VM 메모리(8G) 공유 주의 |
-| G2 | P0 | 매니페스트 관리 방식 결정 — **Kustomize(base/overlays: local(kind)→prod(OKE)) 권장**, Helm은 외부 차트 소비용 | 자작 서비스 4개엔 Kustomize가 가볍다 |
+| G2 | P0 | ✅ **완료(2026-07-13)** — **Kustomize base/overlays 확정(ADR-009, `k8s/doc/`)**: `k8s/base` + `overlays/{local,prod}` 골격 커밋, kubectl 내장 kustomize 사용(`kubectl apply -k`, 별도 설치 없음). 네임스페이스 `mini-commerce` 단일, 공통 라벨 `part-of` base 일괄 부여, Helm은 외부 컴포넌트(G5 Strimzi·G6 ingress-nginx) 소비용으로 역할 분리. local 오버레이 kind 적용 검증 완료 | patch는 이미지·레플리카·리소스량으로 제한, 환경차는 env var 유지(F5 원칙) |
 | G3 | P0 | 4개 서비스(shop-api/order-api/order-admin/order-batch) Deployment+Service 작성 — probe(F2), 리소스(F6), env(F5) 반영 | |
 | G4 | P0 | Postgres/Redis 배치 결정 — **운영은 Supabase/Upstash 유지로 확정(ADR-007)**. 남은 결정은 로컬 배치(Bitnami 차트 or 단순 StatefulSet+PVC)뿐 | 운영 상태ful 직접 운영 안 함 확정 |
 | G5 | P1 | Kafka on k8s — **Strimzi Operator**(학습 가치 높음) vs 단일 브로커 StatefulSet, KRaft 유지 | compose 단일 브로커의 승계 |

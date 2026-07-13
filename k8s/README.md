@@ -5,8 +5,16 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 ## 구성
 
 - `kind/cluster.yaml` — 로컬 kind 클러스터 정의 (G1, ADR-008)
+- `base/` — 환경 무관 공통 매니페스트 (G2, ADR-009)
+- `overlays/local/` — kind 대상 오버레이, `overlays/prod/` — OKE 대상 오버레이
 - `doc/` — k8s 관련 ADR·문서
-- (예정) Kustomize base/overlays — G2에서 구조 결정
+
+```bash
+# 매니페스트 적용 (kubectl 내장 kustomize 사용, 별도 설치 불필요)
+kubectl apply -k k8s/overlays/local
+# 빌드 결과만 확인
+kubectl kustomize k8s/overlays/local
+```
 
 ## 로컬 클러스터
 

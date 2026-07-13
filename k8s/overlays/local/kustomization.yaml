@@ -1,0 +1,8 @@
+# local(kind) 오버레이 — ADR-008 클러스터 대상 (ADR-009)
+# 적용: kubectl apply -k k8s/overlays/local
+# G3+: 로컬 이미지 태그(kind load 주입분), 레플리카 축소 patch가 여기 추가된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base

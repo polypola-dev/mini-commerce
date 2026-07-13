@@ -1,0 +1,14 @@
+# 환경 무관 공통 매니페스트 (ADR-009)
+# G3에서 4개 서비스 Deployment/Service가 resources에 추가된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mini-commerce
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: mini-commerce
+
+resources:
+  - namespace.yaml
