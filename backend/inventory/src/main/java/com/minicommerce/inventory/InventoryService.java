@@ -75,10 +75,6 @@ public class InventoryService {
         this.reservationRepository = reservationRepository;
     }
 
-    public void initializeStockIfAbsent(String productId, long stock) {
-        redisTemplate.opsForValue().setIfAbsent(stockKey(productId), String.valueOf(stock));
-    }
-
     public void setStock(String productId, long stock) {
         redisTemplate.opsForValue().set(stockKey(productId), String.valueOf(stock));
     }

@@ -1,0 +1,6 @@
+spring:
+  flyway:
+    # db/migration(스키마) + db/seed(로컬 개발용 더미 상품 데이터, GH #14). 이 profile은
+    # docker-compose.yml에서 SPRING_PROFILES_ACTIVE=local로만 활성화되고, prod(Render)는
+    # profile을 지정하지 않으므로 seed가 적용되지 않는다.
+    locations: classpath:db/migration,classpath:db/seed

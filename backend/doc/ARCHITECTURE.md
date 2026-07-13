@@ -72,6 +72,13 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
   `event_publication` 테이블도 Flyway baseline이 소유(모듈의 `schema-initialization`은 끔).
   DB 자체 생성(`CREATE DATABASE orderdb`)은 Flyway 범위 밖 — 인프라 초기화 스크립트
   (`docker/postgres-init/`, 추후 k8s)가 담당한다.
+- **로컬 개발용 더미 데이터(GH #14)는 `db/migration`과 분리된 `db/seed`에 둔다.** `db/migration`은
+  전 환경(prod 포함) 공통 스키마만 소유하고, `db/seed`는 `spring.profiles.active=local`일 때만
+  `spring.flyway.locations`에 추가되어 적용된다(`application-local.yml`). prod(Render)는 profile을
+  지정하지 않으므로 seed가 자동 적용되지 않는다. **부팅 중 다른 서비스를 동기 호출하는 시드 로직은
+  두지 않는다** — 서비스별로 자기 DB/캐시에만 쓰고, 상대 서비스가 없어도 부팅이 막히지 않아야 한다
+  (예: shop-api SeedData가 order-api Redis 재고를 REST로 초기화하던 방식은 부팅 순서 결합을 만들어
+  제거했다; 필요하면 어드민 API로 수동 설정).
 - **Supabase 전용 보안 설정(GH #12, RLS/롤/Auth)** 도 Flyway 범위 밖 — `anon`/`authenticated`/
   `service_role` 등 Supabase 롤에 의존해 로컬 docker에서 재현 불가하므로 `backend/db/supabase/`에서
   별도 관리한다. 현재 태세: public 테이블은 백엔드 전용(백엔드는 `postgres`=BYPASSRLS 접속, 프론트는

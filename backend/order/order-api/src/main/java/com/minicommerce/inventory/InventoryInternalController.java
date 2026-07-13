@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +30,7 @@ class InventoryInternalController {
     /**
      * 배치 조회. {@code ?ids=a,b,c} 형태의 productId 목록을 받아 {productId: availableStock} Map을
      * 반환한다(N+1 방지). 요청 쪽은 자기 DB의 seed 기본값을 전달하지 않으므로 레디스 미존재 시
-     * fallback은 0으로 고정한다 — 실제 초기값은 catalog가 시딩/생성 시점에 setStock/init으로 넣는다.
+     * fallback은 0으로 고정한다 — 실제 초기값은 catalog가 생성 시점에 setStock으로 넣는다.
      */
     @GetMapping("/stocks")
     Map<String, Long> availableStocks(@RequestParam(name = "ids", required = false) List<String> ids) {
@@ -54,15 +53,6 @@ class InventoryInternalController {
         return inventoryService.availableStock(productId, request.stock());
     }
 
-    @PostMapping("/stock/{productId}/init")
-    long initStock(@PathVariable String productId, @RequestBody InitRequest request) {
-        inventoryService.initializeStockIfAbsent(productId, request.defaultStock());
-        return inventoryService.availableStock(productId, request.defaultStock());
-    }
-
     record StockRequest(long stock) {
-    }
-
-    record InitRequest(long defaultStock) {
     }
 }

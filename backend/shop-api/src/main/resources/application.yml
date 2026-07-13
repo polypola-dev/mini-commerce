@@ -17,6 +17,8 @@ spring:
     open-in-view: false
   flyway:
     # minicommerce DB 스키마는 shop-api가 소유(GH #11). classpath:db/migration 기본 위치 사용.
+    # db/seed(더미 상품 데이터)는 여기 포함하지 않는다 — local profile에서만
+    # application-local.yml이 locations에 추가한다(GH #14).
     enabled: true
     # 이미 데이터가 있는 기존 볼륨에서도 전환 가능하도록 baseline 허용(clean 볼륨은 V1부터 정상 실행).
     baseline-on-migrate: true

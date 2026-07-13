@@ -1,10 +1,8 @@
 package com.minicommerce.inventory;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -69,19 +67,5 @@ class InventoryInternalControllerTest {
                 .andExpect(content().string("50"));
 
         verify(inventoryService).setStock("p1", 50L);
-    }
-
-    @Test
-    @DisplayName("POST /internal/inventory/stock/{id}/init: initializeStockIfAbsent 호출 후 최종 재고 반환")
-    void initStock_initializes_and_returns_available_stock() throws Exception {
-        when(inventoryService.availableStock("p1", 100L)).thenReturn(100L);
-
-        mockMvc.perform(post("/internal/inventory/stock/p1/init")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"defaultStock\":100}"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("100"));
-
-        verify(inventoryService).initializeStockIfAbsent(eq("p1"), eq(100L));
     }
 }

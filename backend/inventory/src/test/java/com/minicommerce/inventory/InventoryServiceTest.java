@@ -36,20 +36,6 @@ class InventoryServiceTest {
     }
 
     // ----------------------------------------------------------------
-    // initializeStockIfAbsent
-    // ----------------------------------------------------------------
-
-    @Test
-    @DisplayName("initializeStockIfAbsent: stock:{productId} 키로 Redis setIfAbsent 호출")
-    void initializeStockIfAbsent_callsSetIfAbsent() {
-        // when
-        inventoryService.initializeStockIfAbsent("prod-1", 100L);
-
-        // then
-        verify(valueOps).setIfAbsent("stock:prod-1", "100");
-    }
-
-    // ----------------------------------------------------------------
     // availableStock
     // ----------------------------------------------------------------
 

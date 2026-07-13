@@ -43,7 +43,7 @@ class InventoryConcurrencyTest {
     @DisplayName("재고 10개에 100개 동시 요청 → 정확히 10개만 성공, 재고 0 잔여")
     void concurrentReserve_exactlyStockSucceeds() throws InterruptedException {
         String productId = "concurrent-prod-" + UUID.randomUUID();
-        inventoryService.initializeStockIfAbsent(productId, 10L);
+        inventoryService.setStock(productId, 10L);
 
         int requests = 100;
         AtomicInteger success = new AtomicInteger();

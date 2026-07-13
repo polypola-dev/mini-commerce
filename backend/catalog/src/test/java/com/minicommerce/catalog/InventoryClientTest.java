@@ -82,16 +82,4 @@ class InventoryClientTest {
 
         server.verify();
     }
-
-    @Test
-    void initializeStockIfAbsent_sends_post_with_default_stock_body() {
-        server.expect(requestTo("http://inventory.internal/internal/inventory/stock/p1/init"))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(content().json("{\"defaultStock\":100}"))
-                .andRespond(withSuccess("100", MediaType.APPLICATION_JSON));
-
-        client.initializeStockIfAbsent("p1", 100L);
-
-        server.verify();
-    }
 }

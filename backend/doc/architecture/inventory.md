@@ -53,8 +53,10 @@ in-process로 호출한다. `InventoryApiExceptionHandler`(`OutOfStockException`
 "조회가 부작용을 낸다"는 설계 자체는 남아 있었다.
 
 현재는 `availableStock()`이 **순수 read-only**로 바뀌었다 — 키가 없으면 `defaultStock`을
-반환만 하고 Redis에는 쓰지 않는다. 재고 초기화 책임은 `initializeStockIfAbsent`/`setStock`
-호출부(상품 생성/시딩 경로: `ProductAdminController.create()`, `SeedData`)에만 있다.
+반환만 하고 Redis에는 쓰지 않는다. 재고 초기화 책임은 `setStock` 호출부(`ProductAdminController.create()`
+/`update()`)에만 있다. 로컬 개발용 상품 시드(GH #14, `db/seed/V1__seed_products.sql`)는
+`products` 테이블에만 직접 INSERT하고 Redis는 건드리지 않는다 — 조회 시 항상 DB의
+`Product.stock`을 `defaultStock`으로 넘기므로 Redis에 키가 없어도 값이 어긋나지 않는다.
 "미초기화 상태"와 "재고 0"을 Redis 레벨에서 별도 구분(null/미정 상태 도입)하지는 않기로
 결정했다 — DB의 `Product.stock`이 이미 선언적 소스이고, 호출부가 항상 그 값을 `defaultStock`으로
 넘기므로 조회 시점에 모호함이 생기지 않는다(과도한 설계로 판단).

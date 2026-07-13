@@ -23,7 +23,7 @@
 | A3 | P1 | `next lint` `Invalid project directory` 오류 원인 조사·수정 | 세션 8부터 보류, 린트가 사실상 비활성 상태 |
 | A4 | P2 | 검색을 Intercepting Routes(`@modal/(.)search`)로 재전환 — 상품상세는 동일 패턴 정상 동작 확인됨 | 세션 11 실패 원인 미규명 |
 | A5 | P1 | `frontend` cart-drawer 기존 테스트 타입에러 1건 수정 — `tsc --noEmit` 완전 그린화 | 세션 13에서 "무관한 기존 에러"로 방치됨 |
-| A6 | P0 | shop-api 부팅 시 SeedData(ApplicationRunner)가 order-api에 동기 REST 호출 → **부팅 순서 결합 제거** (재시도 or 시드를 별도 Job으로 분리) | compose `depends_on: service_healthy`로 봉합 중. k8s에는 기동 순서 보장이 없어 그대로 옮기면 CrashLoop |
+| A6 | P0 | ✅ **완료(2026-07-13, GH #14)** — shop-api SeedData(ApplicationRunner)가 order-api에 동기 REST 호출하던 구조 제거. 상품 시드는 `db/seed/` Flyway 마이그레이션(local profile 전용)으로 대체, 재고 REST 호출은 완전 삭제(어드민 API로 대체). compose `depends_on`에서 order-api 제거 | 기존 `depends_on: service_healthy` 봉합 해소 |
 | A7 | P2 | `/maintenance` 점검중 페이지가 실제 점검모드 토글과 미연동 — feature flag 연결 | CONTEXT.md 명시 |
 
 ## B. 보안 (8)
@@ -85,7 +85,7 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| F1 | P0 | 기동 순서 의존 완전 제거 — A6(SeedData) 포함, 모든 서비스가 의존 서비스 부재 시에도 부팅 후 재시도하도록 (Kafka/DB 연결 재시도 포함) | k8s는 Pod 기동 순서를 보장하지 않음 |
+| F1 | P0 | 기동 순서 의존 완전 제거 — A6(SeedData, ✅ 완료) 외 잔여 범위: 모든 서비스가 의존 서비스 부재 시에도 부팅 후 재시도하도록 (Kafka/DB 연결 재시도 포함) 전 모듈 점검, compose 역순 기동 검증 | k8s는 Pod 기동 순서를 보장하지 않음 |
 | F2 | P0 | Actuator health group 구성 — `liveness`/`readiness` 분리 노출, order-api 헬스체크의 `/internal/inventory/stocks` 편법 제거 | probe의 근간. B3와 맞물림 |
 | F3 | P0 | 스키마 소유권 재설계 — "order-api가 ddl-auto로 스키마 생성, admin/batch는 none" 구조를 **Flyway 마이그레이션 Job/initContainer**로 대체 (D1 실행분) | 현재 구조는 order-api 선기동 강제의 원인 |
 | F4 | P1 | Graceful shutdown — `server.shutdown: graceful` + Kafka consumer 정상 종료 + preStop 유예, 롤링 업데이트 중 주문 유실 방지 | |
@@ -106,7 +106,7 @@
 | G7 | P2 | HPA — shop-api/order-api 대상 CPU 기반부터, E6 부하 테스트로 임계값 산정. order-batch는 고정 replica | |
 | G8 | P0 | Secret 관리 — 로컬: `.env`→Secret 생성 스크립트, 이후 SealedSecrets or SOPS로 Git 관리 가능하게 | B4 승계. 시크릿 평문 커밋 금지 |
 | G9 | P1 | NetworkPolicy — `/internal/**`는 서비스간 트래픽만 허용, default-deny 기반 | B3의 인프라 레이어 |
-| G10 | P1 | 시드/초기화 Job — SeedData(A6)와 orderdb 생성 SQL(F3)을 k8s Job/initContainer로 이관 | |
+| G10 | P1 | 시드/초기화 Job — orderdb 생성 SQL(F3)을 k8s Job/initContainer로 이관 (SeedData는 A6에서 Flyway `db/seed` local-profile 마이그레이션으로 대체되어 Job 이관 대상에서 제외됨) | |
 | G11 | P1 | CD 파이프라인 — 1단계: GitHub Actions에서 kind 배포 검증, 2단계: **Argo CD** GitOps (학습 목표에 부합) | E4 이미지 파이프라인 선행 |
 
 ## H. 관측성 — k8s 통합 (5)

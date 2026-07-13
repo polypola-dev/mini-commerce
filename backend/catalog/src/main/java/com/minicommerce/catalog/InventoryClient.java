@@ -56,18 +56,6 @@ public class InventoryClient {
                 .toBodilessEntity();
     }
 
-    public void initializeStockIfAbsent(String productId, long stock) {
-        inventoryRestClient.post()
-                .uri("/internal/inventory/stock/{productId}/init", productId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new InitRequest(stock))
-                .retrieve()
-                .toBodilessEntity();
-    }
-
     private record StockRequest(long stock) {
-    }
-
-    private record InitRequest(long defaultStock) {
     }
 }
