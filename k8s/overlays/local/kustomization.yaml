@@ -1,11 +1,22 @@
 # local(kind) 오버레이 — ADR-008 클러스터 대상 (ADR-009)
-# 선행: k8s/dev/ 임시 인프라(postgres/redis) + Secret app-secrets 생성 (k8s/README.md)
+# 선행: k8s/dev/kafka.yaml(G5에서 대체) + Secret app-secrets 생성 (k8s/README.md)
 # 적용: kubectl apply -k k8s/overlays/local
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+# 오버레이 자체 리소스(postgres/redis)에도 base와 동일한 네임스페이스·공통 라벨 적용
+namespace: mini-commerce
+
+labels:
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/part-of: mini-commerce
+
 resources:
   - ../../base
+  # 로컬 전용 상태 저장 인프라 (G4, ADR-010) — 운영은 Supabase/Upstash라 local만 소유
+  - postgres.yaml
+  - redis.yaml
 
 # base의 image 이름을 kind load로 주입한 로컬 빌드 이미지로 치환.
 # 이미지 빌드는 compose가 담당: docker compose build && kind load docker-image <이미지> --name mini-commerce

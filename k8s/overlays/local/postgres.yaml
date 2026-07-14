@@ -1,0 +1,88 @@
+# 로컬 전용 Postgres — StatefulSet + PVC (G4, ADR-010)
+# 운영은 Supabase 유지(ADR-007)라 이 리소스는 local 오버레이만 소유한다.
+# PVC는 kind 기본 StorageClass(standard, local-path)로 프로비저닝 — 파드 재생성에도
+# 데이터가 유지된다. 클러스터 삭제(kind delete cluster) 시에는 함께 소멸.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  # docker/postgres-init/01-create-orderdb.sql과 동일 계약 — orderdb "데이터베이스"
+  # 생성만 담당, 스키마는 Flyway(order-api 단독) 소유. G10에서 Job/initContainer로 정식 이관.
+  # initdb 스크립트는 PGDATA가 비어 있는 최초 기동에만 실행된다.
+  01-create-orderdb.sql: |
+    SELECT 'CREATE DATABASE orderdb'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'orderdb')\gexec
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: pg
+      port: 5432
+      targetPort: pg
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  # 단일 replica라 per-pod DNS가 불필요 — headless 서비스 대신 앱이 쓰는
+  # ClusterIP 서비스를 governing service로 그대로 지정한다.
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: minicommerce
+            - name: POSTGRES_USER
+              value: minicommerce
+            - name: POSTGRES_PASSWORD
+              value: minicommerce # 로컬 인프라 한정 — 앱 쪽은 Secret app-secrets 사용
+            - name: PGDATA
+              # 마운트 루트가 아닌 하위 디렉토리를 데이터 디렉토리로 — 볼륨 루트에
+              # 남는 프로비저너 산출물과 initdb의 "디렉토리 비어있지 않음" 충돌 방지
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: pg
+              containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "minicommerce", "-d", "minicommerce"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

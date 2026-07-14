@@ -6,8 +6,8 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 
 - `kind/cluster.yaml` — 로컬 kind 클러스터 정의 (G1, ADR-008)
 - `base/` — 환경 무관 공통 매니페스트: 4개 서비스 Deployment+Service, ConfigMap (G2·G3, ADR-009)
-- `overlays/local/` — kind 대상 오버레이, `overlays/prod/` — OKE 대상 오버레이
-- `dev/` — 로컬 검증용 임시 인프라(postgres/redis/kafka, emptyDir 휘발) — G4/G5에서 대체
+- `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010), `overlays/prod/` — OKE 대상 오버레이
+- `dev/` — 로컬 검증용 임시 인프라(kafka, emptyDir 휘발) — G5에서 대체
 - `doc/` — k8s 관련 ADR·문서
 
 ## 로컬 배포 (전체 순서)
@@ -16,8 +16,8 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 # 1. 클러스터 생성 (최초 1회)
 kind create cluster --config k8s/kind/cluster.yaml
 
-# 2. 임시 인프라 (postgres/redis/kafka)
-kubectl apply -f k8s/dev/postgres-redis.yaml -f k8s/dev/kafka.yaml
+# 2. 임시 인프라 (kafka — G5에서 대체. postgres/redis는 overlays/local에 포함됨)
+kubectl apply -f k8s/dev/kafka.yaml
 
 # 3. Secret 생성 (실물 미커밋 — G8에서 관리 방식 확정)
 set -a && source .env && set +a
