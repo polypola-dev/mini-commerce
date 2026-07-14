@@ -1,0 +1,20 @@
+# ingress-nginx Helm values — local(kind) 전용 (G6, ADR-012)
+# 설치(재현 명령):
+#   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+#   helm install ingress-nginx ingress-nginx/ingress-nginx \
+#     --version 4.15.1 -n ingress-nginx --create-namespace \
+#     -f k8s/ingress-nginx/values-local.yaml
+# kind에는 LoadBalancer가 없다 — G1(ADR-008)에서 host 80/443을 control-plane에
+# 매핑해뒀으므로, 컨트롤러를 control-plane에 고정하고 hostPort로 직접 노출한다.
+# 운영(OKE)은 LoadBalancer 기반이라 values-prod.yaml로 분리 예정(prod 구축 시).
+controller:
+  hostPort:
+    enabled: true # 노드(=control-plane)의 80/443에 직접 바인딩
+  nodeSelector:
+    ingress-ready: "true" # kind cluster.yaml에서 control-plane에 부여한 라벨
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  service:
+    type: ClusterIP # LoadBalancer 없음 — 진입 경로는 hostPort, pending 서비스 방지

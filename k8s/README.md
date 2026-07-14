@@ -8,6 +8,7 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 - `base/` — 환경 무관 공통 매니페스트: 4개 서비스 Deployment+Service, ConfigMap (G2·G3, ADR-009)
 - `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010), `overlays/prod/` — OKE 대상 오버레이
 - `kafka/` — Strimzi operator values + Kafka 클러스터 CR (G5, ADR-011)
+- `ingress-nginx/` — ingress-nginx 컨트롤러 Helm values (G6, ADR-012) — 라우팅 규칙은 `base/ingress.yaml`
 - `doc/` — k8s 관련 ADR·문서
 
 ## 로컬 배포 (전체 순서)
@@ -41,9 +42,27 @@ for img in mini-commerce-shop-api mini-commerce-order-api mini-commerce-order-ad
   kind load docker-image "$img:latest" --name mini-commerce
 done
 
-# 5. 배포
+# 5. Ingress 컨트롤러 (G6 — host 80/443은 kind cluster.yaml이 control-plane에 매핑)
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --version 4.15.1 -n ingress-nginx --create-namespace \
+  -f k8s/ingress-nginx/values-local.yaml
+
+# 6. 배포
 kubectl apply -k k8s/overlays/local
 kubectl get pods -n mini-commerce -w
+```
+
+배포 후 API 진입점은 `http://localhost`(80) 하나다 — 경로 라우팅은 `base/ingress.yaml`:
+`/api/admin/orders`→order-admin, `/api/orders`→order-api, 그 외 `/api/**`→shop-api
+(`/api/admin/products`는 catalog admin이라 shop-api로 감), `/internal/**`은 비노출.
+프론트(BFF)를 k8s 백엔드에 붙이려면 `frontend/.env.local`에서 포트 직결 대신:
+
+```bash
+API_BASE_URL=http://localhost
+ORDER_SERVICE_URL=http://localhost
+ORDER_ADMIN_SERVICE_URL=http://localhost
+NEXT_PUBLIC_API_BASE_URL=http://localhost  # 브라우저 직접 호출분 — 빌드타임 인라인이라 별도 명시
 ```
 
 매니페스트 빌드 결과만 보려면 `kubectl kustomize k8s/overlays/local`.
