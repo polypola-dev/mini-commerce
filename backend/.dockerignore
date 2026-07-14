@@ -1,0 +1,15 @@
+# 빌드 산출물·IDE 잔재가 COPY . . 에 섞이면 소스가 안 바뀌어도 레이어 캐시가 매번 깨진다(E5).
+# 주의: **/out 같은 재귀 패턴 금지 — 헥사고날 패키지 디렉토리(application/port/out,
+# adapter/out)가 src 안에 실재해서 소스가 통째로 빠진다(실제 발생했던 사고).
+# 산출물 디렉토리는 루트/모듈 루트에만 생기므로 깊이를 명시해 앵커링한다.
+.gradle/
+build/
+*/build/
+*/*/build/
+bin/
+*/bin/
+*/*/bin/
+out/
+doc/
+render.yaml
+Dockerfile

@@ -1,0 +1,158 @@
+# E4 — GHCR 이미지 빌드·푸시 파이프라인 (ADR-017)
+# 운영(OKE, OCI Ampere)이 arm64라 multi-arch(amd64+arm64)가 필수(ADR-007).
+# Dockerfile 빌드 스테이지가 --platform=$BUILDPLATFORM 이라(E5) gradle 컴파일은 러너
+# 네이티브(amd64)로 1회만 돌고, QEMU는 런타임 스테이지의 cp 한 줄에만 쓰인다.
+# 4개 서비스를 매트릭스가 아닌 단일 잡 순차 빌드로 두는 이유: 빌드 스테이지 레이어를
+# 같은 buildx 빌더에서 공유해 gradle 실행이 전체에서 1회가 된다(매트릭스면 콜드 캐시에서
+# 4번 풀컴파일 — private 리포 무료 분수 낭비).
+# 이미지는 ghcr.io/<owner>/mini-commerce/<service>. 패키지는 public 운용(2026-07-14 결정
+# — private 패키지는 Free 플랜 스토리지 500MB 제한으로 $0 목표와 충돌). 시크릿은 전부
+# env 주입 계약(F5/G8)이라 이미지에 비밀이 들어가지 않는다.
+# 태그 전략: sha-<short>(불변 — k8s/Argo CD가 참조할 기본 좌표) + main(브랜치 최신) +
+# semver(v* 태그 push 시). paths 필터는 태그 push에는 적용되지 않는다(Actions 문서).
+name: Build & Push (GHCR)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - backend/**
+      - docker-compose.yml
+      - .github/workflows/build-push.yml
+  workflow_dispatch:
+
+concurrency:
+  group: build-push-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+
+jobs:
+  build-push:
+    name: 이미지 빌드·푸시 (amd64+arm64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: QEMU 설치 (arm64 런타임 스테이지용)
+        uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: GHCR 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---- shop-api ----
+      - name: 메타데이터 (shop-api)
+        id: meta-shop-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/shop-api
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: 빌드·푸시 (shop-api)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            MODULE=shop-api
+            PORT=8080
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta-shop-api.outputs.tags }}
+          labels: ${{ steps.meta-shop-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---- order-api ----
+      - name: 메타데이터 (order-api)
+        id: meta-order-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/order-api
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: 빌드·푸시 (order-api)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            MODULE=order/order-api
+            PORT=8081
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta-order-api.outputs.tags }}
+          labels: ${{ steps.meta-order-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---- order-admin ----
+      - name: 메타데이터 (order-admin)
+        id: meta-order-admin
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/order-admin
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: 빌드·푸시 (order-admin)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            MODULE=order/order-admin
+            PORT=8082
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta-order-admin.outputs.tags }}
+          labels: ${{ steps.meta-order-admin.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---- order-batch ----
+      - name: 메타데이터 (order-batch)
+        id: meta-order-batch
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/order-batch
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: 빌드·푸시 (order-batch)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            MODULE=order/order-batch
+            PORT=8083
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta-order-batch.outputs.tags }}
+          labels: ${{ steps.meta-order-batch.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
