@@ -44,6 +44,10 @@ jobs:
             --version 1.1.0 -n strimzi --create-namespace \
             -f k8s/kafka/operator-values.yaml --wait
           kubectl apply -f k8s/kafka/kafka-cluster.yaml
+          # 2코어 러너 cpu request 예산 보정 — 로컬 250m은 CI엔 과함(실측: 스케줄링
+          # 실패로 shop-api Pending, ADR-016). limit은 원래 없어 런타임엔 무영향.
+          kubectl patch kafkanodepool dual-role -n mini-commerce --type=merge \
+            -p '{"spec":{"resources":{"requests":{"cpu":"50m"}}}}'
           helm install ingress-nginx ingress-nginx/ingress-nginx \
             --version 4.15.1 -n ingress-nginx --create-namespace \
             -f k8s/ingress-nginx/values-local.yaml
@@ -105,6 +109,7 @@ jobs:
       - name: 진단 덤프 (실패 시)
         if: failure()
         run: |
+          kubectl describe nodes || true
           kubectl get pods -A -o wide || true
           kubectl get events -n mini-commerce --sort-by=.lastTimestamp | tail -40 || true
           for d in shop-api order-api order-admin order-batch; do
