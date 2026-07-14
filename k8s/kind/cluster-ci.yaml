@@ -1,0 +1,22 @@
+# CI 전용 kind 클러스터 (G11 1단계, ADR-016)
+# 로컬(cluster.yaml)은 멀티노드지만 CI 러너는 2코어/7GB 단일 VM — 멀티노드는
+# 재현 가치 없이 kubeadm join/노드 오버헤드만 추가하므로 단일 노드로 줄인다.
+# ingress-ready 라벨 + 80/443 매핑은 로컬과 동일 계약(G6 ingress-nginx 표준 레시피).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: mini-commerce
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP

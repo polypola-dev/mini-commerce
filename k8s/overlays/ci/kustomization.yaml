@@ -1,0 +1,18 @@
+# CI(GitHub Actions kind) 오버레이 — local 위에 러너 환경 보정만 얹는다 (G11, ADR-016)
+# 검증 대상은 local 오버레이 그 자체이므로 리소스는 전부 ../local 상속.
+# 유일한 델타는 부팅 예산: 2코어 러너에서 JVM 5개(앱 4 + Kafka)가 동시 부팅하면
+# 로컬 기준 60s(30×2s)를 초과할 수 있다 — startupProbe가 그 흡수 장치이므로
+# failureThreshold만 90(=180s)으로 완화한다. probe 계약 자체(경로·주기)는 불변.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../local
+
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/startupProbe/failureThreshold
+        value: 90
