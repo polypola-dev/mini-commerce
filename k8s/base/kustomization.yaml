@@ -1,5 +1,5 @@
 # 환경 무관 공통 매니페스트 (ADR-009)
-# Secret `app-secrets`는 여기 없다 — 실물 미커밋(G8 소관), 로컬 생성 명령은 k8s/README.md
+# Secret `app-secrets`는 여기 없다 — k8s/scripts/secrets.sh로 관리(G8, ADR-013)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 

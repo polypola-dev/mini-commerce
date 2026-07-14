@@ -1,8 +1,8 @@
 # 비밀 아닌 환경변수 계약 (backend/doc/CONFIGURATION.md의 CM 분류 항목)
 # 값의 원본은 docker-compose.yml environment 블록 — 호스트명만 k8s Service 이름으로 치환.
 # 비밀(SEC 분류: DATABASE_USERNAME/PASSWORD, REDIS_PASSWORD, BFF_SECRET_KEY,
-# SUPABASE_SERVICE_ROLE_KEY)은 Secret `app-secrets`로 — 실물은 커밋하지 않는다(G8에서
-# 관리 방식 확정, 로컬 생성 명령은 k8s/README.md).
+# SUPABASE_SERVICE_ROLE_KEY)은 Secret `app-secrets`로 — 평문 미커밋,
+# k8s/scripts/secrets.sh로 관리(G8, ADR-013 — SOPS/age 암호화 커밋본은 k8s/secrets/).
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -9,6 +9,7 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 - `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010), `overlays/prod/` — OKE 대상 오버레이
 - `kafka/` — Strimzi operator values + Kafka 클러스터 CR (G5, ADR-011)
 - `ingress-nginx/` — ingress-nginx 컨트롤러 Helm values (G6, ADR-012) — 라우팅 규칙은 `base/ingress.yaml`
+- `scripts/secrets.sh` + `secrets/app-secrets.enc.yaml` — Secret 관리 (G8, ADR-013). 원천은 `.env`, enc 파일은 SOPS/age 암호화 파생물(수동 편집 금지). age 개인키는 `~/.config/sops/age/keys.txt` — **리포 밖 백업 필수**(유실해도 .env에서 seal 재생성은 가능)
 - `doc/` — k8s 관련 ADR·문서
 
 ## 로컬 배포 (전체 순서)
@@ -26,14 +27,11 @@ kubectl apply -f k8s/kafka/kafka-cluster.yaml
 # shop-api는 부팅 시 bootstrap DNS 해석이 필요하므로(G3 발견) Kafka CR을 앱보다 먼저 적용
 kubectl wait kafka/mini-commerce -n mini-commerce --for=condition=Ready --timeout=600s
 
-# 3. Secret 생성 (실물 미커밋 — G8에서 관리 방식 확정)
-set -a && source .env && set +a
-kubectl create secret generic app-secrets -n mini-commerce \
-  --from-literal=DATABASE_USERNAME=minicommerce \
-  --from-literal=DATABASE_PASSWORD=minicommerce \
-  --from-literal=REDIS_PASSWORD='' \
-  --from-literal=BFF_SECRET_KEY="$BFF_SECRET_KEY" \
-  --from-literal=SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
+# 3. Secret 생성 (G8, ADR-013 — .env가 원천)
+k8s/scripts/secrets.sh apply
+# .env가 없는 환경(새 머신 등)이면 암호화 커밋본에서 복원: (age 개인키 필요)
+#   k8s/scripts/secrets.sh apply-sealed
+# .env의 비밀값을 바꿨다면 커밋본 재생성: k8s/scripts/secrets.sh seal
 # (namespace가 아직 없다고 나오면 kubectl apply -k k8s/overlays/local을 먼저 한 번)
 
 # 4. 이미지 빌드·주입 (compose가 빌드 담당)

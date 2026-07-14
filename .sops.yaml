@@ -1,0 +1,8 @@
+# SOPS 암호화 규칙 (G8, ADR-013)
+# 복호화 개인키는 ~/.config/sops/age/keys.txt (커밋 금지 — 유실 시 .env에서 seal 재생성).
+# 아래 공개키(recipient)만 커밋한다. 새 협업자/CI 키 추가 시 age 배열에 append 후 재암호화.
+creation_rules:
+  - path_regex: k8s/secrets/.*\.enc\.yaml$
+    # Secret의 값 필드만 암호화 — metadata/type은 평문 유지해 diff 가독성 확보
+    encrypted_regex: ^(data|stringData)$
+    age: age147ja7n3gpjuwaw8kft7xxwstpnt39u5r36zdxd2t6ughtg77pukqrwx944
