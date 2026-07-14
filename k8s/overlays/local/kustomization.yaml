@@ -17,6 +17,8 @@ resources:
   # 로컬 전용 상태 저장 인프라 (G4, ADR-010) — 운영은 Supabase/Upstash라 local만 소유
   - postgres.yaml
   - redis.yaml
+  # 로컬 인프라 인바운드 허용 — base default-deny의 local 보완 (G9, ADR-014)
+  - network-policy.yaml
 
 # base의 image 이름을 kind load로 주입한 로컬 빌드 이미지로 치환.
 # 이미지 빌드는 compose가 담당: docker compose build && kind load docker-image <이미지> --name mini-commerce

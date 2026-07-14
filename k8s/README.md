@@ -9,6 +9,9 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 - `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010), `overlays/prod/` — OKE 대상 오버레이
 - `kafka/` — Strimzi operator values + Kafka 클러스터 CR (G5, ADR-011)
 - `ingress-nginx/` — ingress-nginx 컨트롤러 Helm values (G6, ADR-012) — 라우팅 규칙은 `base/ingress.yaml`
+- NetworkPolicy — default-deny(Ingress) + env var 계약 기반 명시 허용 (G9, ADR-014).
+  base가 앱 4종, `overlays/local/network-policy.yaml`이 postgres/redis 소유. Kafka는
+  Strimzi 자동 생성 정책 소관
 - `scripts/secrets.sh` + `secrets/app-secrets.enc.yaml` — Secret 관리 (G8, ADR-013). 원천은 `.env`, enc 파일은 SOPS/age 암호화 파생물(수동 편집 금지). age 개인키는 `~/.config/sops/age/keys.txt` — **리포 밖 백업 필수**(유실해도 .env에서 seal 재생성은 가능)
 - `doc/` — k8s 관련 ADR·문서
 

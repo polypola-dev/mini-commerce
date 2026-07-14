@@ -18,3 +18,4 @@ resources:
   - order-admin.yaml
   - order-batch.yaml
   - ingress.yaml
+  - network-policy.yaml

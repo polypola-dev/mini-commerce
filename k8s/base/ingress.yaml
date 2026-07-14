@@ -2,7 +2,8 @@
 # 컨트롤러는 ingress-nginx(Helm, k8s/ingress-nginx/) — 규칙만 여기서 소유한다.
 # nginx는 최장 프리픽스 우선이라 /api/admin/products(catalog admin, shop-api 소속)는
 # /api 규칙으로 떨어진다 — admin 프리픽스가 전부 order-admin이 아님에 주의.
-# /internal/** 은 의도적으로 노출하지 않는다(서비스간 전용 — 차단 강제는 G9 NetworkPolicy).
+# /internal/** 은 의도적으로 노출하지 않는다(서비스간 전용 — 네트워크 차단은 G9
+# NetworkPolicy가 강제한다: base/network-policy.yaml, ADR-014).
 # host 미지정(로컬 = localhost 직결). 운영 도메인·TLS는 prod 오버레이에서 patch 예정.
 apiVersion: networking.k8s.io/v1
 kind: Ingress

@@ -1,0 +1,60 @@
+# 로컬 전용 인프라(postgres/redis)의 인바운드 허용 (G9, ADR-014)
+# base의 default-deny-ingress가 이 파드들도 덮으므로 소비자를 명시 허용한다.
+# 운영은 Supabase/Upstash(클러스터 외부)라 이 정책도 local 오버레이만 소유.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # DATABASE_URL 소비자 — 앱 4종 전부 (CONFIGURATION.md)
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: shop-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-admin
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-batch
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-redis
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # REDIS_HOST 소비자 — 앱 4종 전부 (장바구니·캐시·ShedLock)
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: shop-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-admin
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-batch
+      ports:
+        - port: 6379
+          protocol: TCP
