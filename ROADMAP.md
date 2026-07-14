@@ -113,9 +113,9 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| H1 | P1 | OTel Collector 도입 — 현재 앱→Tempo/Loki/Prometheus 직접 export를 Collector(Deployment/DaemonSet) 경유로 전환, 앱 설정은 endpoint 하나로 단순화 | k8s 리소스 메타데이터(pod/namespace) 라벨 자동 부착 |
-| H2 | P1 | kube-prometheus-stack 도입 — 기존 Prometheus(OTLP push 전용) 통합, 노드/파드 메트릭 수집 | 현행 v2.55.1은 OTLP receiver가 experimental 플래그 — 이전 시 v3.x의 승격 여부 확인 필요 |
-| H3 | P1 | Tempo/Loki Helm 배포 + PVC 스토리지/retention 설계 | compose 볼륨의 승계 |
+| H1 | P1 | ✅ **완료(2026-07-15, ADR-018)** — OTel Collector(open-telemetry Helm, monitoring ns, `mode: deployment`) 도입. `k8s_attributes` 프로세서(contrib 이미지, kubernetesAttributes 프리셋)로 파드/네임스페이스/deployment 메타데이터 자동 부착 — Prometheus `target_info`·Loki 로그 라벨로 실증. 시그널별 otlphttp exporter(tempo/prometheus/loki)로 3축 라우팅. `overlays/local`의 `OTEL_SDK_DISABLED` 패치를 `OTLP_*_ENDPOINT`(Collector Service 경유)로 교체 | k8s/observability/otel-collector-values.yaml |
+| H2 | P1 | ✅ **완료(2026-07-15, ADR-018)** — kube-prometheus-stack(monitoring ns). Prometheus **v3.13.1 네이티브 `enableOTLPReceiver`**로 compose(v2.55.1 experimental 플래그) 대비 단순화(README 트러블슈팅 미결 사항 해소). kind 컨트롤플레인 컴포넌트(scheduler/controller-manager/etcd/kube-proxy) 스크레이프는 kind 제약으로 비활성, Alertmanager는 H5 스코프라 배제. 번들 Grafana에 Tempo/Loki datasource 추가 | k8s/observability/kube-prometheus-stack-values.yaml |
+| H3 | P1 | ✅ **완료(2026-07-15, ADR-018)** — Tempo(단일 바이너리, local 스토리지, PVC 2Gi — 차트 deprecated 표시는 캐치업 항목으로 기록)·Loki(SingleBinary+filesystem, minio/캐시 계층 배제 — 캐시는 1차 배포에서 Insufficient memory로 실패해 제거) Helm 배포 | k8s/observability/{tempo,loki}-values.yaml |
 | H4 | P2 | Grafana 대시보드 as code — 서비스별 RED 대시보드 + k8s 클러스터 대시보드 프로비저닝 | 현재 datasource만 프로비저닝됨 |
 | H5 | P2 | Alertmanager 알림 규칙 — 에러율/컨슈머 랙/Pod 재시작 임계 알림 (Slack/Telegram) | |
 

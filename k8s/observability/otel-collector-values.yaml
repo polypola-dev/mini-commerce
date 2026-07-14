@@ -1,0 +1,58 @@
+# H1(ROADMAP) — 앱→Tempo/Loki/Prometheus 직접 export를 이 Collector 경유로 전환.
+# k8sattributes 프로세서가 발신 파드의 pod/namespace/deployment 메타데이터를 리소스
+# 속성으로 자동 부착한다(H1의 본래 목적). mode: deployment 단일 인스턴스로 충분 —
+# daemonset은 호스트 로그·메트릭 수집(filelog/hostmetrics) 용도라 이 앱들의 순수
+# OTLP push 수신엔 불필요.
+mode: deployment
+replicaCount: 1
+
+# k8sattributes 프로세서는 contrib 전용 컴포넌트 — core 이미지(otel/opentelemetry-collector)엔
+# 없다.
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+presets:
+  # 파드/네임스페이스 메타데이터 자동 부착 + 필요한 ClusterRole(pods/namespaces/replicasets
+  # get·list·watch)을 함께 생성한다.
+  kubernetesAttributes:
+    enabled: true
+
+config:
+  exporters:
+    # tempo/prometheus/loki는 3축을 각각 다른 백엔드로 받는다 — 기존 앱 직접 export
+    # 시절(observability/README.md)과 동일한 signal별 endpoint 구조를 Collector 레벨로 이관.
+    otlphttp/tempo:
+      endpoint: http://tempo.monitoring.svc.cluster.local:4318
+      tls:
+        insecure: true
+    otlphttp/prometheus:
+      # Prometheus OTLP 수신 경로는 /v1/metrics 자동 부착이 아니라 실제 API 경로가 달라
+      # (/api/v1/otlp/v1/metrics) exporter의 signal별 전체 경로 오버라이드를 사용한다.
+      metrics_endpoint: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/otlp/v1/metrics
+      tls:
+        insecure: true
+    otlphttp/loki:
+      logs_endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp/v1/logs
+      tls:
+        insecure: true
+  service:
+    pipelines:
+      # processors는 건드리지 않는다 — kubernetesAttributes 프리셋이 넣어준
+      # [k8s_attributes, memory_limiter, batch]를 그대로 승계(딥 머지로 보존됨).
+      traces:
+        receivers: [otlp]
+        exporters: [otlphttp/tempo]
+      metrics:
+        receivers: [otlp]
+        exporters: [otlphttp/prometheus]
+      logs:
+        receivers: [otlp]
+        exporters: [otlphttp/loki]
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    # memory_limiter 프로세서가 이 값의 80%/25%를 기준점으로 삼는다(차트 기본 로직).
+    memory: 256Mi

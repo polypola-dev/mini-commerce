@@ -49,14 +49,24 @@ patches:
         value:
           name: SPRING_PROFILES_ACTIVE
           value: local
-  # 로컬 클러스터에는 아직 관측성 백엔드가 없다(H계열 소관) — OTLP export 실패가
-  # 주기적 에러 로그로 쌓이는 것을 막기 위해 SDK 전체를 끈다. H1에서 Collector
-  # 도입 시 이 패치를 제거한다.
+  # H1 완료(ADR-018) — OTel Collector(monitoring ns, Helm)로 3축 전부 export.
+  # per-signal endpoint는 SDK가 경로를 자동으로 안 붙여주므로(application.yml 주석,
+  # F5 계약과 동일 패턴) 각자 실제 OTLP http 경로까지 명시한다.
   - target:
       kind: Deployment
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:
-          name: OTEL_SDK_DISABLED
-          value: "true"
+          name: OTLP_TRACES_ENDPOINT
+          value: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318/v1/traces
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: OTLP_METRICS_ENDPOINT
+          value: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318/v1/metrics
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: OTLP_LOGS_ENDPOINT
+          value: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318/v1/logs

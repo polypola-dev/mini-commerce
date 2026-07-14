@@ -1,0 +1,14 @@
+# H3(ROADMAP) — 트레이스 저장소. 단일 바이너리 모드(compose 승계 — 로컬 단일 인스턴스에
+# 클러스터 모드/오브젝트 스토리지 가치 없음, G4 ADR-010과 동일 판단 논리).
+persistence:
+  enabled: true
+  storageClassName: standard
+  size: 2Gi
+
+tempo:
+  retention: 24h
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi

@@ -1,0 +1,54 @@
+# H3(ROADMAP) — 로그 저장소. SingleBinary 모드 + 파일시스템 스토리지(compose 승계 —
+# SimpleScalable/Distributed 모드는 오브젝트 스토리지 필수라 로컬 단일 인스턴스엔 과함,
+# tempo-values.yaml과 동일 판단 논리). minio 등 오브젝트 스토리지 구성요소는 배제.
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  # 차트가 안내하는 "테스트/로컬용" 스키마 자동 구성 — storage.type을 그대로 반영한다.
+  useTestSchema: true
+
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    storageClass: standard
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+
+minio:
+  enabled: false
+
+# memcached 캐시 계층(청크/쿼리 결과) — 로컬 데이터 규모에서 성능 이점보다 kind 2워커의
+# 메모리 예산(Insufficient memory 스케줄링 실패 실측)이 더 문제라 배제.
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# SimpleScalable 전용 컴포넌트 — deploymentMode가 렌더링은 걸러주지만 차트의 validate.yaml이
+# replicas 값 자체도 함께 확인해 명시적으로 0을 요구한다.
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+
+# read/write/backend(SimpleScalable 전용 컴포넌트)는 deploymentMode: SingleBinary가
+# replicas를 자동으로 0으로 내린다 — 별도 조정 불필요.
+
+test:
+  enabled: false
+monitoring:
+  serviceMonitor:
+    enabled: false
+lokiCanary:
+  enabled: false
