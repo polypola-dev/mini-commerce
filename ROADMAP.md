@@ -75,8 +75,8 @@
 | E1 | P0 | **GitHub Actions CI 구축** — 백엔드 `gradlew build`(test 포함) + 프론트 `tsc`/`next build`, PR 게이트 | 현재 워크플로 0개. 모든 자동화의 기반 |
 | E2 | P1 | Testcontainers 통합 테스트 — Postgres/Redis/Kafka 실컨테이너 기반, CI에서 실행 | Redis 동시성 테스트는 있으나 로컬 인프라 의존 |
 | E3 | P1 | 프론트 E2E 스모크 (Playwright) — 로그인→상품→장바구니→주문 핵심 여정 | 세션마다 수동 클릭 검증에 의존 중 |
-| E4 | P1 | Docker 이미지 빌드·푸시 파이프라인 — GHCR, 태그 전략(sha/semver), **arm64 필수**(운영이 OCI Ampere — ADR-007). GHA amd64 러너면 buildx/QEMU 또는 ARM 러너 | k8s 배포(G계열)의 전제 |
-| E5 | P1 | Dockerfile 최적화 — `COPY . .` 전체 복사로 레이어 캐시 전멸 → 의존성 선복사, Gradle 캐시 마운트, **multi-arch(amd64+arm64) 필수화**(ADR-007) | 빌드 시간·CI 비용 직결 |
+| E4 | P1 | ✅ **완료(2026-07-14, ADR-017)** — `.github/workflows/build-push.yml`: GHCR `ghcr.io/<owner>/mini-commerce/<service>` 4종, **multi-arch(amd64+arm64)** buildx+QEMU(빌드 스테이지는 BUILDPLATFORM 네이티브라 QEMU는 런타임 cp만), 태그 sha+main+semver(metadata-action), 단일 잡 순차 빌드(빌드 스테이지 공유 — gradle 전체 1회), gha 캐시. 첫 실행 **4분48초** 전 스텝 성공. **패키지는 public 운용**(private는 Free 500MB 제한 — $0 목표 충돌, 사용자 결정). 트리거: main push(backend/**)+v* 태그+수동 | deploy-kind의 GHCR pull 전환은 경쟁 조건으로 보류(G11 2단계 소관). 리포 public 전환은 히스토리 시크릿 스캔+B4 선행 |
+| E5 | P1 | ✅ **완료(2026-07-14, ADR-017)** — Dockerfile 재설계: 리포 wrapper(9.5.1)로 빌드 버전 단일화(구 gradle:8.14 이미지 이원화 해소), build.gradle 선복사+`dependencies` 태스크로 의존성 레이어 분리(cache mount 배제 — gha 캐시는 mount 내용물 미저장), **빌드 스테이지가 bootJar 4개를 한 번에 빌드**(MODULE 인자는 런타임 스테이지 전용 → 4서비스 레이어 공유, gradle 4회→1회 — 나머지 3종 빌드 5초 실증), `--platform=$BUILDPLATFORM` 크로스컴파일, `.dockerignore` 신설. **주의: dockerignore 재귀 패턴(`**/out/`) 금지** — 헥사고날 `port/out` 패키지 소스가 통째로 빠지는 사고 실제 발생(파일 주석 기록) | compose 인터페이스(MODULE/PORT) 불변. 컨테이너 빌드는 매번 클린 컴파일(증분 없음 — 수용) |
 | E6 | P2 | k6 부하 테스트 — 재고 동시성(reserve/confirm/release) 시나리오, HPA 튜닝(G7) 근거 데이터 | MSA 분리 검증 겸용 |
 
 ## F. k8s 전환 — 애플리케이션 선행 작업 (7)
