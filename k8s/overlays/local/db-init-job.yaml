@@ -1,0 +1,47 @@
+# orderdb 생성 Job — docker/postgres-init 계약의 k8s 정식 이관 (G10, ADR-015)
+# initdb ConfigMap(G4 임시)과 달리 "PGDATA 비어있는 최초 기동"이라는 제약이 없다 —
+# 멱등 SQL이라 언제든 재실행 안전. 스키마는 여전히 Flyway(order-api 단독) 소유이며
+# 이 Job은 orderdb "데이터베이스" 존재만 보장한다. 시드 데이터는 Flyway db/seed
+# local 프로파일 마이그레이션 소관(A6)이라 이 Job의 대상이 아니다.
+# 운영은 Supabase(외부)라 postgres와 함께 local 오버레이만 소유.
+# ttl로 완료 후 자동 삭제 → 다음 kubectl apply -k가 재생성·재실행한다(멱등이라 안전).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: orderdb-init
+  labels:
+    app.kubernetes.io/name: db-init
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 6
+  activeDeadlineSeconds: 300 # postgres가 5분 내 안 뜨면 실패로 표면화
+  template:
+    metadata:
+      labels:
+        # NetworkPolicy allow-to-postgres가 이 라벨을 허용한다 (G9, ADR-014)
+        app.kubernetes.io/name: db-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: psql
+          image: postgres:16-alpine # postgres StatefulSet과 동일 이미지 — psql 버전 일치
+          env:
+            - name: PGHOST
+              value: postgres
+            - name: PGUSER
+              value: minicommerce
+            - name: PGPASSWORD
+              value: minicommerce # 로컬 인프라 고정값 — postgres.yaml·ADR-013과 동일 논리
+            - name: PGDATABASE
+              value: minicommerce
+          command:
+            - sh
+            - -ec
+            - |
+              until pg_isready -t 3; do echo "postgres 대기 중..."; sleep 2; done
+              if psql -v ON_ERROR_STOP=1 -tAc "SELECT 1 FROM pg_database WHERE datname = 'orderdb'" | grep -q 1; then
+                echo "orderdb 이미 존재 — no-op"
+              else
+                psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE orderdb"
+                echo "orderdb 생성 완료"
+              fi

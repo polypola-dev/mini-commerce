@@ -14,6 +14,10 @@ spec:
   ingress:
     - from:
         # DATABASE_URL 소비자 — 앱 4종 전부 (CONFIGURATION.md)
+        # + orderdb 생성 Job (G10, ADR-015)
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: db-init
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: shop-api

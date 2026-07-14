@@ -6,7 +6,7 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
 
 - `kind/cluster.yaml` — 로컬 kind 클러스터 정의 (G1, ADR-008)
 - `base/` — 환경 무관 공통 매니페스트: 4개 서비스 Deployment+Service, ConfigMap (G2·G3, ADR-009)
-- `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010), `overlays/prod/` — OKE 대상 오버레이
+- `overlays/local/` — kind 대상 오버레이 + 로컬 전용 postgres/redis StatefulSet+PVC (G4, ADR-010) + orderdb 생성 Job (G10, ADR-015), `overlays/prod/` — OKE 대상 오버레이
 - `kafka/` — Strimzi operator values + Kafka 클러스터 CR (G5, ADR-011)
 - `ingress-nginx/` — ingress-nginx 컨트롤러 Helm values (G6, ADR-012) — 라우팅 규칙은 `base/ingress.yaml`
 - NetworkPolicy — default-deny(Ingress) + env var 계약 기반 명시 허용 (G9, ADR-014).

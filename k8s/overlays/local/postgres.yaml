@@ -2,18 +2,8 @@
 # 운영은 Supabase 유지(ADR-007)라 이 리소스는 local 오버레이만 소유한다.
 # PVC는 kind 기본 StorageClass(standard, local-path)로 프로비저닝 — 파드 재생성에도
 # 데이터가 유지된다. 클러스터 삭제(kind delete cluster) 시에는 함께 소멸.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-init
-data:
-  # docker/postgres-init/01-create-orderdb.sql과 동일 계약 — orderdb "데이터베이스"
-  # 생성만 담당, 스키마는 Flyway(order-api 단독) 소유. G10에서 Job/initContainer로 정식 이관.
-  # initdb 스크립트는 PGDATA가 비어 있는 최초 기동에만 실행된다.
-  01-create-orderdb.sql: |
-    SELECT 'CREATE DATABASE orderdb'
-    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'orderdb')\gexec
----
+# orderdb 데이터베이스 생성은 db-init-job.yaml 소유 (G10, ADR-015 — G4의 initdb
+# ConfigMap 방식을 대체).
 apiVersion: v1
 kind: Service
 metadata:
@@ -72,12 +62,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-            - name: init
-              mountPath: /docker-entrypoint-initdb.d
-      volumes:
-        - name: init
-          configMap:
-            name: postgres-init
   volumeClaimTemplates:
     - metadata:
         name: data
