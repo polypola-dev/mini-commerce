@@ -1,0 +1,64 @@
+# Kafka 클러스터 정의 — Strimzi CR (G5, ADR-011)
+# 적용: kubectl apply -f k8s/kafka/kafka-cluster.yaml  (operator 설치 후)
+# compose 단일 브로커 KRaft 구성을 승계: RF=1, min ISR=1, 즉시 리밸런스.
+# bootstrap 서비스는 operator가 생성: mini-commerce-kafka-bootstrap:9092
+# (앱 계약은 env var KAFKA_BOOTSTRAP_SERVERS — base ConfigMap에서 이 이름을 가리킨다.
+#  G3 발견 사항의 본질은 "shop-api 부팅 시 bootstrap DNS 해석 가능"이며, 이 서비스가
+#  Kafka CR 생성 직후 만들어지므로 충족된다.)
+# Strimzi 1.x는 API v1 단일 버전(KRaft·node pool 전제 — 별도 annotation 불필요)
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: mini-commerce
+  labels:
+    strimzi.io/cluster: mini-commerce
+spec:
+  replicas: 1
+  # 단일 노드가 controller+broker 겸임 — compose의 process.roles=broker,controller 승계
+  roles:
+    - controller
+    - broker
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim # kind standard(local-path) — G4와 동일한 영속화
+        size: 2Gi
+        deleteClaim: false
+        kraftMetadata: shared # KRaft 메타데이터를 데이터 볼륨과 공유(단일 볼륨)
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: mini-commerce
+  namespace: mini-commerce
+spec:
+  kafka:
+    # version 생략 — operator가 지원하는 기본(최신) Kafka 버전 사용
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false # 클러스터 내부 전용 — 인증/암호화는 G9(NetworkPolicy) 이후 필요시
+    config:
+      # compose 승계: 단일 브로커라 복제 계수 전부 1
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      group.initial.rebalance.delay.ms: 0
+      # Modulith events가 토픽(order.placed 등)을 사전 생성하지 않음 — 자동 생성 유지
+      auto.create.topics.enable: true
+    jvmOptions:
+      # 로컬 kind(Docker Desktop VM 공유) 힙 상한 — 기본값은 과함
+      "-Xms": 512m
+      "-Xmx": 512m
+  # entityOperator 생략 — KafkaTopic/KafkaUser CRD 관리 안 함(자동 생성 토픽 + 무인증)

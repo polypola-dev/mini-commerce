@@ -14,8 +14,9 @@ data:
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   REDIS_SSL: "false"
-  # G5(Kafka on k8s)에서 이 이름·포트로 Service를 제공해야 한다
-  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  # Strimzi가 생성하는 bootstrap 서비스 (G5, ADR-011). shop-api는 부팅 시 이 DNS가
+  # 해석돼야 기동하므로(G3 발견) Kafka CR이 앱보다 먼저 적용돼 있어야 한다.
+  KAFKA_BOOTSTRAP_SERVERS: mini-commerce-kafka-bootstrap:9092
   # 서비스간 호출 — Service 포트를 compose 시절 포트와 동일하게 유지해 URL 계약 불변
   CATALOG_BASE_URL: http://shop-api:8080
   INVENTORY_BASE_URL: http://order-api:8081

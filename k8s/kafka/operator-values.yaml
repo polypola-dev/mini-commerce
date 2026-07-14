@@ -1,0 +1,10 @@
+# Strimzi operator Helm values (G5, ADR-011)
+# 설치(재현 명령):
+#   helm repo add strimzi https://strimzi.io/charts/
+#   helm install strimzi-operator strimzi/strimzi-kafka-operator \
+#     --version 1.1.0 -n strimzi --create-namespace -f k8s/kafka/operator-values.yaml
+# ADR-009 역할 분담: 외부 컴포넌트는 Helm 소비 + values를 k8s/ 아래 컴포넌트 디렉토리에 커밋.
+
+# operator는 자기 네임스페이스(strimzi)가 아닌 앱 네임스페이스의 Kafka CR을 관리한다
+watchNamespaces:
+  - mini-commerce
