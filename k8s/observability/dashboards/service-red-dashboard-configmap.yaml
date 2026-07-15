@@ -15,7 +15,7 @@ data:
       ],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 1,
+      "version": 2,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -24,13 +24,13 @@ data:
       "templating": {
         "list": [
           {
-            "name": "job",
+            "name": "workload",
             "type": "query",
             "datasource": {
               "type": "prometheus",
               "uid": "prometheus"
             },
-            "query": "label_values(http_server_request_duration_seconds_count, job)",
+            "query": "label_values(target_info{k8s_namespace_name=\"mini-commerce\"}, k8s_deployment_name)",
             "refresh": 2,
             "multi": true,
             "includeAll": true,
@@ -58,8 +58,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (job) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[5m]))",
-              "legendFormat": "{{job}}"
+              "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
+              "legendFormat": "{{k8s_deployment_name}}"
             }
           ]
         },
@@ -85,8 +85,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (job) (rate(http_server_request_duration_seconds_count{job=~\"$job\", http_response_status_code=~\"5..\"}[5m])) / sum by (job) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[5m]))",
-              "legendFormat": "{{job}}"
+              "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\", http_response_status_code=~\"5..\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}) / sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
+              "legendFormat": "{{k8s_deployment_name}}"
             }
           ]
         },
@@ -106,16 +106,16 @@ data:
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.50, sum by (job, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[5m])))",
-              "legendFormat": "p50 {{job}}"
+              "expr": "histogram_quantile(0.50, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
+              "legendFormat": "p50 {{k8s_deployment_name}}"
             },
             {
-              "expr": "histogram_quantile(0.95, sum by (job, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[5m])))",
-              "legendFormat": "p95 {{job}}"
+              "expr": "histogram_quantile(0.95, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
+              "legendFormat": "p95 {{k8s_deployment_name}}"
             },
             {
-              "expr": "histogram_quantile(0.99, sum by (job, le) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[5m])))",
-              "legendFormat": "p99 {{job}}"
+              "expr": "histogram_quantile(0.99, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
+              "legendFormat": "p99 {{k8s_deployment_name}}"
             }
           ]
         },
@@ -135,8 +135,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (job, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[5m]))",
-              "legendFormat": "{{job}} {{http_response_status_code}}"
+              "expr": "sum by (k8s_deployment_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
+              "legendFormat": "{{k8s_deployment_name}} {{http_response_status_code}}"
             }
           ]
         },
@@ -162,8 +162,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"$job\", jvm_memory_type=\"heap\"})",
-              "legendFormat": "{{job}}"
+              "expr": "sum by (k8s_deployment_name) (jvm_memory_used_bytes{job=~\"mini-commerce/.+\", jvm_memory_type=\"heap\"} * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
+              "legendFormat": "{{k8s_deployment_name}}"
             }
           ]
         },
@@ -183,8 +183,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (job) (rate(jvm_gc_duration_seconds_sum{job=~\"$job\"}[5m]))",
-              "legendFormat": "{{job}}"
+              "expr": "sum by (k8s_deployment_name) (rate(jvm_gc_duration_seconds_sum{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
+              "legendFormat": "{{k8s_deployment_name}}"
             }
           ]
         },
@@ -204,7 +204,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"mini-commerce\"}[1h]))",
+              "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}[1h]))",
               "legendFormat": "{{pod}}"
             }
           ]
@@ -231,7 +231,7 @@ data:
           },
           "targets": [
             {
-              "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\"}",
+              "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}",
               "legendFormat": "{{pod}}"
             }
           ]
