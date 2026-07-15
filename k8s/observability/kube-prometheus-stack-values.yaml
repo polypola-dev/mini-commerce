@@ -70,12 +70,17 @@ grafana:
     path: /grafana
     pathType: Prefix
   additionalDataSources:
+    # uid를 명시 고정 — 지정 안 하면 Grafana가 임의 문자열을 생성해 재설치 때마다
+    # 바뀔 수 있고, 대시보드 JSON에서 datasource를 uid로 참조하는 패널(로그/트레이스
+    # 패널 등)이 깨진다. Prometheus는 차트 기본값 자체가 이미 uid: prometheus로 고정.
     - name: Tempo
+      uid: tempo
       type: tempo
       access: proxy
       url: http://tempo.monitoring.svc.cluster.local:3200
       isDefault: false
     - name: Loki
+      uid: loki
       type: loki
       access: proxy
       url: http://loki-gateway.monitoring.svc.cluster.local

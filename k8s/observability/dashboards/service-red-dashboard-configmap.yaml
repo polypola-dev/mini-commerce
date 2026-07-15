@@ -15,7 +15,7 @@ data:
       ],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 5,
+      "version": 6,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -327,6 +327,70 @@ data:
             {
               "expr": "kafka_consumergroup_members{namespace=\"mini-commerce\"}",
               "legendFormat": "{{consumergroup}}"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Errors & warnings",
+          "description": "ERROR/WARN 레벨 로그만 필터링(Kibana의 에러 필터 뷰와 동일한 용도) — $workload로 서비스 전환. 서비스가 최근 부팅 이후 아무것도 로깅하지 않았으면(정상 요청은 access log를 안 남김) No data가 정상이다.",
+          "type": "logs",
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": true,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "dedupStrategy": "none",
+            "sortOrder": "Descending"
+          },
+          "targets": [
+            {
+              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"} | severity_text=~\"ERROR|WARN\"",
+              "queryType": "range"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Recent logs (all levels)",
+          "description": "선택한 서비스의 전체 로그 스트림 — Kibana의 Discover 탭과 같은 용도. 우측 상단 검색창으로 키워드 필터, 로그 줄 클릭 시 trace_id가 있으면 Tempo 트레이스로 바로 이동 가능.",
+          "type": "logs",
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 48
+          },
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": true,
+            "wrapLogMessage": true,
+            "prettifyLogMessage": false,
+            "enableLogDetails": true,
+            "dedupStrategy": "none",
+            "sortOrder": "Descending"
+          },
+          "targets": [
+            {
+              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"}",
+              "queryType": "range"
             }
           ]
         }
