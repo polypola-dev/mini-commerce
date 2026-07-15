@@ -15,7 +15,7 @@ data:
       ],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 3,
+      "version": 4,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -55,6 +55,12 @@ data:
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
           },
           "targets": [
             {
@@ -104,6 +110,12 @@ data:
             "type": "prometheus",
             "uid": "prometheus"
           },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
           "targets": [
             {
               "expr": "histogram_quantile(0.50, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
@@ -132,6 +144,12 @@ data:
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
           },
           "targets": [
             {
@@ -169,7 +187,7 @@ data:
         },
         {
           "id": 6,
-          "title": "JVM GC pause rate (s/s)",
+          "title": "JVM GC pause rate (% of wall-clock time spent in GC)",
           "type": "timeseries",
           "gridPos": {
             "h": 8,
@@ -180,6 +198,12 @@ data:
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
           },
           "targets": [
             {
@@ -201,6 +225,12 @@ data:
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
           },
           "targets": [
             {
@@ -250,6 +280,12 @@ data:
             "type": "prometheus",
             "uid": "prometheus"
           },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
+          },
           "targets": [
             {
               "expr": "sum by (consumergroup, topic) (kafka_consumergroup_lag{namespace=\"mini-commerce\"})",
@@ -270,6 +306,12 @@ data:
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            },
+            "overrides": []
           },
           "targets": [
             {
