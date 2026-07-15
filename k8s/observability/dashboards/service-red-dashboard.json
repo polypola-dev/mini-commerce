@@ -92,7 +92,7 @@
       "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
       "targets": [
         {
-          "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"$job\", area=\"heap\"})",
+          "expr": "sum by (job) (jvm_memory_used_bytes{job=~\"$job\", jvm_memory_type=\"heap\"})",
           "legendFormat": "{{job}}"
         }
       ]
@@ -112,13 +112,27 @@
     },
     {
       "id": 7,
-      "title": "Pod restarts (mini-commerce ns)",
+      "title": "Container restarts in-place (같은 Pod 안에서 컨테이너만 재기동 — 예: OOMKilled 후 자동복구)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"mini-commerce\"}[1h]))",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Pod age (초 — 급격히 0 근처로 떨어지면 Pod가 삭제·재생성된 것. k9s Kill/OOM 등 전체 재생성은 위 패널이 아니라 이 패널로 확인)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\"}",
           "legendFormat": "{{pod}}"
         }
       ]
