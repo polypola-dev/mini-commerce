@@ -79,12 +79,42 @@ grafana:
       access: proxy
       url: http://tempo.monitoring.svc.cluster.local:3200
       isDefault: false
+      jsonData:
+        httpMethod: GET
+        # 트레이스 → 로그(2026-07-15 후속) — 트레이스 화면에서 "Logs for this span"으로
+        # 같은 trace_id의 로그를 전 서비스(네임스페이스 전체, 특정 deployment로 안 좁힘)
+        # 시간순으로 한 번에 본다. shop-api→order-api처럼 여러 서비스를 거친 요청의
+        # 전체 경로를 로그로 재구성할 때 씀. customQuery로 line_format까지 적용해
+        # RED 대시보드 로그 패널과 표기를 통일([deployment명] 접두어).
+        tracesToLogsV2:
+          datasourceUid: loki
+          spanStartTimeShift: "-2m"
+          spanEndTimeShift: "2m"
+          filterByTraceID: true
+          filterBySpanID: false
+          customQuery: true
+          # 차트가 이 블록 전체를 Helm tpl로 한 번 더 해석해서 LogQL의 {{ }}가 Helm
+          # 액션으로 오인된다(빌드 실패 실측) — 백틱 트릭({{`{{`}})으로 리터럴 {{ }}가
+          # 그대로 살아남게 이스케이프.
+          query: '{k8s_namespace_name="mini-commerce"} | trace_id="${__trace.traceId}" | line_format "[{{`{{`}}.k8s_deployment_name{{`}}`}}] {{`{{`}} __line__ {{`}}`}}"'
     - name: Loki
       uid: loki
       type: loki
       access: proxy
       url: http://loki-gateway.monitoring.svc.cluster.local
       isDefault: false
+      jsonData:
+        maxLines: 1000
+        # 로그 → 트레이스(compose 시절부터 있던 연동, ADR-018로 k8s에도 승계) —
+        # trace_id는 로그 본문이 아니라 구조화 메타데이터(label)로 실리므로
+        # matcherType은 정규식이 아니라 label 매처를 쓴다.
+        derivedFields:
+          - datasourceUid: tempo
+            matcherType: label
+            matcherRegex: trace_id
+            name: TraceID
+            url: '$${__value.raw}'
+            urlDisplayLabel: 'Tempo에서 트레이스 보기'
   resources:
     requests:
       cpu: 50m
