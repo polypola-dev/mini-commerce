@@ -1,58 +1,35 @@
 {
   "title": "mini-commerce / Service RED + JVM",
   "uid": "mc-service-red",
-  "tags": [
-    "mini-commerce"
-  ],
+  "tags": ["mini-commerce"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 4,
+  "version": 5,
   "refresh": "30s",
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
+  "time": { "from": "now-1h", "to": "now" },
   "templating": {
     "list": [
       {
         "name": "workload",
         "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
         "query": "label_values(target_info{k8s_namespace_name=\"mini-commerce\"}, k8s_deployment_name)",
         "refresh": 2,
         "multi": true,
         "includeAll": true,
-        "current": {
-          "text": "All",
-          "value": "$__all"
-        }
+        "current": { "text": "All", "value": "$__all" }
       }
     ]
   },
   "panels": [
     {
       "id": 1,
-      "title": "Request rate (req/s)",
+      "title": "Request rate",
+      "description": "초당 요청 수(req/s, 5분 rate). shop-api/order-api/order-admin/order-batch 4개 서비스를 $workload 변수로 전환·비교.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -62,24 +39,12 @@
     },
     {
       "id": 2,
-      "title": "Error rate (5xx / total)",
+      "title": "Error rate",
+      "description": "전체 요청 대비 5xx 응답 비율(5분 rate). 0.05(5%)를 5분 이상 초과하면 HighErrorRate 알림(PrometheusRule)이 발동한다.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\", http_response_status_code=~\"5..\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}) / sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -89,24 +54,12 @@
     },
     {
       "id": 3,
-      "title": "Duration p50 / p95 / p99 (s)",
+      "title": "Duration p50 / p95 / p99",
+      "description": "응답시간 백분위수(초). p99가 p50보다 크게 튀면 일부 요청만 느려지는 꼬리 지연(tail latency) — 커넥션풀·DB 슬로우쿼리·GC 정지 등을 의심할 지점.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
@@ -124,24 +77,12 @@
     },
     {
       "id": 4,
-      "title": "In-flight-ish: request count by status class",
+      "title": "Requests by status class",
+      "description": "HTTP 상태코드별 초당 요청 수. 특정 상태코드(4xx/5xx)만 튀는지, 전체가 같이 늘어나는지(트래픽 증가 vs 장애)를 구분하는 용도.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -151,24 +92,12 @@
     },
     {
       "id": 5,
-      "title": "JVM heap used (bytes)",
+      "title": "JVM heap used",
+      "description": "힙 메모리 사용량(bytes). 컨테이너 memory limit의 75%가 힙 상한(Dockerfile MaxRAMPercentage=75.0, F6). 계단식으로 튀었다가 떨어지는 톱니 패턴은 GC로 인한 정상 동작 — 우상향만 계속되면 메모리 누수 의심.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (jvm_memory_used_bytes{job=~\"mini-commerce/.+\", jvm_memory_type=\"heap\"} * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -178,24 +107,12 @@
     },
     {
       "id": 6,
-      "title": "JVM GC pause rate (% of wall-clock time spent in GC)",
+      "title": "JVM GC pause rate",
+      "description": "GC로 애플리케이션이 멈춰있던 시간의 비율(wall-clock 대비, %). 예를 들어 1%면 1초 중 10ms를 GC로 소비했다는 뜻. 값이 크게 튀면 힙 압박·GC 튜닝 필요 신호.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(jvm_gc_duration_seconds_sum{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -205,24 +122,12 @@
     },
     {
       "id": 7,
-      "title": "Container restarts in-place (같은 Pod 안에서 컨테이너만 재기동 — 예: OOMKilled 후 자동복구)",
+      "title": "Container restarts (in-place)",
+      "description": "같은 Pod 안에서 컨테이너만 재기동된 횟수(예: 앱 크래시, OOMKilled 후 kubelet의 자동 복구). Pod 자체가 삭제·재생성된 경우(kubectl delete, k9s Kill, 노드 축출 등)는 이 지표에 안 잡힌다 — 그 경우는 옆의 Pod age 패널로 확인.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}[1h]))",
@@ -232,24 +137,12 @@
     },
     {
       "id": 8,
-      "title": "Pod age (초 — 급격히 0 근처로 떨어지면 Pod가 삭제·재생성된 것. k9s Kill/OOM 등 전체 재생성은 위 패널이 아니라 이 패널로 확인)",
+      "title": "Pod age",
+      "description": "Pod가 떠 있는 시간(초). 급격히 0 근처로 떨어지면 Pod가 삭제·재생성된 것 — k9s Kill, 노드 재배치, 롤링 업데이트 등 Pod 오브젝트 자체가 교체되는 이벤트는 Container restarts 패널이 아니라 이 패널로 확인해야 한다(둘은 서로 다른 실패 유형을 잡는다).",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "targets": [
         {
           "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}",
@@ -259,24 +152,12 @@
     },
     {
       "id": 9,
-      "title": "Kafka consumer lag (2026-07-15 후속 — 토픽에 메시지가 쌓인 적 없으면 No data가 정상)",
+      "title": "Kafka consumer lag",
+      "description": "notification 컨슈머 그룹이 order.placed/order.paid 토픽에서 최신 메시지보다 얼마나 뒤처져 있는지(메시지 개수). 1000건을 10분 이상 초과하면 KafkaConsumerLagHigh 알림 발동. 토픽에 메시지가 한 번도 쌓인 적 없으면(offset=0) 커밋 오프셋 자체가 없어 No data가 뜨는 게 정상 — 실제 주문 트래픽이 발생해야 값이 채워진다.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "targets": [
         {
           "expr": "sum by (consumergroup, topic) (kafka_consumergroup_lag{namespace=\"mini-commerce\"})",
@@ -287,23 +168,11 @@
     {
       "id": 10,
       "title": "Kafka consumer group members",
+      "description": "컨슈머 그룹에 현재 붙어있는 컨슈머 인스턴스 수. shop-api의 notification 컨슈머 기준 정상값은 2(파드 1개당 리스너 2개 — order.placed/order.paid 토픽별). 갑자기 0으로 떨어지면 컨슈머가 전부 죽었거나 리밸런싱 중이라는 뜻.",
       "type": "timeseries",
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 32
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "targets": [
         {
           "expr": "kafka_consumergroup_members{namespace=\"mini-commerce\"}",
