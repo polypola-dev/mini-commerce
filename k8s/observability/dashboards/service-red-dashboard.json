@@ -1,23 +1,34 @@
 {
   "title": "mini-commerce / Service RED + JVM",
   "uid": "mc-service-red",
-  "tags": ["mini-commerce"],
+  "tags": [
+    "mini-commerce"
+  ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
         "name": "workload",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(target_info{k8s_namespace_name=\"mini-commerce\"}, k8s_deployment_name)",
         "refresh": 2,
         "multi": true,
         "includeAll": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
   },
@@ -26,8 +37,16 @@
       "id": 1,
       "title": "Request rate (req/s)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -39,9 +58,22 @@
       "id": 2,
       "title": "Error rate (5xx / total)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\", http_response_status_code=~\"5..\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}) / sum by (k8s_deployment_name) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -53,8 +85,16 @@
       "id": 3,
       "title": "Duration p50 / p95 / p99 (s)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum by (k8s_deployment_name, le) (rate(http_server_request_duration_seconds_bucket{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"}))",
@@ -74,8 +114,16 @@
       "id": 4,
       "title": "In-flight-ish: request count by status class",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -87,9 +135,22 @@
       "id": 5,
       "title": "JVM heap used (bytes)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (jvm_memory_used_bytes{job=~\"mini-commerce/.+\", jvm_memory_type=\"heap\"} * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -101,8 +162,16 @@
       "id": 6,
       "title": "JVM GC pause rate (s/s)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "expr": "sum by (k8s_deployment_name) (rate(jvm_gc_duration_seconds_sum{job=~\"mini-commerce/.+\"}[5m]) * on(instance, job) group_left(k8s_deployment_name) target_info{k8s_deployment_name=~\"$workload\"})",
@@ -114,8 +183,16 @@
       "id": 7,
       "title": "Container restarts in-place (같은 Pod 안에서 컨테이너만 재기동 — 예: OOMKilled 후 자동복구)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}[1h]))",
@@ -127,13 +204,68 @@
       "id": 8,
       "title": "Pod age (초 — 급격히 0 근처로 떨어지면 Pod가 삭제·재생성된 것. k9s Kill/OOM 등 전체 재생성은 위 패널이 아니라 이 패널로 확인)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
       "targets": [
         {
           "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}",
           "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Kafka consumer lag (2026-07-15 후속 — 토픽에 메시지가 쌓인 적 없으면 No data가 정상)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (consumergroup, topic) (kafka_consumergroup_lag{namespace=\"mini-commerce\"})",
+          "legendFormat": "{{consumergroup}} / {{topic}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Kafka consumer group members",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "kafka_consumergroup_members{namespace=\"mini-commerce\"}",
+          "legendFormat": "{{consumergroup}}"
         }
       ]
     }

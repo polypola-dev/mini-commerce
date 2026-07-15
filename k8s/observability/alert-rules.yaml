@@ -6,8 +6,12 @@
 # 준비되면 그때 추가(2026-07-15 사용자 결정: "지금은 규칙만"). 지금은 firing 여부를
 # Alertmanager/Grafana UI에서 확인하는 것까지가 스코프.
 #
-# Kafka consumer lag 알림은 스코프 제외 — kafka-exporter(또는 Strimzi 자체 메트릭 노출)가
-# 없어 lag 메트릭 자체가 수집되지 않는다(캐치업 항목, ADR-018 기록).
+# Kafka consumer lag(2026-07-15 후속) — Strimzi 내장 kafkaExporter(k8s/kafka/kafka-cluster.yaml)
+# + PodMonitor(k8s/observability/kafka-exporter-podmonitor.yaml) 경유로 kafka_consumergroup_lag
+# 수집. 주의: 토픽에 실제 메시지가 쌓인 적 없으면(offset=0) 이 메트릭 자체가 비어있다 —
+# 부재가 곧 "랙 없음"이 아니라 "아직 트래픽 없음"일 수 있어, 값이 존재하는 시점부터
+# 임계 판단이 유효하다(absent 알림은 별도로 두지 않음 — 컨슈머가 아예 안 뜬 건 Pod
+# restarts/readiness 쪽에서 이미 잡힘).
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -42,3 +46,14 @@ spec:
           annotations:
             summary: "{{ $labels.pod }} 파드가 최근 1시간 동안 3회 넘게 재시작했습니다"
             description: "container={{ $labels.container }}, 재시작 횟수={{ $value }}"
+    - name: mini-commerce.kafka
+      rules:
+        - alert: KafkaConsumerLagHigh
+          expr: |
+            sum by (consumergroup, topic) (kafka_consumergroup_lag{namespace="mini-commerce"}) > 1000
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.consumergroup }} 컨슈머가 {{ $labels.topic }} 토픽에서 1000건 넘게 밀렸습니다"
+            description: "lag={{ $value }}"

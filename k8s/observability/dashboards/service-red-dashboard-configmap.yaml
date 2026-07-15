@@ -15,7 +15,7 @@ data:
       ],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 2,
+      "version": 3,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -233,6 +233,48 @@ data:
             {
               "expr": "time() - kube_pod_start_time{namespace=\"mini-commerce\", pod=~\"($workload)-.*\"}",
               "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Kafka consumer lag (2026-07-15 후속 — 토픽에 메시지가 쌓인 적 없으면 No data가 정상)",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 32
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "sum by (consumergroup, topic) (kafka_consumergroup_lag{namespace=\"mini-commerce\"})",
+              "legendFormat": "{{consumergroup}} / {{topic}}"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Kafka consumer group members",
+          "type": "timeseries",
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 32
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "expr": "kafka_consumergroup_members{namespace=\"mini-commerce\"}",
+              "legendFormat": "{{consumergroup}}"
             }
           ]
         }

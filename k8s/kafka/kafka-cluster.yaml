@@ -62,3 +62,11 @@ spec:
       "-Xms": 512m
       "-Xmx": 512m
   # entityOperator 생략 — KafkaTopic/KafkaUser CRD 관리 안 함(자동 생성 토픽 + 무인증)
+  # H5 후속(ADR-018) — 컨슈머 랙 관측. Strimzi 내장 옵션이라 별도 컴포넌트 설치 불필요,
+  # Deployment(파드 포트 9404/tcp-prometheus, /metrics)를 operator가 생성한다.
+  # **Service는 안 만들어준다** — Prometheus 스크레이프 연결은
+  # k8s/observability/kafka-exporter-podmonitor.yaml(PodMonitor, Service 없이 파드
+  # 라벨로 직접 스크레이프 — prometheus-operator CRD라 Strimzi가 함께 만들어주지 않음).
+  kafkaExporter:
+    groupRegex: ".*"
+    topicRegex: ".*"

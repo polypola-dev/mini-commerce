@@ -1,0 +1,23 @@
+# H5 후속(ADR-018) — Kafka Exporter(k8s/kafka/kafka-cluster.yaml의 kafkaExporter)를
+# Prometheus가 스크레이프하도록 연결. Strimzi는 Service를 만들지 않고 파드만 생성하므로
+# Service 없이 파드를 직접 스크레이프하는 PodMonitor를 쓴다.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: kafka-exporter
+  namespace: mini-commerce
+  labels:
+    # Prometheus CR의 podMonitorSelector(release: kube-prometheus-stack)와 일치해야
+    # 실제로 스크레이프 대상에 포함된다.
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - mini-commerce
+  selector:
+    matchLabels:
+      strimzi.io/name: mini-commerce-kafka-exporter
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      path: /metrics
+      interval: 30s
