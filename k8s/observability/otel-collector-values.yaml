@@ -18,6 +18,18 @@ presets:
     enabled: true
 
 config:
+  receivers:
+    # 차트 기본값은 ${env:MY_POD_IP}(파드 자신의 IP)에만 바인딩 — Service 경유 접속(우리
+    # 4개 백엔드 앱)은 문제없지만, kubectl port-forward는 파드 네트워크 네임스페이스
+    # 안에서 loopback(localhost)으로 접속을 시도해서 파드 IP 전용 바인딩과는 안 맞아
+    # "connection refused"로 실패한다(로컬 프론트엔드에서 OTLP를 보내려고 포트포워드하다
+    # 실측). 0.0.0.0으로 넓혀 Service 접속과 port-forward 둘 다 되게 한다.
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
   exporters:
     # tempo/prometheus/loki는 3축을 각각 다른 백엔드로 받는다 — 기존 앱 직접 export
     # 시절(docker/observability/README.md)과 동일한 signal별 endpoint 구조를 Collector 레벨로 이관.

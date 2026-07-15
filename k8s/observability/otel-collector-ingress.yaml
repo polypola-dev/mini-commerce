@@ -1,0 +1,27 @@
+# 2026-07-15 후속 — 로컬 프론트엔드(호스트에서 npm run dev)가 OTLP 트레이스를 매번
+# kubectl port-forward 없이 영구적으로 보낼 수 있게 Ingress로 노출. Grafana(/grafana)와
+# 같은 ingress-nginx 컨트롤러를 공유(G6) — G6 base ingress(prod 공유 파일)는 건드리지
+# 않고 monitoring ns 소유의 별도 Ingress로 분리(Grafana Ingress와 동일 패턴).
+#
+# otel-collector의 OTLP HTTP 리시버는 /v1/traces 같은 표준 경로만 받으므로,
+# rewrite-target으로 /otlp 접두어를 벗겨내 백엔드에는 원래 경로 그대로 전달한다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: otel-collector-otlp
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /otlp(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: otel-collector-opentelemetry-collector
+                port:
+                  number: 4318
