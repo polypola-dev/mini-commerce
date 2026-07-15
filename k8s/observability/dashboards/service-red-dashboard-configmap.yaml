@@ -15,7 +15,7 @@ data:
       ],
       "timezone": "browser",
       "schemaVersion": 39,
-      "version": 6,
+      "version": 7,
       "refresh": "30s",
       "time": {
         "from": "now-1h",
@@ -333,7 +333,7 @@ data:
         {
           "id": 11,
           "title": "Errors & warnings",
-          "description": "ERROR/WARN 레벨 로그만 필터링(Kibana의 에러 필터 뷰와 동일한 용도) — $workload로 서비스 전환. 서비스가 최근 부팅 이후 아무것도 로깅하지 않았으면(정상 요청은 access log를 안 남김) No data가 정상이다.",
+          "description": "ERROR/WARN 레벨 로그만 필터링(Kibana의 에러 필터 뷰와 동일한 용도) — $workload로 서비스 전환. 여러 서비스를 동시에 볼 때 어느 줄이 어디서 왔는지 구분되도록 각 줄 앞에 [deployment명]을 붙였다(line_format). 서비스가 최근 부팅 이후 아무것도 로깅하지 않았으면(정상 요청은 access log를 안 남김) No data가 정상이다.",
           "type": "logs",
           "gridPos": {
             "h": 8,
@@ -357,7 +357,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"} | severity_text=~\"ERROR|WARN\"",
+              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"} | severity_text=~\"ERROR|WARN\" | line_format \"[{{.k8s_deployment_name}}] {{ __line__ }}\"",
               "queryType": "range"
             }
           ]
@@ -365,7 +365,7 @@ data:
         {
           "id": 12,
           "title": "Recent logs (all levels)",
-          "description": "선택한 서비스의 전체 로그 스트림 — Kibana의 Discover 탭과 같은 용도. 우측 상단 검색창으로 키워드 필터, 로그 줄 클릭 시 trace_id가 있으면 Tempo 트레이스로 바로 이동 가능.",
+          "description": "선택한 서비스의 전체 로그 스트림 — Kibana의 Discover 탭과 같은 용도. 각 줄 앞에 [deployment명]이 붙어 여러 서비스를 한꺼번에 볼 때도 출처가 바로 구분된다(line_format). 우측 상단 검색창으로 키워드 필터, 로그 줄 클릭 시 trace_id가 있으면 Tempo 트레이스로 바로 이동 가능.",
           "type": "logs",
           "gridPos": {
             "h": 10,
@@ -389,7 +389,7 @@ data:
           },
           "targets": [
             {
-              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"}",
+              "expr": "{k8s_namespace_name=\"mini-commerce\", k8s_deployment_name=~\"$workload\"} | line_format \"[{{.k8s_deployment_name}}] {{ __line__ }}\"",
               "queryType": "range"
             }
           ]
