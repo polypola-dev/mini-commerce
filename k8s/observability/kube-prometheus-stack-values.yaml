@@ -14,13 +14,21 @@ kubeEtcd:
 kubeProxy:
   enabled: false
 
-# 기본 알림 규칙 전체를 켜지 않는다 — 알림 설계는 H5(Alertmanager) 소관.
+# kube-prometheus-stack이 함께 딸려오는 기본 알림 규칙(수백 개, 클러스터 전반)은 배제 —
+# H5는 우리 서비스에 맞춘 규칙만 별도 PrometheusRule(k8s/observability/alert-rules.yaml)로 관리.
 defaultRules:
   create: false
 
-# H5 스코프. 지금은 지표 저장 + 조회까지만.
+# H5(ADR-018) — Alertmanager 활성화. receiver는 아직 미설정(null) — Slack/Telegram
+# webhook이 준비되면 그때 추가(사용자 결정, 2026-07-15). 지금은 규칙 평가 + Alertmanager/
+# Grafana UI에서 firing 상태 확인까지가 스코프.
 alertmanager:
-  enabled: false
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
 
 prometheus:
   prometheusSpec:
@@ -51,6 +59,16 @@ grafana:
       enabled: true
       org_name: Main Org.
       org_role: Admin
+    server:
+      # Ingress 서브패스(/grafana) 경유 접속 — kind 재생성해도 helm 재설치만으로
+      # 영구 재현되도록 port-forward 대신 Ingress로 고정(2026-07-15 사용자 요청).
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
+      serve_from_sub_path: true
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    path: /grafana
+    pathType: Prefix
   additionalDataSources:
     - name: Tempo
       type: tempo

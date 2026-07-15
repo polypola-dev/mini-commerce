@@ -68,14 +68,66 @@ monitoring ns 자체엔 정책 미적용).
    (observability/README.md 기존 트러블슈팅 항목과 동일한 현상 — 신규 이슈 아님).
 5. Grafana `additionalDataSources`로 Prometheus(기본)·Tempo·Loki 3종 API 조회로 확인.
 
-## 결과 및 트레이드오프
+## 결과 및 트레이드오프 (1차, H1~H3)
 
 - 관측성 3축이 kind에 정식으로 통합됐다 — G11 이후 비어 있던 공백 해소.
-- Grafana UI는 별도 Ingress 라우팅을 추가하지 않았다(로컬 전용 조회 편의 목적이라
-  `kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80`으로
-  충분 — G6 base ingress는 prod에도 적용되는 라우팅 규칙이라 관측성 UI를 얹지 않는다).
 - Tempo 차트의 deprecated 상태는 미해결 리스크로 남는다 — 차트가 실제로 저장소에서
   빠지면 `tempo-distributed` 또는 후속 통합 차트로 이관 필요(그때 재평가).
-- H4(Grafana 대시보드 as code)·H5(Alertmanager 알림 규칙)는 P2로 범위 밖 유지.
 - 운영(OKE) 관측성은 여전히 별도 결정 대상 — 이 스택은 로컬 전용(observability/README.md
   원칙 계승, SaaS export 재검토는 그때).
+
+## 추가 결정 (2차, 2026-07-15 — Grafana 영구 접속 + H4 + H5)
+
+1차 배포 직후 사용자가 Grafana 접속을 `kubectl port-forward` 대신 영구적으로 요청,
+그 자리에서 H4/H5까지 이어서 진행.
+
+### Grafana 영구 접속 — Ingress 서브패스(`/grafana`)
+
+port-forward는 kind 재생성·터미널 종료마다 재실행이 필요해 "영구적"이라는 요구와
+맞지 않는다. G6 base ingress(prod 공유 파일)에는 손대지 않고, **kube-prometheus-stack
+차트 자체의 `grafana.ingress`**를 활성화하는 방식을 택했다 — 같은 ingress-nginx
+컨트롤러가 여러 네임스페이스의 Ingress 리소스를 동시에 서빙하므로 base와 충돌 없이
+공존한다. `host` 미지정(G6 host-less 패턴과 동일 — prod에서 host/TLS patch 여지).
+서브패스 서빙에는 `grafana.ini`의 `server.root_url`+`serve_from_sub_path: true`가
+필수(없으면 정적 자산 경로가 깨진다) — 렌더링된 HTML의 상대경로 자산이 `/grafana/`
+기준으로 정상 해석되는 것까지 실증.
+
+### H4 — 서비스별 RED 대시보드
+
+`k8s/observability/dashboards/service-red-dashboard.json`(소스) +
+`service-red-dashboard-configmap.yaml`(배포 아티팩트, `grafana_dashboard: "1"`
+라벨). kube-prometheus-stack 기본 대시보드(kubernetes-mixin 등)와 **동일한
+sidecar 메커니즘**(`sidecar.dashboards.searchNamespace: ALL`, 차트 기본값)을
+그대로 활용 — 별도 프로비저닝 설정 불필요, ConfigMap만 만들면 자동 로드된다.
+`job` 템플릿 변수로 4개 서비스(shop-api/order-api/order-admin/order-batch) 전환,
+패널: 요청률·5xx 에러율·p50/p95/p99 레이턴시·상태코드별 분포·JVM 힙·GC pause율·
+파드 재시작 횟수. 쿼리는 실제 존재 확인된 메트릭만 사용
+(`http_server_request_duration_seconds_*`, `jvm_memory_used_bytes`,
+`jvm_gc_duration_seconds_sum`, `kube_pod_container_status_restarts_total`).
+검증: Grafana API 대시보드 검색 성공 + datasource 프록시로 패널 1의 실제 쿼리가
+데이터를 반환하는 것까지 확인.
+
+### H5 — Alertmanager 알림 규칙
+
+| 결정 | 근거 |
+|---|---|
+| `alertmanager.enabled: true`로 전환(1차에서 P2로 배제했던 것을 여기서 활성화) | 규칙 평가 자체엔 Alertmanager가 전제 조건 |
+| `defaultRules.create: false` 유지 | kube-prometheus-stack 기본 규칙(수백 개, 클러스터 전반 대상)은 노이즈가 커 배제 — 우리 서비스에 맞춘 규칙만 별도 `PrometheusRule`로 직접 관리 |
+| `PrometheusRule`에 `release: kube-prometheus-stack` 라벨 필수 | Prometheus CR의 `ruleSelector`가 이 라벨로 매칭(`ruleNamespaceSelector`는 `{}`라 전체 네임스페이스 허용 — 라벨 매칭만 관문) |
+| 규칙 2종만: `HighErrorRate`(5xx 비율 5% 초과, 5분), `PodRestartingFrequently`(1시간 내 재시작 3회 초과) | ROADMAP H5 문구의 "에러율·Pod 재시작"에 해당. **컨슈머 랙은 스코프 제외** — kafka-exporter(또는 Strimzi 메트릭 노출)가 없어 lag 메트릭 자체가 수집되지 않음(캐치업 항목) |
+| **receiver 미설정**(Alertmanager 기본 route만 존재, Slack/Telegram 연동 안 함) | 사용자 결정(2026-07-15): "지금은 규칙만" — webhook/봇 토큰이 준비되면 그때 receiver 추가. 지금은 firing 여부를 Alertmanager/Grafana UI에서 확인하는 것까지가 스코프 |
+
+검증: `PrometheusRule` 적용 후 Prometheus `/api/v1/rules`에 두 그룹 모두
+`health=ok`로 로드(현재는 임계 미도달로 `inactive` — 정상), `/api/v1/alertmanagers`로
+Alertmanager가 활성 타겟으로 자동 발견됨(오퍼레이터가 기본 연동, 별도 설정 불필요)
+확인.
+
+## 결과 및 트레이드오프 (종합)
+
+- Grafana는 이제 `http://localhost/grafana`로 영구 접속 가능 — kind를 재생성해도
+  `helm upgrade`만 재실행하면 동일하게 재현(포트포워드 불필요).
+- H4/H5까지 포함해 H계열(관측성 — k8s 통합) 5개 항목 전부 완료.
+- Alertmanager receiver는 의도적 미완성 상태로 남는다 — Slack/Telegram webhook이
+  생기면 `alertmanager.config.receivers`에 추가하는 후속 작업으로 명확히 분리.
+- Kafka consumer lag 관측은 별도 백로그로 넘어간다 — kafka-exporter 도입이 선행
+  조건(H계열엔 없던 신규 아이템, 필요 시 사용자 지정으로 착수).

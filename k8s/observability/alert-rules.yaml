@@ -1,0 +1,44 @@
+# H5(ROADMAP, ADR-018) — 우리 서비스에 맞춘 알림 규칙만 직접 관리(kube-prometheus-stack의
+# 기본 defaultRules는 배제 — 클러스터 전반 대상이라 노이즈가 큼). release 라벨은
+# Prometheus CR의 ruleSelector(release: kube-prometheus-stack)와 일치해야 실제로 로드된다.
+#
+# receiver는 아직 미설정(Alertmanager 기본 route만 존재) — Slack/Telegram webhook이
+# 준비되면 그때 추가(2026-07-15 사용자 결정: "지금은 규칙만"). 지금은 firing 여부를
+# Alertmanager/Grafana UI에서 확인하는 것까지가 스코프.
+#
+# Kafka consumer lag 알림은 스코프 제외 — kafka-exporter(또는 Strimzi 자체 메트릭 노출)가
+# 없어 lag 메트릭 자체가 수집되지 않는다(캐치업 항목, ADR-018 기록).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mini-commerce-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: mini-commerce.http
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum by (job) (rate(http_server_request_duration_seconds_count{job=~"mini-commerce/.+", http_response_status_code=~"5.."}[5m]))
+            /
+            sum by (job) (rate(http_server_request_duration_seconds_count{job=~"mini-commerce/.+"}[5m]))
+            > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.job }} 5xx 비율이 5%를 초과했습니다"
+            description: "{{ $labels.job }}의 최근 5분 5xx 응답 비율이 {{ $value | humanizePercentage }}입니다."
+    - name: mini-commerce.pods
+      rules:
+        - alert: PodRestartingFrequently
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="mini-commerce"}[1h]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.pod }} 파드가 최근 1시간 동안 3회 넘게 재시작했습니다"
+            description: "container={{ $labels.container }}, 재시작 횟수={{ $value }}"
