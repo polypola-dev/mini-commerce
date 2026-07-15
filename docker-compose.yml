@@ -218,7 +218,7 @@ services:
     image: grafana/tempo:2.7.2
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./observability/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - ./docker/observability/tempo/tempo.yaml:/etc/tempo.yaml:ro
       - tempo-data:/var/tempo
     ports:
       - "4317:4317"
@@ -230,7 +230,7 @@ services:
     image: grafana/loki:3.3.2
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
-      - ./observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - ./docker/observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
       - loki-data:/loki
     ports:
       - "3100:3100"
@@ -244,7 +244,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yaml
       - --enable-feature=otlp-write-receiver
     volumes:
-      - ./observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - ./docker/observability/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
       - prometheus-data:/prometheus
     ports:
       - "9090:9090"
@@ -263,7 +263,7 @@ services:
     ports:
       - "3001:3000"
     volumes:
-      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - tempo
       - loki

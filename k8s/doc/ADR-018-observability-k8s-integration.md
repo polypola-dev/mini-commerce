@@ -1,7 +1,7 @@
 # ADR-018: 관측성 k8s 통합 — kube-prometheus-stack + Tempo/Loki + OTel Collector
 
 - 상태: 승인 (2026-07-15)
-- 관련: ROADMAP H1/H2/H3, GH #9(k8s 이전 에픽), observability/README.md(compose 시절 원 설계),
+- 관련: ROADMAP H1/H2/H3, GH #9(k8s 이전 에픽), docker/observability/README.md(compose 시절 원 설계),
   G9(NetworkPolicy default-deny), F5(설정 계약), ADR-005~017
 
 ## 컨텍스트
@@ -30,7 +30,7 @@ monitoring ns 자체엔 정책 미적용).
 |---|---|
 | `kubeControllerManager`/`kubeScheduler`/`kubeEtcd`/`kubeProxy` 전부 비활성 | kind 컨트롤 플레인 컴포넌트는 127.0.0.1 bind라 외부 스크레이프 불가 — 기본값대로 두면 대상이 영구 down으로 잡혀 노이즈만 발생(kind의 잘 알려진 제약) |
 | `defaultRules.create: false`, `alertmanager.enabled: false` | 알림 설계는 H5 소관 — 기본 알림 규칙 대량 적용은 지금 범위 밖 |
-| `prometheus.prometheusSpec.enableOTLPReceiver: true` | 차트 v87.15.2가 번들한 Prometheus **v3.13.1**의 네이티브 옵션. compose(v2.55.1)가 썼던 experimental 플래그(`--enable-feature=otlp-write-receiver`)가 stable 옵션으로 승격된 결과 — observability/README.md 트러블슈팅 항목의 "v3.x 승격 여부 확인" 미결 사항이 여기서 해소됨 |
+| `prometheus.prometheusSpec.enableOTLPReceiver: true` | 차트 v87.15.2가 번들한 Prometheus **v3.13.1**의 네이티브 옵션. compose(v2.55.1)가 썼던 experimental 플래그(`--enable-feature=otlp-write-receiver`)가 stable 옵션으로 승격된 결과 — docker/observability/README.md 트러블슈팅 항목의 "v3.x 승격 여부 확인" 미결 사항이 여기서 해소됨 |
 | `storageSpec.volumeClaimTemplate`(standard, 2Gi), `retention: 24h` | G4 패턴 승계 — kind local-path PVC로 파드 재기동에도 데이터 생존 |
 | Grafana는 **번들된 서브차트를 그대로 사용**(별도 Grafana 배포 안 함) | Prometheus datasource가 자동 등록되고, `additionalDataSources`로 Tempo/Loki를 얹기만 하면 되어 중복 리소스가 없다 |
 | Grafana 익명 Admin 접근(`grafana.ini`의 `auth.anonymous`) | compose의 `GF_AUTH_ANONYMOUS_*` env 설계를 동등하게 승계 — 로컬 전용, 대시보드/데이터 비영속(README 원칙 그대로) |
@@ -65,7 +65,7 @@ monitoring ns 자체엔 정책 미적용).
    k8s_attributes 프로세서 enrichment 실증.
 4. Loki 로그 스트림에 동일한 k8s 라벨(`k8s_namespace_name`, `k8s_pod_name` 등) 부착
    확인. `trace_id`가 없는 로그 줄(부팅·Kafka 리스너 로그)은 활성 span 밖이라 정상
-   (observability/README.md 기존 트러블슈팅 항목과 동일한 현상 — 신규 이슈 아님).
+   (docker/observability/README.md 기존 트러블슈팅 항목과 동일한 현상 — 신규 이슈 아님).
 5. Grafana `additionalDataSources`로 Prometheus(기본)·Tempo·Loki 3종 API 조회로 확인.
 
 ## 결과 및 트레이드오프 (1차, H1~H3)
@@ -73,7 +73,7 @@ monitoring ns 자체엔 정책 미적용).
 - 관측성 3축이 kind에 정식으로 통합됐다 — G11 이후 비어 있던 공백 해소.
 - Tempo 차트의 deprecated 상태는 미해결 리스크로 남는다 — 차트가 실제로 저장소에서
   빠지면 `tempo-distributed` 또는 후속 통합 차트로 이관 필요(그때 재평가).
-- 운영(OKE) 관측성은 여전히 별도 결정 대상 — 이 스택은 로컬 전용(observability/README.md
+- 운영(OKE) 관측성은 여전히 별도 결정 대상 — 이 스택은 로컬 전용(docker/observability/README.md
   원칙 계승, SaaS export 재검토는 그때).
 
 ## 추가 결정 (2차, 2026-07-15 — Grafana 영구 접속 + H4 + H5)

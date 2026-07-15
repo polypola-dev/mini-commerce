@@ -20,7 +20,7 @@ presets:
 config:
   exporters:
     # tempo/prometheus/loki는 3축을 각각 다른 백엔드로 받는다 — 기존 앱 직접 export
-    # 시절(observability/README.md)과 동일한 signal별 endpoint 구조를 Collector 레벨로 이관.
+    # 시절(docker/observability/README.md)과 동일한 signal별 endpoint 구조를 Collector 레벨로 이관.
     otlphttp/tempo:
       endpoint: http://tempo.monitoring.svc.cluster.local:4318
       tls:

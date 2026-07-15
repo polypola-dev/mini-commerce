@@ -1,6 +1,6 @@
 # H2(ROADMAP) — 노드/파드 메트릭 수집 + Prometheus(OTLP 네이티브 수신, H1 Collector가 소스) +
 # 번들 Grafana(조회 UI 겸 Tempo/Loki datasource 등록처 — 별도 Grafana 배포 안 함).
-# kind 로컬 전용, 운영(OKE)은 SaaS 관측성 재검토 대상(observability/README.md 원칙 계승).
+# kind 로컬 전용, 운영(OKE)은 SaaS 관측성 재검토 대상(docker/observability/README.md 원칙 계승).
 
 # kind 컨트롤 플레인 컴포넌트(scheduler/controller-manager/etcd/kube-proxy)는 127.0.0.1
 # bind라 외부에서 스크레이프 불가 — 기본 ServiceMonitor를 켜두면 대상이 영구 down으로
@@ -34,7 +34,7 @@ prometheus:
   prometheusSpec:
     # Prometheus v3.x(이 차트 v3.13.1) 네이티브 옵션 — compose의 experimental 플래그
     # (v2.55.1 --enable-feature=otlp-write-receiver)가 stable 옵션으로 승격된 결과
-    # (observability/README.md 트러블슈팅 항목의 "v3.x 승격 여부 확인" 결론).
+    # (docker/observability/README.md 트러블슈팅 항목의 "v3.x 승격 여부 확인" 결론).
     enableOTLPReceiver: true
     retention: 24h
     storageSpec:
@@ -53,7 +53,7 @@ prometheus:
 grafana:
   # 로컬 전용 조회 도구 — compose와 동일하게 익명 Admin 접근(로그인 불필요, GF_AUTH_ANONYMOUS_*
   # env 대신 grafana.ini 동등 설정). 대시보드/데이터는 영속하지 않는다(compose 승계 결정 —
-  # observability/README.md 트러블슈팅: "Grafana는 순수 조회 도구").
+  # docker/observability/README.md 트러블슈팅: "Grafana는 순수 조회 도구").
   grafana.ini:
     auth.anonymous:
       enabled: true

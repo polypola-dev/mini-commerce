@@ -1,7 +1,7 @@
 # k8s 관측성 스택 (H1~H5, ADR-018)
 
 kind 전용. `monitoring` 네임스페이스에 Helm으로 설치한다. compose 시절 스택
-(저장소 루트 `observability/README.md`)의 k8s 승계 버전 — 컴포넌트·원칙은 대부분
+(`docker/observability/README.md`)의 k8s 승계 버전 — 컴포넌트·원칙은 대부분
 동일하고, 앱→Collector→백엔드 경로가 추가된 점이 다르다.
 
 ## 설치
@@ -56,7 +56,7 @@ kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9
 
 ## 조회 방법
 
-compose 시절과 동일(저장소 루트 `observability/README.md` "Grafana에서 조회하기"
+compose 시절과 동일(`docker/observability/README.md` "Grafana에서 조회하기"
 참고) — Explore에서 datasource 전환. 라벨 이름은 OTel 시맨틱 컨벤션이 Loki/Prometheus에
 반영되는 방식 차이로 언더스코어 표기(`k8s_namespace_name` 등)가 붙는다.
 
@@ -78,7 +78,7 @@ Gateway(80, /otlp/v1/logs) / Prometheus(9090, /api/v1/otlp/v1/metrics)
   `kubectl get prometheus -n monitoring -o jsonpath='{.items[0].spec.enableOTLPReceiver}'`로 확인.
 - **로그에 `trace_id`가 없다** — 활성 span 밖(부팅·Kafka 리스너 로그 등)에서는 정상.
   실제 HTTP 요청 처리 중 로그에만 실린다(compose 시절과 동일 동작, 저장소 루트
-  `observability/README.md` 참고).
+  `docker/observability/README.md` 참고).
 - **Collector가 뜨는데 데이터가 안 온다** — `kubectl logs -n monitoring
   deploy/otel-collector-opentelemetry-collector`에서 exporter 에러 확인. 앱 쪽은
   `overlays/local`의 `OTLP_*_ENDPOINT` 패치가 실제로 적용됐는지
@@ -96,5 +96,5 @@ Gateway(80, /otlp/v1/logs) / Prometheus(9090, /api/v1/otlp/v1/metrics)
 ## 로컬 전용, 운영(OKE) 무관
 
 이 스택은 kind 로컬 전용이다. 운영에서 관측성 SaaS export가 필요해지면 그때
-Collector의 exporter만 교체 검토(원칙은 저장소 루트 `observability/README.md`
+Collector의 exporter만 교체 검토(원칙은 `docker/observability/README.md`
 "로컬 전용, 프로덕션 무관" 승계).
