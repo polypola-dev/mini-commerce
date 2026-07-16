@@ -14,6 +14,7 @@ public class Order {
     private OrderStatus status;
     private final BigDecimal totalAmount;
     private final Instant createdAt;
+    private String paymentKey;
 
     private final String shippingRecipient;
     private final String shippingPhone;
@@ -48,13 +49,14 @@ public class Order {
     }
 
     private Order(String id, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
-                  String shippingRecipient, String shippingPhone, String shippingAddress,
+                  String paymentKey, String shippingRecipient, String shippingPhone, String shippingAddress,
                   String shippingDetailAddress, String shippingZipCode, List<OrderLine> lines) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
         this.totalAmount = totalAmount;
         this.createdAt = createdAt;
+        this.paymentKey = paymentKey;
         this.shippingRecipient = shippingRecipient;
         this.shippingPhone = shippingPhone;
         this.shippingAddress = shippingAddress;
@@ -65,10 +67,10 @@ public class Order {
 
     /** 영속성에서 도메인 객체를 복원할 때만 사용 (Mapper 전용). */
     public static Order reconstitute(String id, String customerId, OrderStatus status, BigDecimal totalAmount,
-                                     Instant createdAt, String shippingRecipient, String shippingPhone,
+                                     Instant createdAt, String paymentKey, String shippingRecipient, String shippingPhone,
                                      String shippingAddress, String shippingDetailAddress, String shippingZipCode,
                                      List<OrderLine> lines) {
-        return new Order(id, customerId, status, totalAmount, createdAt, shippingRecipient, shippingPhone,
+        return new Order(id, customerId, status, totalAmount, createdAt, paymentKey, shippingRecipient, shippingPhone,
                 shippingAddress, shippingDetailAddress, shippingZipCode, lines);
     }
 
@@ -83,10 +85,12 @@ public class Order {
     public String getShippingAddress() { return shippingAddress; }
     public String getShippingDetailAddress() { return shippingDetailAddress; }
     public String getShippingZipCode() { return shippingZipCode; }
+    public String getPaymentKey() { return paymentKey; }
 
-    public void markPaid() {
+    public void markPaid(String paymentKey) {
         if (status == OrderStatus.PENDING_PAYMENT) {
             status = OrderStatus.PAID;
+            this.paymentKey = paymentKey;
         }
     }
 

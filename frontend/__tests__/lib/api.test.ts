@@ -1,7 +1,7 @@
 import {
   getProducts,
   createOrder,
-  completeFakePayment,
+  confirmPayment,
   getReviews,
   createReview,
   deleteReview,
@@ -114,26 +114,30 @@ describe('createOrder', () => {
 })
 
 // ----------------------------------------------------------------
-// completeFakePayment
+// confirmPayment
 // ----------------------------------------------------------------
-describe('completeFakePayment', () => {
-  test('POST /api/proxy/orders/{orderId}/complete-payment 로 요청 전송', async () => {
-    const orderResp = { orderId: 'order-1', status: 'PAID', totalAmount: 5000 }
+describe('confirmPayment', () => {
+  test('POST /api/proxy/orders/{orderId}/confirm-payment 로 paymentKey/amount 바디 전송', async () => {
+    const orderResp = { orderId: 'order-1', status: 'PAID', totalAmount: 5000, paymentKey: 'pk_123' }
     mockOk(orderResp)
 
-    const result = await completeFakePayment('order-1')
+    const result = await confirmPayment('order-1', 'pk_123', 5000)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/proxy/orders/order-1/complete-payment',
-      expect.objectContaining({ method: 'POST' }),
+      '/api/proxy/orders/order-1/confirm-payment',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentKey: 'pk_123', amount: 5000 }),
+      }),
     )
     expect(result).toEqual(orderResp)
   })
 
-  test('응답 실패 시 에러 throw', async () => {
-    mockError(500, '결제 처리 실패')
+  test('응답 실패 시 응답 본문 메시지로 에러 throw', async () => {
+    mockError(400, '결제 금액이 일치하지 않습니다')
 
-    await expect(completeFakePayment('order-1')).rejects.toThrow('결제 처리 실패')
+    await expect(confirmPayment('order-1', 'pk_123', 9999)).rejects.toThrow('결제 금액이 일치하지 않습니다')
   })
 })
 

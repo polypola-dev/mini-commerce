@@ -65,6 +65,7 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 | `CORS_ALLOWED_ORIGINS` | " | CM |
 | `SUPABASE_JWKS_URL` | " | CM |
 | `BFF_SECRET_KEY` | " | SEC |
+| `TOSS_SECRET_KEY` | 토스페이먼츠 결제 승인 API Basic 인증 시크릿 키 (C1) | SEC |
 
 ### order-admin
 

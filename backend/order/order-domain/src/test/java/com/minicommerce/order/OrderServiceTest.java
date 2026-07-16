@@ -7,6 +7,8 @@ import com.minicommerce.order.application.port.out.InventoryPort.StockHold;
 import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
+import com.minicommerce.order.application.port.out.PaymentGatewayPort;
+import com.minicommerce.order.application.port.out.PaymentGatewayPort.Confirmation;
 import com.minicommerce.order.application.port.out.ProductQueryPort;
 import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
 import com.minicommerce.order.application.port.out.ProductQueryPort.ProductInfo;
@@ -14,7 +16,9 @@ import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLine;
 import com.minicommerce.order.domain.OrderLineDraft;
 import com.minicommerce.order.domain.OrderStatus;
+import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
+import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,12 +48,14 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private OrderEventPublisher eventPublisher;
+    @Mock
+    private PaymentGatewayPort paymentGatewayPort;
 
     private OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(productQueryPort, inventoryPort, orderRepository, eventPublisher);
+        orderService = new OrderService(productQueryPort, inventoryPort, orderRepository, eventPublisher, paymentGatewayPort);
     }
 
     @Test
@@ -153,33 +159,80 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("성공: 결제 완료 시 주문 상태가 PAID로 저장되고 재고 확정 후 OrderPaid 이벤트가 발행된다")
-    void completePayment_Success() {
+    @DisplayName("성공: 결제 승인 시 금액 대조 후 게이트웨이 승인 → PAID 저장 + paymentKey 기록 + 재고 확정 + OrderPaid 발행")
+    void confirmPayment_Success() {
         // given
         Order pendingOrder = new Order("order-1", "cust-1", List.of(
                 new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
         ));
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentGatewayPort.confirm(eq("pay-key-1"), eq("order-1"), any(BigDecimal.class)))
+                .thenReturn(new Confirmation("pay-key-1", "카드", Instant.now()));
 
         // when
-        Order result = orderService.complete("order-1");
+        Order result = orderService.confirm("order-1", "cust-1", "pay-key-1", BigDecimal.valueOf(10000));
 
         // then
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.PAID);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(result.getPaymentKey()).isEqualTo("pay-key-1");
         verify(inventoryPort).confirmByOrderId("order-1");
         verify(eventPublisher).publishOrderPaid(eq("order-1"), eq("cust-1"), any());
     }
 
     @Test
-    @DisplayName("실패: 존재하지 않는 주문을 결제 완료하면 OrderNotFoundException, 저장하지 않는다")
-    void completePayment_OrderNotFound_throws() {
+    @DisplayName("실패: 결제 금액이 주문 금액과 다르면 게이트웨이 호출 전에 PaymentAmountMismatchException, 저장하지 않는다")
+    void confirmPayment_AmountMismatch_throwsBeforeGateway() {
+        Order pendingOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
+
+        assertThatThrownBy(() -> orderService.confirm("order-1", "cust-1", "pay-key-1", BigDecimal.valueOf(9999)))
+                .isInstanceOf(PaymentAmountMismatchException.class);
+
+        verify(paymentGatewayPort, never()).confirm(any(), any(), any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: 이미 결제된 주문에 결제 승인을 재요청하면 OrderAlreadyProcessedException, 게이트웨이 호출·저장 없음")
+    void confirmPayment_AlreadyProcessed_throws() {
+        Order paidOrder = Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+                Instant.now(), "old-key", null, null, null, null, null, List.<OrderLine>of());
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder));
+
+        assertThatThrownBy(() -> orderService.confirm("order-1", "cust-1", "pay-key-1", BigDecimal.valueOf(10000)))
+                .isInstanceOf(OrderAlreadyProcessedException.class);
+
+        verify(paymentGatewayPort, never()).confirm(any(), any(), any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: 타인 주문에 결제 승인을 시도하면 OrderNotFoundException, 게이트웨이 호출·저장 없음(소유권 검증)")
+    void confirmPayment_OtherUsersOrder_throws() {
+        Order pendingOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
+
+        assertThatThrownBy(() -> orderService.confirm("order-1", "attacker", "pay-key-1", BigDecimal.valueOf(10000)))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(paymentGatewayPort, never()).confirm(any(), any(), any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 주문을 결제 승인하면 OrderNotFoundException, 저장하지 않는다")
+    void confirmPayment_OrderNotFound_throws() {
         when(orderRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> orderService.complete("missing"))
+        assertThatThrownBy(() -> orderService.confirm("missing", "cust-1", "pay-key-1", BigDecimal.valueOf(10000)))
                 .isInstanceOf(OrderNotFoundException.class);
 
         verify(orderRepository, never()).save(any());
@@ -208,7 +261,7 @@ class OrderServiceTest {
     void expire_paidOrder_doesNotChangeStatus() {
         // given
         Order paidOrder = Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
-                Instant.now(), null, null, null, null, null, List.<OrderLine>of());
+                Instant.now(), "pay-key-1", null, null, null, null, null, List.<OrderLine>of());
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder));
 
         // when

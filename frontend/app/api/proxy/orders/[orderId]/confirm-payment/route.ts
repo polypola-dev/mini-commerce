@@ -6,7 +6,7 @@ const BACKEND_URL = process.env.ORDER_SERVICE_URL ?? "http://localhost:18081";
 const BFF_SECRET_KEY = process.env.BFF_SECRET_KEY;
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   if (!BFF_SECRET_KEY) {
@@ -21,14 +21,18 @@ export async function POST(
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
+  const body = await request.text();
+
   const backendResponse = await fetch(
-    `${BACKEND_URL}/api/orders/${orderId}/complete-payment`,
+    `${BACKEND_URL}/api/orders/${orderId}/confirm-payment`,
     {
       method: "POST",
       headers: {
         "X-Internal-BFF-Key": BFF_SECRET_KEY,
         "Authorization": `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
       },
+      body,
     }
   );
 

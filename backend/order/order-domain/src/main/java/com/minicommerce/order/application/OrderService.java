@@ -1,6 +1,6 @@
 package com.minicommerce.order.application;
 
-import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.ConfirmPaymentUseCase;
 import com.minicommerce.order.application.port.in.ExpireOrderUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
@@ -9,12 +9,17 @@ import com.minicommerce.order.application.port.out.InventoryPort.StockHold;
 import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
+import com.minicommerce.order.application.port.out.PaymentGatewayPort;
+import com.minicommerce.order.application.port.out.PaymentGatewayPort.Confirmation;
 import com.minicommerce.order.application.port.out.ProductQueryPort;
 import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
 import com.minicommerce.order.application.port.out.ProductQueryPort.ProductInfo;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
+import com.minicommerce.order.domain.OrderStatus;
+import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
+import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -23,23 +28,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase {
+public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase {
 
     private final ProductQueryPort productQueryPort;
     private final InventoryPort inventoryPort;
     private final OrderRepository orderRepository;
     private final OrderEventPublisher eventPublisher;
+    private final PaymentGatewayPort paymentGatewayPort;
 
     public OrderService(
             ProductQueryPort productQueryPort,
             InventoryPort inventoryPort,
             OrderRepository orderRepository,
-            OrderEventPublisher eventPublisher
+            OrderEventPublisher eventPublisher,
+            PaymentGatewayPort paymentGatewayPort
     ) {
         this.productQueryPort = productQueryPort;
         this.inventoryPort = inventoryPort;
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.paymentGatewayPort = paymentGatewayPort;
     }
 
     @Override
@@ -96,10 +104,20 @@ public class OrderService implements PlaceOrderUseCase, CompletePaymentUseCase, 
     }
 
     @Override
-    public Order complete(String orderId) {
+    public Order confirm(String orderId, String customerId, String paymentKey, BigDecimal amount) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
-        order.markPaid();
+        if (!order.getCustomerId().equals(customerId)) {
+            throw new OrderNotFoundException(orderId);
+        }
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new OrderAlreadyProcessedException(orderId);
+        }
+        if (amount.compareTo(order.getTotalAmount()) != 0) {
+            throw new PaymentAmountMismatchException(orderId);
+        }
+        Confirmation confirmation = paymentGatewayPort.confirm(paymentKey, orderId, amount);
+        order.markPaid(confirmation.paymentKey());
         order = orderRepository.save(order);
         inventoryPort.confirmByOrderId(orderId);
         eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());

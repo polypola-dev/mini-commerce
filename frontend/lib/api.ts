@@ -100,6 +100,7 @@ export type OrderResponse = {
   shippingAddress: string | null;
   shippingDetailAddress: string | null;
   shippingZipCode: string | null;
+  paymentKey: string | null;
 };
 
 export type ShippingInfo = {
@@ -147,14 +148,20 @@ export async function createOrder(request: CreateOrderRequest): Promise<OrderRes
   return response.json();
 }
 
-export async function completeFakePayment(orderId: string): Promise<OrderResponse> {
-  const response = await fetch(`/api/proxy/orders/${orderId}/complete-payment`, {
+export async function confirmPayment(
+  orderId: string,
+  paymentKey: string,
+  amount: number,
+): Promise<OrderResponse> {
+  const response = await fetch(`/api/proxy/orders/${orderId}/confirm-payment`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ paymentKey, amount }),
   });
 
   if (!response.ok) {
     const problem = await response.text();
-    throw new Error(problem || "Failed to complete payment");
+    throw new Error(problem || "Failed to confirm payment");
   }
 
   return response.json();

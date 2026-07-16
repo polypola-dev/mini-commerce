@@ -27,6 +27,7 @@ class OrderJpaEntity {
 
     private BigDecimal totalAmount;
     private Instant createdAt;
+    private String paymentKey;
 
     private String shippingRecipient;
     private String shippingPhone;
@@ -41,13 +42,14 @@ class OrderJpaEntity {
     }
 
     OrderJpaEntity(String id, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
-                   String shippingRecipient, String shippingPhone, String shippingAddress,
+                   String paymentKey, String shippingRecipient, String shippingPhone, String shippingAddress,
                    String shippingDetailAddress, String shippingZipCode) {
         this.id = id;
         this.customerId = customerId;
         this.status = status;
         this.totalAmount = totalAmount;
         this.createdAt = createdAt;
+        this.paymentKey = paymentKey;
         this.shippingRecipient = shippingRecipient;
         this.shippingPhone = shippingPhone;
         this.shippingAddress = shippingAddress;
@@ -65,6 +67,7 @@ class OrderJpaEntity {
     OrderStatus getStatus() { return status; }
     BigDecimal getTotalAmount() { return totalAmount; }
     Instant getCreatedAt() { return createdAt; }
+    String getPaymentKey() { return paymentKey; }
     List<OrderLineJpaEntity> getLines() { return lines; }
     String getShippingRecipient() { return shippingRecipient; }
     String getShippingPhone() { return shippingPhone; }

@@ -12,7 +12,7 @@ class OrderPersistenceMapper {
     OrderJpaEntity toEntity(Order order) {
         OrderJpaEntity entity = new OrderJpaEntity(
                 order.getId(), order.getCustomerId(), order.getStatus(), order.getTotalAmount(), order.getCreatedAt(),
-                order.getShippingRecipient(), order.getShippingPhone(), order.getShippingAddress(),
+                order.getPaymentKey(), order.getShippingRecipient(), order.getShippingPhone(), order.getShippingAddress(),
                 order.getShippingDetailAddress(), order.getShippingZipCode());
         for (OrderLine line : order.getLines()) {
             entity.addLine(new OrderLineJpaEntity(
@@ -29,7 +29,7 @@ class OrderPersistenceMapper {
                 .toList();
         return Order.reconstitute(
                 entity.getId(), entity.getCustomerId(), entity.getStatus(), entity.getTotalAmount(), entity.getCreatedAt(),
-                entity.getShippingRecipient(), entity.getShippingPhone(), entity.getShippingAddress(),
+                entity.getPaymentKey(), entity.getShippingRecipient(), entity.getShippingPhone(), entity.getShippingAddress(),
                 entity.getShippingDetailAddress(), entity.getShippingZipCode(), lines);
     }
 }

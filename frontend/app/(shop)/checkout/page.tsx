@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { completeFakePayment, createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
+import { loadTossPayments, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
+import { createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
 import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
 
-type PayMethod = "card" | "easy" | "bank";
+const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
-const PAY_LABEL: Record<PayMethod, string> = {
-  card: "신용 / 체크카드",
-  easy: "간편결제 (Mini Pay)",
-  bank: "무통장 입금",
-};
+function makeCustomerKey(): string {
+  return `mc_${crypto.randomUUID()}`;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,8 +19,11 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pay, setPay] = useState<PayMethod>("card");
   const [addr, setAddr] = useState({ name: "", phone: "", a1: "", a2: "" });
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState<number | null>(null);
+  const [widgetReady, setWidgetReady] = useState(false);
+  const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
 
   useEffect(() => {
     getCart()
@@ -50,9 +52,36 @@ export default function CheckoutPage() {
 
   const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
   const shipping = subtotal === 0 || subtotal >= 50000 ? 0 : 3000;
-  const total = subtotal + shipping;
 
-  async function placeOrder() {
+  // 주문 생성 후 결제위젯을 마운트한다. 위젯은 setAmount가 선행돼야 renderPaymentMethods가 동작.
+  // 금액은 반드시 서버가 검증할 order.totalAmount(payAmount) 기준 — 백엔드는 배송비를 청구하지 않으므로
+  // 로컬 배송비 포함 합계를 넘기면 confirm 단계에서 PAYMENT_AMOUNT_MISMATCH로 전량 실패한다.
+  useEffect(() => {
+    if (!orderId || payAmount == null) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tossPayments = await loadTossPayments(TOSS_CLIENT_KEY);
+        const widgets = tossPayments.widgets({ customerKey: makeCustomerKey() });
+        await widgets.setAmount({ currency: "KRW", value: payAmount });
+        if (cancelled) return;
+        await Promise.all([
+          widgets.renderPaymentMethods({ selector: "#payment-method" }),
+          widgets.renderAgreement({ selector: "#agreement" }),
+        ]);
+        if (cancelled) return;
+        widgetsRef.current = widgets;
+        setWidgetReady(true);
+      } catch {
+        if (!cancelled) setError("결제 모듈을 불러오지 못했어요");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, payAmount]);
+
+  async function startCheckout() {
     if (!cart || items.length === 0) return;
     setPending(true);
     setError(null);
@@ -68,11 +97,30 @@ export default function CheckoutPage() {
         shippingAddress: addr.a1,
         shippingDetailAddress: addr.a2,
       });
-      await completeFakePayment(order.orderId);
-      router.push(`/orders/${order.orderId}?completed=1`);
+      setPayAmount(order.totalAmount);
+      setOrderId(order.orderId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "주문에 실패했어요");
       setPending(false);
+    }
+  }
+
+  async function requestPayment() {
+    const widgets = widgetsRef.current;
+    if (!widgets || !orderId) return;
+    setError(null);
+    const first = items[0]?.productName ?? "주문 상품";
+    const orderName = items.length > 1 ? `${first} 외 ${items.length - 1}건` : first;
+    try {
+      await widgets.requestPayment({
+        orderId,
+        orderName,
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+        ...(addr.name ? { customerName: addr.name } : {}),
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "결제 요청에 실패했어요");
     }
   }
 
@@ -92,26 +140,10 @@ export default function CheckoutPage() {
       <div style={{ padding: "20px" }}>
         <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>배송지</div>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <input className="mcCheckoutInput" placeholder="받는 분" value={addr.name} onChange={(e) => setAddr((a) => ({ ...a, name: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="연락처" value={addr.phone} onChange={(e) => setAddr((a) => ({ ...a, phone: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="주소" value={addr.a1} onChange={(e) => setAddr((a) => ({ ...a, a1: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="상세 주소" value={addr.a2} onChange={(e) => setAddr((a) => ({ ...a, a2: e.target.value }))} />
-        </div>
-      </div>
-
-      <div className="mcDivider8" />
-
-      <div style={{ padding: "20px" }}>
-        <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>결제 수단</div>
-        <div style={{ border: "1px solid var(--color-hairline)", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
-          {(Object.keys(PAY_LABEL) as PayMethod[]).map((key) => (
-            <div key={key} className="mcPayRow" onClick={() => setPay(key)}>
-              <span className={`mcPayRadio${pay === key ? " selected" : ""}`}>
-                {pay === key && <span className="mcPayRadioDot" />}
-              </span>
-              <span style={{ fontSize: "15px", fontWeight: 500 }}>{PAY_LABEL[key]}</span>
-            </div>
-          ))}
+          <input className="mcCheckoutInput" placeholder="받는 분" value={addr.name} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, name: e.target.value }))} />
+          <input className="mcCheckoutInput" placeholder="연락처" value={addr.phone} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, phone: e.target.value }))} />
+          <input className="mcCheckoutInput" placeholder="주소" value={addr.a1} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a1: e.target.value }))} />
+          <input className="mcCheckoutInput" placeholder="상세 주소" value={addr.a2} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a2: e.target.value }))} />
         </div>
       </div>
 
@@ -134,12 +166,29 @@ export default function CheckoutPage() {
         <div className="mcSummaryRow"><span>배송비</span><span>{shipping === 0 ? "무료" : `${shipping.toLocaleString("ko-KR")}원`}</span></div>
       </div>
 
+      {orderId && (
+        <>
+          <div className="mcDivider8" />
+          <div style={{ padding: "20px" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>결제 수단</div>
+            <div id="payment-method" />
+            <div id="agreement" />
+          </div>
+        </>
+      )}
+
       {error && <p style={{ padding: "0 20px", color: "var(--color-error)", fontSize: "13px" }}>{error}</p>}
 
       <div className="mcActionBar" style={{ padding: "12px 16px 16px" }}>
-        <button type="button" className="mcBtn mcBtnPrimary" disabled={pending} onClick={placeOrder}>
-          {pending ? "주문 처리 중…" : `${total.toLocaleString("ko-KR")}원 결제하기`}
-        </button>
+        {orderId ? (
+          <button type="button" className="mcBtn mcBtnPrimary" disabled={!widgetReady || payAmount == null} onClick={requestPayment}>
+            {widgetReady && payAmount != null ? `${payAmount.toLocaleString("ko-KR")}원 결제하기` : "결제 준비 중…"}
+          </button>
+        ) : (
+          <button type="button" className="mcBtn mcBtnPrimary" disabled={pending} onClick={startCheckout}>
+            {pending ? "주문 처리 중…" : `${subtotal.toLocaleString("ko-KR")}원 결제하기`}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 package com.minicommerce.order.adapter.in.web;
 
 import com.minicommerce.order.application.PlaceOrderCommand;
-import com.minicommerce.order.application.port.in.CompletePaymentUseCase;
+import com.minicommerce.order.application.port.in.ConfirmPaymentUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,14 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final PlaceOrderUseCase placeOrderUseCase;
-    private final CompletePaymentUseCase completePaymentUseCase;
+    private final ConfirmPaymentUseCase confirmPaymentUseCase;
     private final GetOrdersUseCase getOrdersUseCase;
 
     public OrderController(PlaceOrderUseCase placeOrderUseCase,
-                           CompletePaymentUseCase completePaymentUseCase,
+                           ConfirmPaymentUseCase confirmPaymentUseCase,
                            GetOrdersUseCase getOrdersUseCase) {
         this.placeOrderUseCase = placeOrderUseCase;
-        this.completePaymentUseCase = completePaymentUseCase;
+        this.confirmPaymentUseCase = confirmPaymentUseCase;
         this.getOrdersUseCase = getOrdersUseCase;
     }
 
@@ -66,8 +69,13 @@ public class OrderController {
         return OrderResponse.from(placeOrderUseCase.place(command, customerId));
     }
 
-    @PostMapping("/{orderId}/complete-payment")
-    OrderResponse completeFakePayment(@PathVariable String orderId) {
-        return OrderResponse.from(completePaymentUseCase.complete(orderId));
+    @PostMapping("/{orderId}/confirm-payment")
+    OrderResponse confirmPayment(@PathVariable String orderId, @Valid @RequestBody ConfirmPaymentRequest request,
+                                 HttpServletRequest httpRequest) {
+        String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
+        return OrderResponse.from(confirmPaymentUseCase.confirm(orderId, customerId, request.paymentKey(), request.amount()));
+    }
+
+    record ConfirmPaymentRequest(@NotBlank String paymentKey, @NotNull BigDecimal amount) {
     }
 }
