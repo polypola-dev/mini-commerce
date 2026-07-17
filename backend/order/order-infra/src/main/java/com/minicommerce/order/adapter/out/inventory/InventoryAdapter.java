@@ -45,4 +45,9 @@ public class InventoryAdapter implements InventoryPort {
     public void confirmByOrderId(String orderId) {
         inventoryService.confirmByOrderId(orderId);
     }
+
+    @Override
+    public void restockByOrderId(String orderId) {
+        inventoryService.restockByOrderId(orderId);
+    }
 }

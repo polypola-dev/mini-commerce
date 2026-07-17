@@ -167,6 +167,21 @@ export async function confirmPayment(
   return response.json();
 }
 
+export async function cancelOrder(orderId: string, cancelReason?: string): Promise<OrderResponse> {
+  const response = await fetch(`/api/proxy/orders/${orderId}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cancelReason ? { cancelReason } : {}),
+  });
+
+  if (!response.ok) {
+    const problem = await response.text();
+    throw new Error(problem || "Failed to cancel order");
+  }
+
+  return response.json();
+}
+
 export async function getReviews(productId: string): Promise<ReviewListResponse> {
   const response = await fetch(`${PUBLIC_API_BASE_URL}/api/products/${productId}/reviews`, {
     cache: "no-store",
@@ -413,6 +428,19 @@ export async function adminUpdateOrderStatus(id: string, status: string): Promis
   if (!response.ok) {
     const msg = await response.text();
     throw new Error(msg || "Failed to update order status");
+  }
+  return response.json();
+}
+
+export async function adminCancelOrder(id: string, cancelReason: string): Promise<OrderResponse> {
+  const response = await fetch(`/api/proxy/admin/orders/${id}/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cancelReason }),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "Failed to cancel order");
   }
   return response.json();
 }

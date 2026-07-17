@@ -1,5 +1,6 @@
 package com.minicommerce.order.domain;
 
+import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -92,6 +93,14 @@ public class Order {
             status = OrderStatus.PAID;
             this.paymentKey = paymentKey;
         }
+    }
+
+    /** 결제 완료된 주문을 취소한다(PG 환불 + 재입고 이후 호출). PAID가 아니면 취소 불가. */
+    public void markCanceled() {
+        if (status != OrderStatus.PAID) {
+            throw new OrderCancelNotAllowedException(id);
+        }
+        status = OrderStatus.CANCELED;
     }
 
     /** 결제 대기 중 재고 예약이 만료됐을 때(이탈/타임아웃) 리퍼가 호출한다. 이미 결제된 주문은 건드리지 않는다. */

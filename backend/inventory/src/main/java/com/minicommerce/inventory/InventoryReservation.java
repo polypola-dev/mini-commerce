@@ -68,4 +68,16 @@ public class InventoryReservation {
             status = ReservationStatus.RELEASED;
         }
     }
+
+    /** 확정된 재고를 취소로 되돌린다. 이미 RESTOCKED면 이중 복원 방지를 위해 no-op(false 반환). */
+    public boolean restock() {
+        if (status == ReservationStatus.RESTOCKED) {
+            return false;
+        }
+        if (status != ReservationStatus.CONFIRMED) {
+            throw new IllegalStateException("Cannot restock reservation in status: " + status);
+        }
+        status = ReservationStatus.RESTOCKED;
+        return true;
+    }
 }

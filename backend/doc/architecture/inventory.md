@@ -83,9 +83,14 @@ orderId)`를 `ApplicationEventPublisher`로 발행하고, order-infra의 `Reserv
 전략상 영원히 같은 프로세스이므로 Kafka 없이 in-process 이벤트로 충분(Modularity.verify() 통과 확인,
 docker-compose에서 실제 스케줄 실행→DB/Redis 반영까지 e2e 검증).
 
-**결제 후 취소(별도 에픽)**: PAID→CANCELED는 이미 confirm된 재고라 단순 release가 아니라 재입고
-경로가 필요하다. 현 Redis `confirm` 스크립트가 `CONFIRMED→release`를 막고 있어(`status ~= 'RESERVED'`)
-신규 재입고 스크립트가 필요하다. PG 환불 연동과 함께 후속 에픽으로 분리.
+**결제 후 취소 — 재입고 완료(GH #4, 2026-07-17)**: PAID→CANCELED는 이미 confirm된 재고라 단순
+release가 아니라 전용 재입고 경로를 쓴다. `InventoryService.restockByOrderId(orderId)`가 **DB 원장을
+진실의 원천**으로 예약을 조회해 `restock()` 전이(CONFIRMED 가드, 이미 RESTOCKED면 no-op) 후 신규
+restock Lua를 실행한다 — 해시가 살아있으면 CONFIRMED 검증 후 INCRBY+`RESTOCKED`, **해시가 TTL(86400s)로
+소멸했으면 DB 가드를 신뢰하고 INCRBY 후 해시를 재기록**한다(결제 24시간 후 취소 대응). Lua 반환
+코드는 1=재입고, 2=이미 RESTOCKED(멱등, INCRBY 스킵 — 동시 취소 시 이중 복원 방지), 0=비정상(예외).
+`ReservationStatus.RESTOCKED` 추가에 따라 orderdb CHECK 제약은 Flyway V3가 갱신. 호출자는 order의
+`CancelOrderUseCase`(PG 환불 성공 후 같은 로컬 트랜잭션에서 재입고→CANCELED 전이).
 
 ## Phase 4 완료 내역 (모듈 분리)
 

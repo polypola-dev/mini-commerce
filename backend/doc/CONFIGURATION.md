@@ -71,6 +71,7 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 
 order-api와 동일하되 **Kafka 없음** (`KAFKA_BOOTSTRAP_SERVERS` 불필요 — 이벤트 발행/소비 안 함).
 `CATALOG_BASE_URL`은 현재 미호출이지만 order-infra 전이의존으로 조립되므로 명시 유지(compose 주석 참고).
+`TOSS_SECRET_KEY`(SEC)는 관리자 주문취소가 Toss 환불을 실행하므로 필요(GH #4) — order-api와 동일 값.
 
 ### order-batch
 

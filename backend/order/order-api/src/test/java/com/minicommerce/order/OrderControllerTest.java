@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minicommerce.order.adapter.in.web.CreateOrderRequest;
 import com.minicommerce.order.adapter.in.web.OrderController;
 import com.minicommerce.order.application.PlaceOrderCommand;
+import com.minicommerce.order.application.port.in.CancelOrderUseCase;
 import com.minicommerce.order.application.port.in.ConfirmPaymentUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
 import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
+import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import com.minicommerce.global.ApiExceptionHandler;
@@ -44,6 +46,9 @@ class OrderControllerTest {
     private ConfirmPaymentUseCase confirmPaymentUseCase;
 
     @Mock
+    private CancelOrderUseCase cancelOrderUseCase;
+
+    @Mock
     private GetOrdersUseCase getOrdersUseCase;
 
     private ObjectMapper objectMapper;
@@ -52,7 +57,8 @@ class OrderControllerTest {
     void setUp() {
         // JWT 필터를 우회하기 위해 standaloneSetup 사용. BusinessException→HTTP 상태 매핑 검증을 위해
         // ApiExceptionHandler를 ControllerAdvice로 등록한다.
-        mockMvc = MockMvcBuilders.standaloneSetup(new OrderController(placeOrderUseCase, confirmPaymentUseCase, getOrdersUseCase))
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                        new OrderController(placeOrderUseCase, confirmPaymentUseCase, cancelOrderUseCase, getOrdersUseCase))
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
         objectMapper = new ObjectMapper();
@@ -184,5 +190,72 @@ class OrderControllerTest {
                         .content(requestBody)
                         .requestAttr("authenticatedUserId", "cust-1"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("성공: 주문 취소 시 200 OK와 CANCELED 상태 OrderResponse를 반환한다")
+    void cancelOrder_ShouldReturn200WithCanceledOrder() throws Exception {
+        String orderId = "order-1";
+        Order mockOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        mockOrder.markPaid("pay-key-1");
+        mockOrder.markCanceled();
+
+        when(cancelOrderUseCase.cancel(eq(orderId), eq("cust-1"), eq("단순 변심")))
+                .thenReturn(mockOrder);
+
+        mockMvc.perform(post("/api/orders/{orderId}/cancel", orderId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"cancelReason": "단순 변심"}
+                                """)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").value("order-1"))
+                .andExpect(jsonPath("$.status").value("CANCELED"));
+    }
+
+    @Test
+    @DisplayName("성공: 취소 사유를 생략하면 기본 사유(고객 변심)로 취소를 위임한다")
+    void cancelOrder_WithoutReason_ShouldUseDefaultReason() throws Exception {
+        String orderId = "order-1";
+        Order mockOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        mockOrder.markPaid("pay-key-1");
+        mockOrder.markCanceled();
+
+        when(cancelOrderUseCase.cancel(eq(orderId), eq("cust-1"), eq("고객 변심")))
+                .thenReturn(mockOrder);
+
+        mockMvc.perform(post("/api/orders/{orderId}/cancel", orderId)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELED"));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않거나 타인 소유의 주문 취소는 404 Not Found를 반환한다")
+    void cancelOrder_NotFound_ShouldReturn404() throws Exception {
+        String orderId = "missing";
+        when(cancelOrderUseCase.cancel(eq(orderId), eq("cust-1"), any()))
+                .thenThrow(new OrderNotFoundException(orderId));
+
+        mockMvc.perform(post("/api/orders/{orderId}/cancel", orderId)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("실패: PAID가 아닌 주문 취소는 409 Conflict를 반환한다")
+    void cancelOrder_NotAllowed_ShouldReturn409() throws Exception {
+        String orderId = "order-1";
+        when(cancelOrderUseCase.cancel(eq(orderId), eq("cust-1"), any()))
+                .thenThrow(new OrderCancelNotAllowedException(orderId));
+
+        mockMvc.perform(post("/api/orders/{orderId}/cancel", orderId)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isConflict());
     }
 }

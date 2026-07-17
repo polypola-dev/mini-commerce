@@ -11,4 +11,5 @@ public interface InventoryPort {
     void release(StockHold hold);
     void createReservationForOrder(String orderId, StockHold hold);
     void confirmByOrderId(String orderId);
+    void restockByOrderId(String orderId);
 }

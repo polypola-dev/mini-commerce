@@ -1,5 +1,6 @@
 package com.minicommerce.notification;
 
+import com.minicommerce.order.OrderCanceledEvent;
 import com.minicommerce.order.OrderPaidEvent;
 import com.minicommerce.order.OrderPlacedEvent;
 import org.slf4j.Logger;
@@ -52,6 +53,20 @@ class NotificationService {
                 "결제가 완료되었습니다. 주문번호: " + event.orderId()
         );
         deliver(notification, "ORDER_PAID", event.orderId());
+    }
+
+    void on(OrderCanceledEvent event) {
+        if (repository.existsByOrderIdAndType(event.orderId(), NotificationType.ORDER_CANCELED)) {
+            log.debug("ORDER_CANCELED notification already exists for orderId={}, skip", event.orderId());
+            return;
+        }
+        Notification notification = new Notification(
+                event.orderId(),
+                event.customerId(),
+                NotificationType.ORDER_CANCELED,
+                "주문이 취소되었습니다. 주문번호: " + event.orderId()
+        );
+        deliver(notification, "ORDER_CANCELED", event.orderId());
     }
 
     private void deliver(Notification notification, String type, String orderId) {

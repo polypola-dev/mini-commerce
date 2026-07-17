@@ -6,5 +6,9 @@ import java.time.Instant;
 public interface PaymentGatewayPort {
     Confirmation confirm(String paymentKey, String orderId, BigDecimal amount);
 
+    Cancellation cancel(String paymentKey, String cancelReason);
+
     record Confirmation(String paymentKey, String method, Instant approvedAt) {}
+
+    record Cancellation(Instant canceledAt) {}
 }

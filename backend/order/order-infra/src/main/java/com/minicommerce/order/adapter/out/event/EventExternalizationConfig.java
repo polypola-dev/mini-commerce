@@ -1,5 +1,6 @@
 package com.minicommerce.order.adapter.out.event;
 
+import com.minicommerce.order.OrderCanceledEvent;
 import com.minicommerce.order.OrderPaidEvent;
 import com.minicommerce.order.OrderPlacedEvent;
 import org.springframework.context.annotation.Bean;
@@ -28,11 +29,15 @@ public class EventExternalizationConfig {
     @Bean
     EventExternalizationConfiguration eventExternalizationConfiguration() {
         return EventExternalizationConfiguration.externalizing()
-                .select(event -> event instanceof OrderPlacedEvent || event instanceof OrderPaidEvent)
+                .select(event -> event instanceof OrderPlacedEvent
+                        || event instanceof OrderPaidEvent
+                        || event instanceof OrderCanceledEvent)
                 .route(OrderPlacedEvent.class,
                         event -> RoutingTarget.forTarget("order.placed").andKey(event.orderId()))
                 .route(OrderPaidEvent.class,
                         event -> RoutingTarget.forTarget("order.paid").andKey(event.orderId()))
+                .route(OrderCanceledEvent.class,
+                        event -> RoutingTarget.forTarget("order.canceled").andKey(event.orderId()))
                 .build();
     }
 }

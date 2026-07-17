@@ -1,6 +1,7 @@
 package com.minicommerce.order.adapter.in.web;
 
 import com.minicommerce.order.application.PlaceOrderCommand;
+import com.minicommerce.order.application.port.in.CancelOrderUseCase;
 import com.minicommerce.order.application.port.in.ConfirmPaymentUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
@@ -25,13 +26,16 @@ public class OrderController {
 
     private final PlaceOrderUseCase placeOrderUseCase;
     private final ConfirmPaymentUseCase confirmPaymentUseCase;
+    private final CancelOrderUseCase cancelOrderUseCase;
     private final GetOrdersUseCase getOrdersUseCase;
 
     public OrderController(PlaceOrderUseCase placeOrderUseCase,
                            ConfirmPaymentUseCase confirmPaymentUseCase,
+                           CancelOrderUseCase cancelOrderUseCase,
                            GetOrdersUseCase getOrdersUseCase) {
         this.placeOrderUseCase = placeOrderUseCase;
         this.confirmPaymentUseCase = confirmPaymentUseCase;
+        this.cancelOrderUseCase = cancelOrderUseCase;
         this.getOrdersUseCase = getOrdersUseCase;
     }
 
@@ -76,6 +80,18 @@ public class OrderController {
         return OrderResponse.from(confirmPaymentUseCase.confirm(orderId, customerId, request.paymentKey(), request.amount()));
     }
 
+    @PostMapping("/{orderId}/cancel")
+    OrderResponse cancel(@PathVariable String orderId, @RequestBody(required = false) CancelOrderRequest request,
+                         HttpServletRequest httpRequest) {
+        String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
+        String reason = request != null && request.cancelReason() != null && !request.cancelReason().isBlank()
+                ? request.cancelReason() : "고객 변심";
+        return OrderResponse.from(cancelOrderUseCase.cancel(orderId, customerId, reason));
+    }
+
     record ConfirmPaymentRequest(@NotBlank String paymentKey, @NotNull BigDecimal amount) {
+    }
+
+    record CancelOrderRequest(String cancelReason) {
     }
 }

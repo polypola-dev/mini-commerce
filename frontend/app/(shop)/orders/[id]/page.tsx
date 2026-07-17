@@ -2,6 +2,7 @@ import { getOrderById, getProductImages } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import CancelOrderButton from "./CancelOrderButton";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING_PAYMENT: "결제 대기",
@@ -212,6 +213,13 @@ export default async function OrderDetailPage({
           </div>
         </div>
       </div>
+
+      {order.status === "PAID" && (
+        <>
+          <div className="mcDivider8" />
+          <CancelOrderButton orderId={order.orderId} />
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 package com.minicommerce.notification;
 
+import com.minicommerce.order.OrderCanceledEvent;
 import com.minicommerce.order.OrderPaidEvent;
 import com.minicommerce.order.OrderPlacedEvent;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -30,6 +31,11 @@ class OrderEventKafkaConsumer {
 
     @KafkaListener(topics = "order.paid", groupId = "notification")
     void onOrderPaid(OrderPaidEvent event) {
+        notificationService.on(event);
+    }
+
+    @KafkaListener(topics = "order.canceled", groupId = "notification")
+    void onOrderCanceled(OrderCanceledEvent event) {
         notificationService.on(event);
     }
 }

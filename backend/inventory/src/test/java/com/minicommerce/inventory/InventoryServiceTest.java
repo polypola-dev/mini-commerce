@@ -26,6 +26,9 @@ class InventoryServiceTest {
     @Mock
     private ValueOperations<String, String> valueOps;
 
+    @Mock
+    private InventoryReservationRepository reservationRepository;
+
     @InjectMocks
     private InventoryService inventoryService;
 
@@ -211,5 +214,89 @@ class InventoryServiceTest {
 
         // then
         assertThat(result).isFalse();
+    }
+
+    // ----------------------------------------------------------------
+    // restockByOrderId (GH #4)
+    // ----------------------------------------------------------------
+
+    private InventoryReservation confirmedReservation() {
+        InventoryReservation reservation = new InventoryReservation(
+                "res-1", "order-1", Instant.now().plusSeconds(600),
+                List.of(new ReservationLine("prod-1", 2L), new ReservationLine("prod-2", 1L)));
+        reservation.confirm();
+        return reservation;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("restockByOrderId: CONFIRMED 예약을 RESTOCKED로 전이하고 Lua로 재고를 복원한다")
+    void restockByOrderId_confirmed_restoresStock() {
+        // given
+        InventoryReservation reservation = confirmedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        doReturn(1L).when(redisTemplate).execute(any(), anyList(), any(), any());
+
+        // when
+        inventoryService.restockByOrderId("order-1");
+
+        // then
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:res-1", "stock:prod-1", "stock:prod-2")),
+                eq("2"), eq("1"));
+    }
+
+    @Test
+    @DisplayName("restockByOrderId: 이미 RESTOCKED면 Redis를 건드리지 않는다(멱등)")
+    void restockByOrderId_alreadyRestocked_isNoOp() {
+        // given — 한 번 restock을 마친 예약
+        InventoryReservation reservation = confirmedReservation();
+        reservation.restock();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+
+        // when
+        inventoryService.restockByOrderId("order-1");
+
+        // then — DB 가드에서 끝나야 이중 INCRBY가 없다
+        verify(redisTemplate, never()).execute(any(), anyList(), any(), any());
+    }
+
+    @Test
+    @DisplayName("restockByOrderId: CONFIRMED가 아닌(RESERVED) 예약은 예외")
+    void restockByOrderId_notConfirmed_throws() {
+        // given — confirm() 전이 전
+        InventoryReservation reservation = new InventoryReservation(
+                "res-1", "order-1", Instant.now().plusSeconds(600),
+                List.of(new ReservationLine("prod-1", 2L)));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+
+        // when & then
+        assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("restockByOrderId: Lua 스크립트 결과 0(비정상) → 예외")
+    void restockByOrderId_scriptRejects_throws() {
+        // given
+        InventoryReservation reservation = confirmedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        doReturn(0L).when(redisTemplate).execute(any(), anyList(), any(), any());
+
+        // when & then
+        assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("restockByOrderId: 예약 원장이 없으면 EntityNotFoundException")
+    void restockByOrderId_missingReservation_throws() {
+        // given
+        when(reservationRepository.findByOrderId("missing")).thenReturn(java.util.Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> inventoryService.restockByOrderId("missing"))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
 }

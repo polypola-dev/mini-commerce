@@ -1,10 +1,12 @@
 "use client";
 
-import { adminGetOrders, adminUpdateOrderStatus, type OrderResponse } from "@/lib/api";
+import { adminCancelOrder, adminGetOrders, adminUpdateOrderStatus, type OrderResponse } from "@/lib/api";
 import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
 
-const STATUS_OPTIONS = ["PENDING_PAYMENT", "PAID", "SHIPPED", "DELIVERED", "CANCELED"];
+// 취소는 상태 셀렉트가 아니라 전용 취소 버튼(adminCancelOrder)으로만 처리 — 재입고/환불 사이드이펙트가
+// 뒤따르므로 일반 상태 전이와 분리한다. 그래서 CANCELED는 셀렉트 옵션에서 제외.
+const STATUS_OPTIONS = ["PENDING_PAYMENT", "PAID", "SHIPPED", "DELIVERED"];
 
 const STATUS_META: Record<string, { label: string; badge: string; dot: string }> = {
   PENDING_PAYMENT: { label: "결제 대기", badge: styles.badgePending, dot: "#ff9500" },
@@ -69,6 +71,8 @@ export default function AdminOrdersPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [drawerOrder, setDrawerOrder] = useState<OrderResponse | null>(null);
   const [drawerStatus, setDrawerStatus] = useState("");
+  const [cancelMode, setCancelMode] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -127,6 +131,26 @@ export default function AdminOrdersPage() {
     await handleStatusChange(drawerOrder.orderId, drawerStatus);
   }
 
+  async function handleCancelOrder(orderId: string) {
+    const trimmed = cancelReason.trim();
+    if (!trimmed) return;
+    setUpdating(orderId);
+    try {
+      await adminCancelOrder(orderId, trimmed);
+      await load();
+      if (drawerOrder?.orderId === orderId) {
+        setDrawerOrder((prev) => prev ? { ...prev, status: "CANCELED" } : null);
+        setDrawerStatus("CANCELED");
+      }
+      setCancelMode(false);
+      setCancelReason("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "주문 취소 실패");
+    } finally {
+      setUpdating(null);
+    }
+  }
+
   function handleSortClick(col: SortCol) {
     const newDir: SortDir = sortCol === col ? (sortDir === "asc" ? "desc" : "asc") : "desc";
     setSortCol(col);
@@ -139,9 +163,11 @@ export default function AdminOrdersPage() {
   function openDrawer(order: OrderResponse) {
     setDrawerOrder(order);
     setDrawerStatus(order.status);
+    setCancelMode(false);
+    setCancelReason("");
   }
 
-  function closeDrawer() { setDrawerOrder(null); }
+  function closeDrawer() { setDrawerOrder(null); setCancelMode(false); setCancelReason(""); }
 
   function applySearch() {
     setAppliedSearch(inputSearch);
@@ -495,7 +521,7 @@ export default function AdminOrdersPage() {
                 </dd>
               </dl>
             </div>
-            <div className={styles.drawerFoot}>
+            <div className={styles.drawerFoot} style={{ flexWrap: "wrap" }}>
               <select
                 className={styles.statusSelect}
                 value={drawerStatus}
@@ -514,6 +540,49 @@ export default function AdminOrdersPage() {
               >
                 상태 변경
               </button>
+              {drawerOrder.status === "PAID" && !cancelMode && (
+                <button
+                  className={styles.btnGhost}
+                  disabled={updating === drawerOrder.orderId}
+                  onClick={() => setCancelMode(true)}
+                  style={{ color: "#f04452", borderColor: "#f04452", width: "100%" }}
+                >
+                  주문 취소 (재입고 · 환불)
+                </button>
+              )}
+              {drawerOrder.status === "PAID" && cancelMode && (
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <p style={{ fontSize: 13, color: "#8b95a1", margin: 0 }}>
+                    확정 재고 재입고와 결제 환불이 진행됩니다. 취소 사유를 입력하세요.
+                  </p>
+                  <input
+                    className={styles.filterInput}
+                    placeholder="취소 사유 (필수)"
+                    value={cancelReason}
+                    disabled={updating === drawerOrder.orderId}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className={styles.btnGhost}
+                      disabled={updating === drawerOrder.orderId}
+                      onClick={() => { setCancelMode(false); setCancelReason(""); }}
+                      style={{ flex: 1 }}
+                    >
+                      닫기
+                    </button>
+                    <button
+                      className={styles.btnPrimary}
+                      disabled={updating === drawerOrder.orderId || !cancelReason.trim()}
+                      onClick={() => handleCancelOrder(drawerOrder.orderId)}
+                      style={{ flex: 1, background: "#f04452", borderColor: "#f04452" }}
+                    >
+                      {updating === drawerOrder.orderId ? "취소 처리 중…" : "취소 확정"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

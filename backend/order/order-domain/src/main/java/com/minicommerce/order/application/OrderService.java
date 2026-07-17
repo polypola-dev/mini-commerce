@@ -1,5 +1,6 @@
 package com.minicommerce.order.application;
 
+import com.minicommerce.order.application.port.in.CancelOrderUseCase;
 import com.minicommerce.order.application.port.in.ConfirmPaymentUseCase;
 import com.minicommerce.order.application.port.in.ExpireOrderUseCase;
 import com.minicommerce.order.application.port.in.GetOrdersUseCase;
@@ -18,17 +19,24 @@ import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLineDraft;
 import com.minicommerce.order.domain.OrderStatus;
 import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
+import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+// order-domain은 최소 의존(spring-context/tx)이라 slf4j가 클래스패스에 없다 — spring-jcl 경유
+// commons-logging이 이 모듈에서 쓸 수 있는 로깅 파사드다(런타임엔 SLF4J로 브리지됨).
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase {
+public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, CancelOrderUseCase, GetOrdersUseCase, ExpireOrderUseCase {
+
+    private static final Log log = LogFactory.getLog(OrderService.class);
 
     private final ProductQueryPort productQueryPort;
     private final InventoryPort inventoryPort;
@@ -122,6 +130,43 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, G
         inventoryPort.confirmByOrderId(orderId);
         eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());
         return order;
+    }
+
+    @Override
+    public Order cancel(String orderId, String customerId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getCustomerId().equals(customerId)) {
+            throw new OrderNotFoundException(orderId);
+        }
+        return doCancel(order, reason);
+    }
+
+    @Override
+    public Order cancelByAdmin(String orderId, String reason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        return doCancel(order, reason);
+    }
+
+    private Order doCancel(Order order, String reason) {
+        if (order.getStatus() != OrderStatus.PAID) {
+            throw new OrderCancelNotAllowedException(order.getId());
+        }
+        // PG 환불 선행(동기). 성공 후 로컬 실패 시 주문이 PAID로 남아 같은 엔드포인트 재시도로 수렴한다
+        // (어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑). 재입고를 save보다 앞에 둬 재입고 실패 시에도 재시도 가능.
+        paymentGatewayPort.cancel(order.getPaymentKey(), reason);
+        try {
+            inventoryPort.restockByOrderId(order.getId());
+            order.markCanceled();
+            Order saved = orderRepository.save(order);
+            eventPublisher.publishOrderCanceled(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());
+            return saved;
+        } catch (RuntimeException e) {
+            log.warn("Refund succeeded but local cancel failed for orderId=" + order.getId()
+                    + ", paymentKey=" + order.getPaymentKey() + " — order stays PAID, retry cancel", e);
+            throw e;
+        }
     }
 
     @Override

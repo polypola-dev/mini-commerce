@@ -1,6 +1,7 @@
 package com.minicommerce.order.adapter.out.event;
 
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
+import com.minicommerce.order.OrderCanceledEvent;
 import com.minicommerce.order.OrderPaidEvent;
 import com.minicommerce.order.OrderPlacedEvent;
 import java.math.BigDecimal;
@@ -24,5 +25,10 @@ public class SpringOrderEventAdapter implements OrderEventPublisher {
     @Override
     public void publishOrderPaid(String orderId, String customerId, BigDecimal amount) {
         springPublisher.publishEvent(new OrderPaidEvent(orderId, customerId, amount));
+    }
+
+    @Override
+    public void publishOrderCanceled(String orderId, String customerId, BigDecimal amount) {
+        springPublisher.publishEvent(new OrderCanceledEvent(orderId, customerId, amount));
     }
 }

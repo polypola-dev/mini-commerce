@@ -125,7 +125,7 @@ stateDiagram-v2
     PENDING_PAYMENT --> EXPIRED: 이탈/타임아웃 → 리퍼 release
     PAID --> SHIPPED
     SHIPPED --> DELIVERED
-    PAID --> CANCELED: 주문취소 = PG환불 + 재입고 (별도 에픽)
+    PAID --> CANCELED: 주문취소 = PG환불 + 재입고 (GH #4 완료)
 ```
 
 > **취소 모델 주의**: 간편결제로 `PENDING_PAYMENT` 창이 수 초라 그 구간의 사용자 취소는 사실상

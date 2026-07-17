@@ -8,6 +8,7 @@ import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort;
+import com.minicommerce.order.application.port.out.PaymentGatewayPort.Cancellation;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort.Confirmation;
 import com.minicommerce.order.application.port.out.ProductQueryPort;
 import com.minicommerce.order.application.port.out.ProductQueryPort.OptionInfo;
@@ -17,12 +18,14 @@ import com.minicommerce.order.domain.OrderLine;
 import com.minicommerce.order.domain.OrderLineDraft;
 import com.minicommerce.order.domain.OrderStatus;
 import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
+import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -281,5 +284,104 @@ class OrderServiceTest {
         orderService.expire("missing");
 
         verify(orderRepository, never()).save(any());
+    }
+
+    private Order paidOrder() {
+        return Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+                Instant.now(), "pay-key-1", null, null, null, null, null, List.<OrderLine>of());
+    }
+
+    @Test
+    @DisplayName("성공: 주문 취소 시 환불 → 재입고 → save → OrderCanceled 발행 순서로 처리되고 CANCELED가 된다")
+    void cancel_Success() {
+        Order order = paidOrder();
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentGatewayPort.cancel("pay-key-1", "고객 변심")).thenReturn(new Cancellation(Instant.now()));
+
+        Order result = orderService.cancel("order-1", "cust-1", "고객 변심");
+
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
+        InOrder inOrder = inOrder(paymentGatewayPort, inventoryPort, orderRepository, eventPublisher);
+        inOrder.verify(paymentGatewayPort).cancel("pay-key-1", "고객 변심");
+        inOrder.verify(inventoryPort).restockByOrderId("order-1");
+        inOrder.verify(orderRepository).save(any(Order.class));
+        inOrder.verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
+    }
+
+    @Test
+    @DisplayName("실패: 타인 주문 취소 시도 → OrderNotFoundException, 환불/재입고/저장 없음")
+    void cancel_OtherUsersOrder_throws() {
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder()));
+
+        assertThatThrownBy(() -> orderService.cancel("order-1", "attacker", "고객 변심"))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(paymentGatewayPort, never()).cancel(any(), any());
+        verify(inventoryPort, never()).restockByOrderId(any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: PAID가 아닌 주문(PENDING_PAYMENT) 취소 → OrderCancelNotAllowedException, 환불/재입고/저장 없음")
+    void cancel_NotPaid_throws() {
+        Order pending = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pending));
+
+        assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
+                .isInstanceOf(OrderCancelNotAllowedException.class);
+
+        verify(paymentGatewayPort, never()).cancel(any(), any());
+        verify(inventoryPort, never()).restockByOrderId(any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: 환불 예외 시 재입고/저장/이벤트 없이 전파(주문은 PAID 유지)")
+    void cancel_RefundFails_propagatesWithoutLocalChanges() {
+        Order order = paidOrder();
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(paymentGatewayPort.cancel(any(), any())).thenThrow(new RuntimeException("toss down"));
+
+        assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(inventoryPort, never()).restockByOrderId(any());
+        verify(orderRepository, never()).save(any());
+        verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("실패: 환불 성공 후 재입고 예외 시 save/이벤트 없이 전파(주문은 PAID 유지, 재시도 가능)")
+    void cancel_RestockFails_propagatesAndOrderStaysPaid() {
+        Order order = paidOrder();
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(paymentGatewayPort.cancel(any(), any())).thenReturn(new Cancellation(Instant.now()));
+        doThrow(new RuntimeException("redis down")).when(inventoryPort).restockByOrderId("order-1");
+
+        assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(orderRepository, never()).save(any());
+        verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("성공: 관리자 취소 경로는 소유권을 검증하지 않고 취소한다")
+    void cancelByAdmin_Success_noOwnershipCheck() {
+        Order order = paidOrder();
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentGatewayPort.cancel("pay-key-1", "관리자 취소")).thenReturn(new Cancellation(Instant.now()));
+
+        Order result = orderService.cancelByAdmin("order-1", "관리자 취소");
+
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
+        verify(inventoryPort).restockByOrderId("order-1");
+        verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
     }
 }
