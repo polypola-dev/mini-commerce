@@ -62,7 +62,8 @@ jobs:
             --from-literal=DATABASE_PASSWORD=minicommerce \
             --from-literal=REDIS_PASSWORD="" \
             --from-literal=BFF_SECRET_KEY=ci-dummy-bff-secret-key-0123456789abcdef \
-            --from-literal=SUPABASE_SERVICE_ROLE_KEY=ci-dummy-service-role-key
+            --from-literal=SUPABASE_SERVICE_ROLE_KEY=ci-dummy-service-role-key \
+            --from-literal=TOSS_SECRET_KEY=ci-dummy-toss-secret-key
 
       - name: 이미지 빌드 (compose가 빌드 담당 — k8s/README.md 계약)
         env:

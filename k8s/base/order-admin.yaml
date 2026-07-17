@@ -87,6 +87,12 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: BFF_SECRET_KEY
+            # 관리자 주문취소가 Toss 환불을 실행한다 (GH #4) — order-api와 동일 키
+            - name: TOSS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: TOSS_SECRET_KEY
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

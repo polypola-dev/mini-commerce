@@ -22,6 +22,7 @@ render_manifest() {
   set -a; source "$REPO_ROOT/.env"; set +a
   : "${BFF_SECRET_KEY:?.env에 BFF_SECRET_KEY가 없습니다}"
   : "${SUPABASE_SERVICE_ROLE_KEY:?.env에 SUPABASE_SERVICE_ROLE_KEY가 없습니다}"
+  : "${TOSS_SECRET_KEY:?.env에 TOSS_SECRET_KEY가 없습니다}"
   cat <<EOF
 apiVersion: v1
 kind: Secret
@@ -37,6 +38,7 @@ stringData:
   REDIS_PASSWORD: ""
   BFF_SECRET_KEY: "$BFF_SECRET_KEY"
   SUPABASE_SERVICE_ROLE_KEY: "$SUPABASE_SERVICE_ROLE_KEY"
+  TOSS_SECRET_KEY: "$TOSS_SECRET_KEY"
 EOF
 }
 

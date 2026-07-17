@@ -91,6 +91,12 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: BFF_SECRET_KEY
+            # 토스페이먼츠 결제 승인/취소(환불) API Basic 인증 (C1/GH #4)
+            - name: TOSS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: TOSS_SECRET_KEY
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
