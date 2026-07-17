@@ -43,8 +43,8 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| C1 | P0 | **실 PG 연동** (토스페이먼츠 등 샌드박스) — 현재 결제는 `CompletePaymentUseCase` mock 완료 처리 | 정식 서비스 표방과 최대 갭 |
-| C2 | P0 | 결제 후 주문취소 — PG 환불 연동 + 확정재고 재입고 (**GH #4**) | C1과 한 몸. 보상 트랜잭션 설계 |
+| C1 | P0 | ✅ **완료(2026-07-16, commit dfdbe8b)** — 토스페이먼츠 결제위젯 v2 실 PG 연동. `CompletePaymentUseCase` mock 제거 → `ConfirmPaymentUseCase`(소유권→상태→금액 3단 검증 → `PaymentGatewayPort.confirm`), `orders.payment_key` 저장(V2 Flyway). kind 클러스터에서 실제 브라우저 결제로 E2E 검증 완료(2026-07-17) | 정식 서비스 표방과 최대 갭 — 해소 |
+| C2 | P0 | ✅ **완료(2026-07-17, commit 73897d6, GH #4 close 가능)** — 결제 후 주문취소. PG 환불 선행 동기 방식(가드→Toss cancel→확정재고 재입고→CANCELED→이벤트), `ALREADY_CANCELED_PAYMENT`→성공 매핑으로 재시도 수렴(사가 배제). 재입고는 DB 원장 진실의 원천 + 신규 Lua(RESTOCKED 멱등), Flyway V3. E2E 중 발견한 `notifications` CHECK 제약 누락 버그도 수정(commit a99167b) | C1과 한 몸. 보상 트랜잭션 설계 — 해소 |
 | C3 | P0 | 배송지 백엔드 저장 — 현재 localStorage(`lib/addresses.ts`)라 기기 간 미동기화·유실 | 주문 도메인엔 배송지가 있는데 주소록만 로컬 |
 | C4 | P1 | 위시리스트 백엔드 저장 — 현재 localStorage(`lib/wishlist.ts`) | C3과 같은 패턴, 같이 처리 |
 | C5 | P1 | 상품 카테고리 도메인 모델 도입 — 현재 `/category`는 검색 키워드 필터로 흉내 | catalog에 분류 체계 없음 |
