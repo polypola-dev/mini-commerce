@@ -30,8 +30,8 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| B1 | P0 | Supabase `public` 스키마 11개 테이블 **RLS 정책 설계 후 활성화** | Supabase advisor critical, TASKS.md 대기 중 |
-| B2 | P0 | `SECURITY DEFINER` 함수 노출 점검·제거 | Supabase advisor 지적 (obs 601) |
+| B1 | P0 | ✅ **완료(2026-07-13, GH #12 close)** — RLS 자체는 2026-07-04 사용자가 Supabase 콘솔에서 직접 활성화(critical `rls_disabled_in_public` 해소). 백엔드는 Session Pooler `postgres` 롤(BYPASSRLS)로 접속하고 프론트는 Data API 미사용이라, 12개 테이블 전부 "RLS on + 정책 0"(default-deny)을 의도된 상태로 확정 — 명시적 정책은 추가하지 않음(중복+permissive 오설정 위험). 신규 테이블 자동 보호용 `ensure_rls` 이벤트 트리거 유지. 근거는 `backend/db/supabase/README.md` | advisor critical 0건 확인 후 종결. `rls_enabled_no_policy`(INFO)는 의도된 상태로 방치 |
+| B2 | P0 | ✅ **완료(2026-07-13, GH #12, commit 13ff710)** — `SECURITY DEFINER` 함수(`rls_auto_enable`)의 EXECUTE 권한을 `PUBLIC/anon/authenticated`에서 REVOKE(`backend/db/supabase/rls_hardening.sql`), 프로덕션 Supabase에 적용. advisor 재검증으로 `security_definer_function_executable`(WARN) 2건 해소 확인 | `auth_leaked_password_protection`(WARN)은 Pro 플랜 전용 기능이라 무료 티어에서 액션 불가 — 잔여 방치 |
 | B3 | P0 | `/internal/**` 서비스간 API 무인증 상태 해소 — 내부 토큰/mTLS, k8s 전환 시 NetworkPolicy 병행 | order-api 헬스체크가 "인증 안 걸림"을 활용 중일 정도로 완전 개방 |
 | B4 | P1 | docker-compose 하드코딩 크리덴셜(`minicommerce/minicommerce`) 및 시크릿 주입 방식 정리 — `.env` 표준화 → k8s Secret으로 승계 | BFF_SECRET_KEY, SERVICE_ROLE_KEY 포함 |
 | B5 | P1 | API rate limiting — 로그인/주문/리뷰 엔드포인트 브루트포스·도배 방어 (Redis 기반) | 현재 전무 |
@@ -58,7 +58,7 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| D1 | P0 | **Flyway 도입, `ddl-auto: update` 제거** — shop-api/order-api가 update로 운영 중, 마이그레이션 도구 부재. `docker/postgres-init/*.sql`도 Flyway로 흡수 | k8s에서 다중 레플리카 동시 DDL은 사고 지점. F계열 전체의 선행 조건 |
+| D1 | P0 | ✅ **완료(2026-07-11, GH #11, commit 307cd21)** — Flyway 도입, 4개 모듈 전부 `ddl-auto: validate`로 전환. shop-api·order-api가 각자 소유 스키마의 마이그레이션을 소유(F3와 동일 근거) | k8s 다중 레플리카 동시 DDL 사고 지점 해소. F계열 전체의 선행 조건 충족 |
 | D2 | P1 | OrderPlacedEvent/OrderPaidEvent 계약 모듈 추출 `order:order-events` (**GH #5**) | 발행자/구독자 클래스 중복 제거 |
 | D3 | P2 | inventory 별도 서비스+DB 추출 — 분산 사가 학습 에픽 (**GH #3**, 전략 c) | k8s 전환 후 진행 권장 |
 | D4 | P1 | Kafka consumer 재시도/DLQ 정책 수립 — 역직렬화 실패·처리 실패 시 유실 방지 | serializer 사고(a05581f) 전력 있음 |
@@ -72,7 +72,7 @@
 
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
-| E1 | P0 | **GitHub Actions CI 구축** — 백엔드 `gradlew build`(test 포함) + 프론트 `tsc`/`next build`, PR 게이트 | 현재 워크플로 0개. 모든 자동화의 기반 |
+| E1 | P0 | ✅ **완료(2026-07-06, GH #10, commit 81d7d52)** — `.github/workflows/ci.yml`: 백엔드 `gradlew build`(test 포함) + 프론트 `tsc`/`jest`/`next build`, PR 게이트 구축 | 이후 build-push.yml(E4/E5)·deploy-kind.yml(G11)이 이 워크플로 기반 위에 추가됨 |
 | E2 | P1 | Testcontainers 통합 테스트 — Postgres/Redis/Kafka 실컨테이너 기반, CI에서 실행 | Redis 동시성 테스트는 있으나 로컬 인프라 의존 |
 | E3 | P1 | 프론트 E2E 스모크 (Playwright) — 로그인→상품→장바구니→주문 핵심 여정 | 세션마다 수동 클릭 검증에 의존 중 |
 | E4 | P1 | ✅ **완료(2026-07-14, ADR-017)** — `.github/workflows/build-push.yml`: GHCR `ghcr.io/<owner>/mini-commerce/<service>` 4종, **multi-arch(amd64+arm64)** buildx+QEMU(빌드 스테이지는 BUILDPLATFORM 네이티브라 QEMU는 런타임 cp만), 태그 sha+main+semver(metadata-action), 단일 잡 순차 빌드(빌드 스테이지 공유 — gradle 전체 1회), gha 캐시. 첫 실행 **4분48초** 전 스텝 성공. **패키지는 public 운용**(private는 Free 500MB 제한 — $0 목표 충돌, 사용자 결정). 트리거: main push(backend/**)+v* 태그+수동 | deploy-kind의 GHCR pull 전환은 경쟁 조건으로 보류(G11 2단계 소관). 리포 public 전환은 히스토리 시크릿 스캔+B4 선행 |
@@ -133,9 +133,9 @@
 ## 총 67개 — 착수 순서 제안
 
 1. ~~**방향 결정 (P0 · 모든 트랙의 전제)**: I2(운영 환경 ADR)~~ ✅ **완료 (2026-07-06)** — OCI Always Free 기반 k8s 이전으로 확정, ADR-007 기록
-2. **즉시 (P0 · 서비스 신뢰 기반)**: E1(CI) → D1/F3(Flyway) → B1/B2(RLS) → B3(internal 인증) → A6/F1(기동 결합 제거) → F2(probe)
-3. **커머스 완성 (P0~P1)**: C1(PG 연동) → C2(환불, GH #4) → C3/C4(배송지·위시리스트 백엔드화)
-4. **k8s 전환**: G1/G2(클러스터·매니페스트) → G3~G5(워크로드) → G8(Secret) → G6(Ingress) → G11(CD) → H계열
+2. **즉시 (P0 · 서비스 신뢰 기반)**: ~~E1(CI) → D1/F3(Flyway) → B1/B2(RLS) → A6/F1(기동 결합 제거) → F2(probe)~~ ✅ 전부 완료 — **잔여는 B3(internal 인증)뿐**
+3. **커머스 완성 (P0~P1)**: ~~C1(PG 연동) → C2(환불, GH #4)~~ ✅ 완료 — **다음은 C3/C4(배송지·위시리스트 백엔드화)**
+4. **k8s 전환**: ~~G1/G2(클러스터·매니페스트) → G3~G5(워크로드) → G8(Secret) → G6(Ingress) → G11 1단계(CI kind 배포) → H계열(관측성)~~ ✅ 전부 완료 — **잔여는 G7(HPA, P2)·G11 2단계(Argo CD, OKE 구축 선행)뿐**
 5. **학습 에픽 (P2)**: D3(inventory 분리 사가, GH #3)는 k8s 위에서 진행하면 배포·운영 학습 효과 극대화
 
 > ⚠️ 순서의 핵심: **F계열(앱 k8s-ready)을 끝내기 전에 G계열(매니페스트)을 시작하지 말 것.**
