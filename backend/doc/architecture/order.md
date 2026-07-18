@@ -25,7 +25,11 @@ order/order-domain/          (Gradle 모듈 — jakarta.persistence·spring-web 
 │   ├── OrderService, PlaceOrderCommand
 │   ├── port/in/             PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase
 │   └── port/out/            OrderRepository, InventoryPort, ProductQueryPort, OrderEventPublisher
-└── OrderPlacedEvent, OrderPaidEvent  도메인 이벤트 (order가 소유)
+└── (이벤트 record는 order-events로 이동 — GH #5)
+
+order/order-events/          (Gradle 모듈 — 의존성 0. Kafka 이벤트 계약 전용)
+└── OrderPlacedEvent, OrderPaidEvent, OrderCanceledEvent  (order 컨텍스트가 소유,
+                              발행측 order-infra와 구독측 shop-api가 이 모듈만 공유)
 
 order/order-infra/           (Gradle 모듈 — order-domain, inventory에 의존. catalog는 모듈 의존 없이 REST로만 호출)
 ├── adapter/out/persistence/ OrderJpaEntity, OrderLineJpaEntity, OrderPersistenceMapper, OrderPersistenceAdapter
@@ -43,8 +47,9 @@ catalog/                     (Gradle 모듈, shop-api에 상주)
 └── ProductInternalController /internal/products/{id}, /internal/products/options/{id} — order 전용
                               내부 API. 스토어프론트용 ProductController와 별개(S2)
 
-shop-api/                    (BOOT 모듈 — order-domain/order-infra에 의존, order 전용이 아닌
-                               범용 API 게이트웨이. cart/review/notification의 웹 계층도 여기 있음)
+shop-api/                    (BOOT 모듈 — order 쪽은 order-events(이벤트 계약)에만 의존,
+                               order 전용이 아닌 범용 API 게이트웨이.
+                               cart/review/notification의 웹 계층도 여기 있음)
 ├── EventExternalizationConfig  order 이벤트를 order.placed/order.paid 토픽으로 라우팅(S1)
 ├── notification/OrderEventKafkaConsumer  @KafkaListener, (orderId,type) 멱등 가드(S1)
 └── adapter/in/web/          OrderController, OrderAdminController, DTO

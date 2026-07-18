@@ -12,9 +12,9 @@ dependencies {
     implementation project(':shared-core')
     implementation project(':shared-web')
     implementation project(':catalog')
-    // notification 모듈이 order 이벤트(OrderPlacedEvent/OrderPaidEvent)를 Kafka로 역직렬화하므로
-    // 이벤트 계약(order-domain)에는 여전히 컴파일 의존한다. order-infra 의존은 order-api로 이관됐다.
-    implementation project(':order:order-domain')
+    // notification 모듈이 order 이벤트(OrderPlaced/Paid/Canceled)를 Kafka로 역직렬화하므로
+    // 이벤트 계약 모듈에만 컴파일 의존한다(GH #5). order 구현(order-domain/order-infra) 의존 없음.
+    implementation project(':order:order-events')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // Flyway 스키마 마이그레이션(GH #11). minicommerce DB 스키마는 shop-api가 소유한다.

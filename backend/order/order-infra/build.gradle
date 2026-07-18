@@ -1,5 +1,8 @@
 dependencies {
     implementation project(':shared-core')
+    // 이벤트 계약(GH #5): SpringOrderEventAdapter가 이벤트를 생성하고
+    // EventExternalizationConfig가 Kafka 토픽으로 라우팅한다.
+    implementation project(':order:order-events')
     implementation project(':order:order-domain')
     implementation project(':inventory')
 

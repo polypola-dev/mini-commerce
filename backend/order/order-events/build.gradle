@@ -1,0 +1,4 @@
+// order 이벤트 계약 모듈(GH #5): Kafka로 externalize되는 이벤트 record만 담는다.
+// 발행측(order-infra)과 구독측(shop-api notification)이 이 모듈만 공유해,
+// 구독자가 order 구현(order-domain)에 컴파일 의존하지 않게 한다.
+// 순수 계약 유지를 위해 의존성 0 — Spring 포함 어떤 라이브러리도 추가하지 않는다(D7 ArchUnit으로 강제 예정).

@@ -1,6 +1,6 @@
 # order — 주문 도메인
 
-주문 생성, 결제(Toss Payments) 승인, 주문취소+환불, 재고 예약 연동을 담당하는 헥사고날 아키텍처 도메인입니다. 5개 Gradle 서브모듈로 구성되며, 상위 설계 원칙은 [../doc/ARCHITECTURE.md](../doc/ARCHITECTURE.md)를 따릅니다.
+주문 생성, 결제(Toss Payments) 승인, 주문취소+환불, 재고 예약 연동을 담당하는 헥사고날 아키텍처 도메인입니다. 6개 Gradle 서브모듈로 구성되며, 상위 설계 원칙은 [../doc/ARCHITECTURE.md](../doc/ARCHITECTURE.md)를 따릅니다.
 
 > 레이어 다이어그램과 시퀀스 다이어그램(마크다운으로 표현이 어려운 상세 흐름)은 **[doc/architecture.html](doc/architecture.html)**에서 확인하세요. 아래 문서에도 핵심 다이어그램을 mermaid로 임베드했습니다.
 
@@ -8,8 +8,9 @@
 
 | 모듈 | 배포 단위 | 역할 | 의존 |
 |---|---|---|---|
+| `order-events` | 라이브러리 | Kafka 이벤트 계약(`OrderPlacedEvent`/`OrderPaidEvent`/`OrderCanceledEvent` record). 구독자(shop-api notification)가 order 구현 대신 이 모듈만 의존한다(GH #5) | 없음(의존성 0) |
 | `order-domain` | 라이브러리 | 순수 도메인(`Order`, `OrderLine`, `OrderStatus`) + 유즈케이스 포트(`port/in`, `port/out`). 기술 의존 없음(spring-context/tx만) | `shared-core` |
-| `order-infra` | 라이브러리 | 아웃바운드 어댑터: JPA 영속성, catalog REST 클라이언트, Toss 결제 클라이언트, Kafka 이벤트 아웃박스 라우팅 | `order-domain`, `inventory`, `shared-core` |
+| `order-infra` | 라이브러리 | 아웃바운드 어댑터: JPA 영속성, catalog REST 클라이언트, Toss 결제 클라이언트, Kafka 이벤트 아웃박스 라우팅 | `order-events`, `order-domain`, `inventory`, `shared-core` |
 | `order-api` | BOOT (고객용) | `OrderController` — 주문 생성/조회/결제승인/취소 | `order-domain`, `order-infra`, `inventory`, `shared-web` |
 | `order-admin` | BOOT (관리자용) | `OrderAdminController` — 주문 목록/상태변경/관리자 취소(환불 포함) | `order-domain`, `order-infra`, `inventory`, `shared-web` |
 | `order-batch` | BOOT (배치, 웹 없음) | `IncompleteEventSweeper`(미발행 이벤트 재시도), 재고만료 이벤트 리스너 활성화 | `order-domain`, `order-infra`, `inventory` |
@@ -120,7 +121,7 @@ sequenceDiagram
 
 ## 이벤트 아웃박스 & Kafka 라우팅
 
-주문 도메인은 `OrderPlacedEvent` / `OrderPaidEvent` / `OrderCanceledEvent` 3종의 이벤트를 발행합니다(`order-domain`이 소유하는 record 타입, 인프라 비의존).
+주문 도메인은 `OrderPlacedEvent` / `OrderPaidEvent` / `OrderCanceledEvent` 3종의 이벤트를 발행합니다(계약 모듈 `order-events`가 소유하는 record 타입, 의존성 0 — 구독자는 이 모듈만 컴파일 의존).
 
 1. `SpringOrderEventAdapter`가 `ApplicationEventPublisher.publishEvent()`로 발행
 2. Spring Modulith가 같은 트랜잭션 내에서 `event_publication` 테이블(아웃박스)에 기록

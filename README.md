@@ -38,6 +38,7 @@ flowchart LR
 │   ├── inventory/             # Redis Lua 기반 재고 예약
 │   ├── shop-api/              # 프론트엔드용 BFF 백엔드 (catalog+cart+review+notification)
 │   ├── order/                 # 주문 도메인 — 상세: backend/order/README.md
+│   │   ├── order-events/      # Kafka 이벤트 계약 (발행자/구독자 공유, 의존성 0)
 │   │   ├── order-domain/      # 순수 도메인 + 유즈케이스 포트
 │   │   ├── order-infra/       # 영속성/결제/카탈로그/이벤트 어댑터
 │   │   ├── order-api/         # 고객용 주문 API
