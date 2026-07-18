@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mini Commerce — 시스템 아키텍처</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #5a5a72;
+    --card-bg: #f7f7fb;
+    --border: #e2e2ec;
+    --accent: #4f46e5;
+    --accent-soft: #eef0ff;
+    --code-bg: #f0f0f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141f;
+      --fg: #e8e8f2;
+      --muted: #a0a0b8;
+      --card-bg: #1c1c2c;
+      --border: #2e2e42;
+      --accent: #8b85ff;
+      --accent-soft: #23233a;
+      --code-bg: #1e1e30;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14141f; --fg: #e8e8f2; --muted: #a0a0b8; --card-bg: #1c1c2c;
+    --border: #2e2e42; --accent: #8b85ff; --accent-soft: #23233a; --code-bg: #1e1e30;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --fg: #1a1a2e; --muted: #5a5a72; --card-bg: #f7f7fb;
+    --border: #e2e2ec; --accent: #4f46e5; --accent-soft: #eef0ff; --code-bg: #f0f0f6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Pretendard, "Noto Sans KR", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 1.7rem; margin-bottom: 4px; }
+  h2 { font-size: 1.2rem; margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+    overflow-x: auto;
+  }
+  .card .mermaid { min-width: 640px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-soft); color: var(--fg); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.88em; }
+  .badge {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+  .note { color: var(--muted); font-size: 0.88rem; margin-top: 8px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mini Commerce — 시스템 아키텍처</h1>
+  <p class="lead">브라우저부터 인프라·관측성 스택까지, 요청이 지나가는 전체 경로를 한 장으로 정리합니다. 루트 <code>README.md</code>에서 링크로 연결됩니다.</p>
+
+  <h2>1. 전체 요청 흐름 (로컬 / k8s 공통 개념도)</h2>
+  <div class="card">
+    <pre class="mermaid">
+flowchart TB
+  Browser["🌐 Browser<br/>Supabase Auth 세션 쿠키/JWT"]
+
+  subgraph FE["Next.js Frontend (Vercel)"]
+    RSC["Server Components<br/>lib/api-server.ts"]
+    CC["Client Components<br/>lib/api.ts"]
+    BFF["BFF Routes<br/>app/api/proxy/**<br/>세션검증 + BFF_SECRET_KEY 첨부"]
+  end
+
+  Browser --> RSC
+  Browser --> CC
+  CC --> BFF
+  RSC -.직접 호출.-> GW
+
+  subgraph GW["Ingress (k8s) / 포트 직결 (local)"]
+    R1["/api/admin/orders"]
+    R2["/api/orders"]
+    R3["/api/** (그 외)"]
+  end
+  BFF --> GW
+
+  R1 --> OA["order-admin :8082<br/>관리자 주문 API"]
+  R2 --> OAPI["order-api :8081<br/>고객 주문/재고 API"]
+  R3 --> SA["shop-api :8080<br/>catalog·cart·review·notification BFF"]
+
+  SA <-- "REST: 상품조회" --> OAPI
+  OAPI -- "PG 승인/환불" --> TOSS["Toss Payments"]
+
+  OAPI --> PG[("Postgres<br/>orderdb")]
+  OA --> PG
+  OB["order-batch<br/>웹엔드포인트 없음"] --> PG
+  SA --> PG2[("Postgres<br/>minicommerce")]
+
+  OAPI --> RDS[("Redis<br/>재고 예약 Lua / ShedLock")]
+  OB --> RDS
+
+  OAPI -- "OrderPlaced/Paid/Canceled<br/>(Modulith outbox)" --> KAFKA[["Kafka"]]
+  OB -- "미발행 이벤트 재시도 스윕" --> KAFKA
+  KAFKA -- "구독" --> SA
+
+  classDef svc fill:#4f46e5,color:#fff,stroke:none;
+  class SA,OAPI,OA,OB svc;
+    </pre>
+  </div>
+  <p class="note">Ingress 라우팅은 경로 최장일치 기준이며 <code>/internal/**</code>은 외부에 노출되지 않고 NetworkPolicy로 서비스 간 전용 트래픽만 허용됩니다.</p>
+
+  <h2>2. 배포 토폴로지 (Oracle Cloud OKE 기준)</h2>
+  <div class="card">
+    <pre class="mermaid">
+flowchart LR
+  subgraph EXT["외부 SaaS"]
+    VERCEL["Vercel<br/>Frontend + BFF"]
+    SUPA["Supabase<br/>Auth + Postgres(원안)"]
+    UPSTASH["Upstash<br/>Redis"]
+    TOSS2["Toss Payments"]
+    GHCR["GHCR<br/>컨테이너 레지스트리"]
+  end
+
+  subgraph OKE["Oracle Cloud OKE (k8s, ns: mini-commerce)"]
+    ING["ingress-nginx"]
+    subgraph APPS["Deployments"]
+      SA2["shop-api"]
+      OAPI2["order-api"]
+      OA2["order-admin"]
+      OB2["order-batch"]
+    end
+    KFK["Kafka (Strimzi Operator)"]
+    OBS["OTel Collector → Tempo / Loki / kube-prometheus-stack"]
+    GRAF["Grafana"]
+  end
+
+  VERCEL -->|HTTPS| ING
+  ING --> APPS
+  APPS --> KFK
+  APPS -.OTLP.-> OBS
+  OBS --> GRAF
+  OAPI2 -->|결제 승인/환불| TOSS2
+  APPS --> SUPA
+  APPS --> UPSTASH
+  GHCR -.이미지 pull.-> APPS
+    </pre>
+  </div>
+
+  <h2>3. 기술 스택</h2>
+  <table>
+    <tr><th>레이어</th><th>기술</th></tr>
+    <tr><td>Frontend</td><td>Next.js (App Router), TypeScript, Supabase Auth, Vercel 배포</td></tr>
+    <tr><td>Backend</td><td>Spring Boot, Spring Modulith(이벤트 아웃박스), 헥사고날 아키텍처, Gradle 멀티모듈</td></tr>
+    <tr><td>데이터</td><td>PostgreSQL(Flyway), Redis(재고 예약 Lua Script, ShedLock 분산락)</td></tr>
+    <tr><td>메시징</td><td>Kafka(KRaft 로컬 / Strimzi Operator on k8s) — 주문 이벤트 외부화</td></tr>
+    <tr><td>결제</td><td>Toss Payments(실 PG 연동)</td></tr>
+    <tr><td>배포/인프라</td><td>Docker Compose(로컬), Kustomize + kind(CI) / Oracle Cloud OKE(운영), SOPS+age 시크릿 암호화</td></tr>
+    <tr><td>관측성</td><td>OpenTelemetry SDK/Collector, Tempo(트레이스), Loki(로그), Prometheus(메트릭, native OTLP), Grafana</td></tr>
+    <tr><td>CI/CD</td><td>GitHub Actions — 빌드/테스트, GHCR 멀티아크 이미지 푸시, kind 스모크 배포</td></tr>
+  </table>
+
+  <p class="note">더 자세한 백엔드 모듈 구조는 <a href="../../backend/README.md">backend/README.md</a>, order 도메인 상세는 <a href="../../backend/order/README.md">backend/order/README.md</a> 및 <a href="../../backend/order/doc/architecture.html">order 헥사고날 다이어그램</a>을 참고하세요.</p>
+</div>
+<script>
+  const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: theme, securityLevel: 'loose' });
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>order 모듈 — 헥사고날 아키텍처</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a2e; --muted: #5a5a72; --card-bg: #f7f7fb;
+    --border: #e2e2ec; --accent: #4f46e5; --accent-soft: #eef0ff; --code-bg: #f0f0f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14141f; --fg: #e8e8f2; --muted: #a0a0b8; --card-bg: #1c1c2c;
+      --border: #2e2e42; --accent: #8b85ff; --accent-soft: #23233a; --code-bg: #1e1e30; }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14141f; --fg: #e8e8f2; --muted: #a0a0b8; --card-bg: #1c1c2c;
+    --border: #2e2e42; --accent: #8b85ff; --accent-soft: #23233a; --code-bg: #1e1e30;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --fg: #1a1a2e; --muted: #5a5a72; --card-bg: #f7f7fb;
+    --border: #e2e2ec; --accent: #4f46e5; --accent-soft: #eef0ff; --code-bg: #f0f0f6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Pretendard, "Noto Sans KR", sans-serif;
+    background: var(--bg); color: var(--fg); line-height: 1.6; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 1.7rem; margin-bottom: 4px; }
+  h2 { font-size: 1.2rem; margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  p.lead { color: var(--muted); margin-top: 0; }
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 16px; overflow-x: auto; }
+  .card .mermaid { min-width: 640px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-soft); color: var(--fg); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.88em; }
+  .note { color: var(--muted); font-size: 0.88rem; margin-top: 8px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>order 모듈 — 헥사고날 아키텍처 &amp; 유즈케이스 흐름</h1>
+  <p class="lead"><code>backend/order/README.md</code>에서 링크로 연결됩니다. 포트/어댑터 배치와 3가지 핵심 유즈케이스(주문생성·결제승인·취소환불)의 단계별 흐름을 다룹니다.</p>
+
+  <h2>1. 레이어 &amp; 모듈 배치</h2>
+  <div class="card">
+    <pre class="mermaid">
+flowchart TB
+  subgraph API["order-api (BOOT, 고객용)"]
+    OC["OrderController<br/>adapter/in/web"]
+  end
+  subgraph ADMIN["order-admin (BOOT, 관리자용)"]
+    OAC["OrderAdminController<br/>adapter/in/web"]
+  end
+  subgraph BATCH["order-batch (BOOT, 웹엔드포인트 없음)"]
+    SWEEP["IncompleteEventSweeper"]
+  end
+
+  subgraph DOMAIN["order-domain — 기술 의존 0 (spring-context/tx만)"]
+    direction TB
+    PORTIN["Inbound Ports<br/>PlaceOrderUseCase / ConfirmPaymentUseCase<br/>CancelOrderUseCase / ExpireOrderUseCase / GetOrdersUseCase"]
+    SVC["OrderService<br/>application/"]
+    ENT["Order / OrderLine / OrderStatus<br/>domain/ (순수 POJO)"]
+    PORTOUT["Outbound Ports<br/>OrderRepository / InventoryPort<br/>PaymentGatewayPort / ProductQueryPort / OrderEventPublisher"]
+    PORTIN --> SVC --> ENT
+    SVC --> PORTOUT
+  end
+
+  subgraph INFRA["order-infra — 아웃바운드 어댑터"]
+    direction TB
+    PERSIST["OrderPersistenceAdapter<br/>+ JpaOrderRepository / OrderJpaEntity"]
+    INV["InventoryAdapter → inventory 모듈<br/>(Redis Lua reserve/release/confirm/restock)"]
+    CAT["CatalogProductAdapter<br/>REST → shop-api"]
+    PAY["TossPaymentAdapter<br/>REST → Toss Payments"]
+    EVT["SpringOrderEventAdapter<br/>+ EventExternalizationConfig<br/>(Kafka 라우팅)"]
+    LISTEN["ReservationExpiredEventListener<br/>adapter/in/event"]
+  end
+
+  OC --> PORTIN
+  OAC --> PORTIN
+  PORTOUT --> PERSIST
+  PORTOUT --> INV
+  PORTOUT --> CAT
+  PORTOUT --> PAY
+  PORTOUT --> EVT
+  LISTEN --> PORTIN
+  BATCH -.활성화 시.-> LISTEN
+  EVT --> KAFKA[["Kafka<br/>order.placed / order.paid / order.canceled"]]
+  PERSIST --> DB[("Postgres orderdb")]
+
+  classDef pure fill:#22c55e,color:#052e13,stroke:none;
+  class ENT,PORTIN,PORTOUT,SVC pure;
+    </pre>
+  </div>
+  <p class="note">도메인(초록색)은 JPA·Spring Web에 비의존. 모든 영속성/외부연동은 <code>order-infra</code>의 어댑터를 거쳐 포트 인터페이스로만 노출됩니다. 상세 규칙은 <a href="../../doc/ARCHITECTURE.md">backend/doc/ARCHITECTURE.md</a> 참고.</p>
+
+  <h2>2. 주문 생성 (Place Order)</h2>
+  <div class="card">
+    <pre class="mermaid">
+sequenceDiagram
+  participant FE as Frontend
+  participant OC as OrderController
+  participant SVC as OrderService
+  participant INV as InventoryPort→InventoryAdapter
+  participant CAT as ProductQueryPort→CatalogProductAdapter
+  participant REPO as OrderRepository→OrderPersistenceAdapter
+  participant EVT as OrderEventPublisher
+
+  FE->>OC: POST /api/orders
+  OC->>SVC: place(PlaceOrderCommand)
+  SVC->>INV: reserve(items)
+  INV-->>SVC: 임시 홀드
+  SVC->>CAT: findProduct/findOption
+  CAT-->>SVC: 상품/옵션(단가)
+  SVC->>SVC: Order 생성 (PENDING_PAYMENT)
+  SVC->>REPO: save(order)
+  SVC->>INV: createReservationForOrder(hold, orderId)
+  SVC->>EVT: publishOrderPlaced()
+  EVT-->>SVC: (Modulith outbox에 event_publication 기록)
+  SVC-->>OC: OrderResponse
+  OC-->>FE: 201 Created
+  Note over SVC,INV: 도중 예외 시 InventoryPort.release(hold)로 롤백
+    </pre>
+  </div>
+
+  <h2>3. 결제 승인 (Toss confirm)</h2>
+  <div class="card">
+    <pre class="mermaid">
+sequenceDiagram
+  participant FE as Frontend (Toss 위젯)
+  participant OC as OrderController
+  participant SVC as OrderService
+  participant PAY as PaymentGatewayPort→TossPaymentAdapter
+  participant TOSS as Toss Payments API
+  participant INV as InventoryPort
+  participant EVT as OrderEventPublisher
+
+  FE->>OC: POST /api/orders/{id}/confirm-payment (paymentKey, amount)
+  OC->>SVC: confirm(orderId, customerId, paymentKey, amount)
+  SVC->>SVC: 소유자/상태(PENDING_PAYMENT)/금액 검증
+  SVC->>PAY: confirm(paymentKey, orderId, amount)
+  PAY->>TOSS: POST /v1/payments/confirm
+  TOSS-->>PAY: 200 OK
+  PAY-->>SVC: 승인 완료
+  SVC->>SVC: order.markPaid(paymentKey) → PAID
+  SVC->>INV: confirmByOrderId() (예약 재고 확정 소진)
+  SVC->>EVT: publishOrderPaid()
+  SVC-->>OC: OrderResponse
+  OC-->>FE: 200 OK
+    </pre>
+  </div>
+
+  <h2>4. 주문취소 + 환불 (PAID → CANCELED)</h2>
+  <div class="card">
+    <pre class="mermaid">
+sequenceDiagram
+  participant FE as Frontend / 관리자
+  participant OC as OrderController / OrderAdminController
+  participant SVC as OrderService
+  participant PAY as PaymentGatewayPort→TossPaymentAdapter
+  participant TOSS as Toss Payments API
+  participant INV as InventoryPort
+  participant EVT as OrderEventPublisher
+
+  FE->>OC: POST .../cancel
+  OC->>SVC: cancel() / cancelByAdmin()
+  SVC->>SVC: 상태 PAID 검증 (아니면 OrderCancelNotAllowedException)
+  SVC->>PAY: cancel(paymentKey, reason)
+  PAY->>TOSS: POST /v1/payments/{paymentKey}/cancel
+  alt 환불 성공 또는 ALREADY_CANCELED_PAYMENT
+    TOSS-->>PAY: 200 / 이미취소(성공 매핑)
+    PAY-->>SVC: 성공
+    SVC->>INV: restockByOrderId() (확정재고 재입고)
+    SVC->>SVC: order.markCanceled() → CANCELED
+    SVC->>EVT: publishOrderCanceled()
+    SVC-->>OC: OrderResponse
+  else 그 외 PG 실패
+    TOSS-->>PAY: 실패
+    PAY-->>SVC: PaymentRefundFailedException
+    SVC-->>OC: 취소 중단 (로컬 상태 변경 없음)
+  end
+  Note over SVC: 재입고/저장 단계 실패 시 환불은 이미 완료된 상태 —<br/>동일 취소 API 재호출로 수렴(Toss가 ALREADY_CANCELED_PAYMENT 반환)
+    </pre>
+  </div>
+
+  <h2>5. 이벤트 아웃박스 &amp; Kafka 라우팅</h2>
+  <div class="card">
+    <pre class="mermaid">
+flowchart LR
+  SVC["OrderService"] -->|"ApplicationEventPublisher"| MOD["Spring Modulith<br/>event_publication 테이블<br/>(같은 트랜잭션 내 기록)"]
+  MOD -->|"커밋 후 외부화"| ROUTE["EventExternalizationConfig<br/>order-infra"]
+  ROUTE -->|"order.placed"| KAFKA[["Kafka"]]
+  ROUTE -->|"order.paid"| KAFKA
+  ROUTE -->|"order.canceled"| KAFKA
+  KAFKA -->|"구독 (groupId: notification)"| CONS["OrderEventKafkaConsumer<br/>shop-api"]
+  CONS --> NOTI["NotificationService<br/>멱등: existsByOrderIdAndType"]
+  SWEEP["IncompleteEventSweeper<br/>order-batch, 5분 주기 + ShedLock"] -->|"미발행분 재시도"| MOD
+    </pre>
+  </div>
+
+  <p class="note">전체 시스템 관점 다이어그램은 <a href="../../../docs/architecture/system-overview.html">docs/architecture/system-overview.html</a> 참고.</p>
+</div>
+<script>
+  const theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+  mermaid.initialize({ startOnLoad: true, theme: theme, securityLevel: 'loose' });
+</script>
+</body>
+</html>
