@@ -59,7 +59,7 @@
 | # | P | 항목 | 근거/비고 |
 |---|---|---|---|
 | D1 | P0 | ✅ **완료(2026-07-11, GH #11, commit 307cd21)** — Flyway 도입, 4개 모듈 전부 `ddl-auto: validate`로 전환. shop-api·order-api가 각자 소유 스키마의 마이그레이션을 소유(F3와 동일 근거) | k8s 다중 레플리카 동시 DDL 사고 지점 해소. F계열 전체의 선행 조건 충족 |
-| D2 | P1 | OrderPlacedEvent/OrderPaidEvent 계약 모듈 추출 `order:order-events` (**GH #5**) | 발행자/구독자 클래스 중복 제거 |
+| D2 | P1 | ✅ **완료(2026-07-18, GH #5 close, commit 954d88e)** — `order:order-events` 계약 모듈 추출(의존성 0). 이벤트 record 3개(Canceled 포함 — 이슈 등록 후 C2에서 추가) 이동, 패키지는 `com.minicommerce.order` 유지(event_publication FQCN·Kafka 와이어 호환). shop-api 의존을 order-domain→order-events로 교체, `@ComponentScan` 정규식 우회 제거. **이슈 본문과 달리 order-domain은 재배선 불필요**(OrderEventPublisher 포트가 primitive 시그니처라 이벤트 미참조 — order-infra만 의존). 검증: build 그린 + kind에서 order.placed 발행→notifications SENT e2e | order-events 순수성 ArchUnit 강제는 D7 소관 |
 | D3 | P2 | inventory 별도 서비스+DB 추출 — 분산 사가 학습 에픽 (**GH #3**, 전략 c) | k8s 전환 후 진행 권장 |
 | D4 | P1 | Kafka consumer 재시도/DLQ 정책 수립 — 역직렬화 실패·처리 실패 시 유실 방지 | serializer 사고(a05581f) 전력 있음 |
 | D5 | P2 | 이벤트 스키마 관리 — JSON 유지 vs Avro/Protobuf+Schema Registry 결정 (ADR로) | D2 이후 |
