@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: mini-commerce-inventory-api
+  # Graceful shutdown 유예 계약(F4) — 유예 30s < 컨테이너 종료 유예 35s(compose stop_grace_period,
+  # k8s terminationGracePeriodSeconds). shop-api/order-api와 동일 계약.
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/inventorydb}
+    username: ${DATABASE_USERNAME:minicommerce}
+    password: ${DATABASE_PASSWORD:minicommerce}
+  jpa:
+    hibernate:
+      # inventorydb 스키마는 Flyway가 소유(GH #11 원칙), Hibernate는 validate만 수행.
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # inventorydb 스키마는 inventory-api가 단독 소유(GH #3). 항상 신규 DB에서 V1부터 실행되므로
+    # baseline은 불필요하다(orderdb와 달리 기존 데이터 볼륨에서 전환하는 경로가 없음).
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+
+server:
+  port: ${SERVER_PORT:8084}
+  # 롤링 업데이트 중 처리 중이던 요청 유실 방지(F4) — order-api application.yml 주석 참고.
+  shutdown: graceful
+
+# OTel 공식 스타터(GH #8) — per-signal endpoint는 경로를 자동으로 안 붙여주므로 실제 수신 경로까지
+# 명시한다(order-api application.yml 주석 참고).
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME:mini-commerce-inventory-api}
+  exporter:
+    otlp:
+      traces:
+        endpoint: ${OTLP_TRACES_ENDPOINT:http://tempo:4318/v1/traces}
+      metrics:
+        endpoint: ${OTLP_METRICS_ENDPOINT:http://prometheus:9090/api/v1/otlp/v1/metrics}
+      logs:
+        endpoint: ${OTLP_LOGS_ENDPOINT:http://loki:3100/otlp/v1/logs}
+  traces:
+    sampler: parentbased_always_on
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: otlp
+
+management:
+  # health만 노출(GH #15 F2). readiness에 DB/Redis 인디케이터는 넣지 않는다(기본 readinessState만) —
+  # 외부 의존 순단 시 연쇄 장애 방지(GH #14 F1 원칙의 연장).
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

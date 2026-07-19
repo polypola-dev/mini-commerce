@@ -4,7 +4,7 @@ dependencies {
     // EventExternalizationConfig가 Kafka 토픽으로 라우팅한다.
     implementation project(':order:order-events')
     implementation project(':order:order-domain')
-    implementation project(':inventory')
+    implementation project(':inventory:inventory-core')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // catalog는 REST로만 호출한다(ADR-005 S2) — 모듈 의존 대신 spring-web의 RestClient만 사용.

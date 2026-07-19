@@ -1,20 +1,14 @@
-// MSA S4: 관리자 전용 주문 BOOT 모듈. OrderRepository를 직접 다루므로 order-domain/order-infra만
-// 필요하다(inventory는 order-infra의 ReservationExpiredEventListener가 이벤트 타입 참조 때문에
-// 물고 있는 전이 의존 — 이 프로세스에서는 @EnableScheduling이 없어 실제로 동작하지 않는다, ADR-005 S4).
-// Micrometer 브릿지 대신 OTel 공식 스타터로 전환(GH #8) — Trace/Metric/Log를 한 벤더 패키지로 통일.
+// GH #3 전략(c): inventory 완전분리 BOOT 모듈 — 전용 inventorydb 소유(Flyway).
+// S1은 스켈레톤(웹 표면 없음). 재고 조회/설정 REST는 S2, 예약 사가 API/이벤트는 S3에서 이관한다.
+// OTel 스타터 구성은 order-api build.gradle 주석 참고(Micrometer 브릿지와 공존 금지).
 dependencyManagement {
     imports {
         mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.29.0'
-        // logback appender는 alpha 계열로만 배포되어 안정 BOM에 버전이 없다(GH #8).
         mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:2.29.0-alpha'
     }
 }
 
 dependencies {
-    implementation project(':shared-core')
-    implementation project(':shared-web')
-    implementation project(':order:order-domain')
-    implementation project(':order:order-infra')
     implementation project(':inventory:inventory-core')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -22,8 +16,10 @@ dependencies {
     implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
     implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // inventorydb 스키마는 inventory-api가 단독 소유한다(orderdb의 order-api와 동일 원칙, GH #11).
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

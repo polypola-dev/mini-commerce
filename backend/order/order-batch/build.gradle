@@ -15,7 +15,7 @@ dependencies {
     implementation project(':shared-core')
     implementation project(':order:order-domain')
     implementation project(':order:order-infra')
-    implementation project(':inventory')
+    implementation project(':inventory:inventory-core')
 
     // 컨트롤러는 없지만 docker-compose 헬스체크용 actuator 노출에 서블릿 컨테이너가 필요하다.
     implementation 'org.springframework.boot:spring-boot-starter-web'

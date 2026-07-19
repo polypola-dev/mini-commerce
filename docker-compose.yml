@@ -217,6 +217,37 @@ services:
     # 전부 순서를 강제하지 않는다. orderdb 스키마 미준비는 Hikari initialization-fail-timeout: -1로,
     # Kafka(producer, IncompleteEventSweeper)/Redis(inventory, ShedLock)는 lazy 연결로 흡수한다.
 
+  # inventory 완전분리 서비스(GH #3, 전략 c). 전용 inventorydb + 공유 Redis(stock:*).
+  # S1 스켈레톤 — 재고 REST(S2)/예약 사가(S3) 이관 전까지 트래픽 없음.
+  inventory-api:
+    build:
+      context: ./backend
+      args:
+        MODULE: inventory/inventory-api
+        PORT: "8084"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/inventorydb
+      DATABASE_USERNAME: minicommerce
+      DATABASE_PASSWORD: minicommerce
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: "8084"
+    ports:
+      - "18084:8084"
+    # F6/F4 — shop-api의 mem_limit/stop_grace_period 주석 참고.
+    mem_limit: 1g
+    stop_grace_period: 35s
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8084/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 20s
+    depends_on:
+      # inventorydb 스키마를 Flyway로 소유하는 앱이므로 Postgres만 정당한 hard dependency(GH #14 F1).
+      postgres:
+        condition: service_healthy
+
   # 분산 트레이싱 백엔드(로컬 전용, GH #7). OTLP 수신 후 로컬 스토리지에 저장.
   # 4317/4318을 host에 노출해 host에서 next dev로 구동하는 BFF도 OTLP export 가능.
   tempo:

@@ -14,8 +14,10 @@ COPY gradle/ gradle/
 COPY shared-core/build.gradle shared-core/
 COPY shared-web/build.gradle shared-web/
 COPY catalog/build.gradle catalog/
-COPY inventory/build.gradle inventory/
+COPY inventory/inventory-core/build.gradle inventory/inventory-core/
+COPY inventory/inventory-api/build.gradle inventory/inventory-api/
 COPY shop-api/build.gradle shop-api/
+COPY order/order-events/build.gradle order/order-events/
 COPY order/order-domain/build.gradle order/order-domain/
 COPY order/order-infra/build.gradle order/order-infra/
 COPY order/order-api/build.gradle order/order-api/
@@ -29,7 +31,8 @@ RUN ./gradlew --no-daemon \
     :shop-api:dependencies \
     :order:order-api:dependencies \
     :order:order-admin:dependencies \
-    :order:order-batch:dependencies > /dev/null
+    :order:order-batch:dependencies \
+    :inventory:inventory-api:dependencies > /dev/null
 
 COPY . .
 # 부팅 모듈 4개의 bootJar를 한 번에 빌드한다. MODULE 인자를 이 스테이지에서 쓰지 않아야
