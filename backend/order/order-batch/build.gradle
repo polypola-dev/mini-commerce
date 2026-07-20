@@ -1,7 +1,6 @@
-// MSA S4: order+inventory 배치 전용 BOOT 모듈. 컨트롤러 없이 재고 만료 리퍼
-// (inventory.ExpiredReservationReleaser, @Scheduled)와 그 리스너
-// (order-infra.ReservationExpiredEventListener, @ApplicationModuleListener)를 전담 실행하고,
-// order-api가 발행한 미발행(outstanding) 이벤트를 스윕해 Kafka로 재시도 발행한다.
+// MSA S4→GH #3 S3: order 배치 전용 BOOT 모듈. 컨트롤러 없이 order-api가 발행한 미발행
+// (outstanding) 이벤트를 스윕해 Kafka로 재시도 발행하고, inventory.reservation.expired를
+// 구독해 주문을 EXPIRED로 전이한다. 재고 만료 리퍼는 inventory-api로 이관됐다(GH #3 S3).
 // Micrometer 브릿지 대신 OTel 공식 스타터로 전환(GH #8) — Trace/Metric/Log를 한 벤더 패키지로 통일.
 dependencyManagement {
     imports {
@@ -15,7 +14,9 @@ dependencies {
     implementation project(':shared-core')
     implementation project(':order:order-domain')
     implementation project(':order:order-infra')
-    implementation project(':inventory:inventory-core')
+    // inventory.reservation.expired 컨슈머(InventoryReservationExpiredKafkaListener)는 order-infra가
+    // 소유한다(Modulith 모듈 경계 — order 모듈 안에서 ExpireOrderUseCase 사용). order-batch는
+    // app.batch.enabled=true로 그 리스너를 활성화하고 consumer 역직렬화만 설정한다(application.yml).
 
     // 컨트롤러는 없지만 docker-compose 헬스체크용 actuator 노출에 서블릿 컨테이너가 필요하다.
     implementation 'org.springframework.boot:spring-boot-starter-web'

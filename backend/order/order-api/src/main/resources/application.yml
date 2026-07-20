@@ -59,6 +59,10 @@ app:
   catalog:
     # order-api가 별도 프로세스이므로 catalog(shop-api)의 실제 호스트를 가리켜야 한다.
     base-url: ${CATALOG_BASE_URL:http://localhost:8080}
+  inventory:
+    # 재고 예약 사가(reserve/release/status + 한시 confirm/restock)는 inventory-api를 REST로
+    # 호출한다(GH #3 S3, InventoryRestAdapter).
+    base-url: ${INVENTORY_BASE_URL:http://localhost:8084}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:

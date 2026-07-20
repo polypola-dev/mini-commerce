@@ -4,6 +4,7 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -23,7 +24,10 @@ public class InventoryReservation {
 
     private Instant expiresAt;
 
-    @ElementCollection
+    // EAGER: inventory 완전분리(GH #3 S3) 후 reserve/restock는 트랜잭션 없이 실행되므로(reserve는
+    // "원장 커밋 → Redis Lua" 순서 계약상 트랜잭션으로 감쌀 수 없다), 세션 밖에서 lines를 읽을 때
+    // LazyInitializationException이 난다. 예약당 라인 수가 적어 EAGER 비용이 무의미하다.
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<ReservationLine> lines = new ArrayList<>();
 
     protected InventoryReservation() {

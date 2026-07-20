@@ -4,14 +4,22 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 @Service
 public class InventoryService {
+
     private static final Duration RESERVATION_TTL = Duration.ofMinutes(10);
+    // 예약 해시 TTL(24h) — 예약 만료(10분)와 의도적으로 분리한다(GH #3 S3). 만료의 권위는 DB
+    // expires_at 단독이고, 해시는 Redis 차감 여부의 증거로만 쓴다. 과거엔 해시 TTL=예약 TTL이라
+    // 리퍼가 도는 시점(만료 후)엔 해시가 이미 소멸해 release Lua가 0을 반환 → INCRBY가 영영
+    // 실행되지 않는 재고 누수 + 원장 RESERVED 고착이 있었다. 24h는 release/confirm/restock
+    // 해시 TTL과 동일한 값으로, "해시 없음 = Redis 차감이 없었음" 불변식을 성립시킨다.
+    private static final long RESERVATION_HASH_TTL_SECONDS = 86_400L;
 
     private final StringRedisTemplate redisTemplate;
     private final InventoryReservationRepository reservationRepository;
@@ -41,9 +49,20 @@ public class InventoryService {
             return 1
             """, Long.class);
 
+    // 반환값: 1=복원 완료(INCRBY), 3=해시 없음(차감이 없었음 — INCRBY 생략), 4=이미 RELEASED
+    // (이전 시도가 복원까지 마치고 원장 전이 전에 끊긴 재시도 — INCRBY 생략), 0=release 불가 상태
+    // (CONFIRMED/RESTOCKED — 결제가 이긴 경합). 1/3/4는 호출자가 원장을 RELEASED로 전이해야 한다.
     private final DefaultRedisScript<Long> releaseScript = new DefaultRedisScript<>("""
             local reservationKey = KEYS[1]
             local status = redis.call('HGET', reservationKey, 'status')
+
+            if status == false then
+              return 3
+            end
+
+            if status == 'RELEASED' then
+              return 4
+            end
 
             if status ~= 'RESERVED' then
               return 0
@@ -110,62 +129,98 @@ public class InventoryService {
         return Long.parseLong(value);
     }
 
-    public InventoryHold reserve(List<InventoryItem> items) {
-        String reservationId = UUID.randomUUID().toString();
-        String reservationKey = reservationKey(reservationId);
-        List<String> keys = stockKeys(items);
-        keys.add(reservationKey);
-
-        List<String> args = items.stream()
-                .map(item -> String.valueOf(item.quantity()))
-                .toList();
-        String itemPayload = items.stream()
-                .map(item -> item.productId() + ":" + item.quantity())
-                .reduce((left, right) -> left + "," + right)
-                .orElse("");
-
-        List<String> scriptArgs = new java.util.ArrayList<>(args);
-        scriptArgs.add(itemPayload);
-        scriptArgs.add(String.valueOf(RESERVATION_TTL.toSeconds()));
-
-        Long result = redisTemplate.execute(reserveScript, keys, scriptArgs.toArray(String[]::new));
-        if (result == null || result != 1L) {
-            throw new OutOfStockException(items.getFirst().productId());
-        }
-
-        return new InventoryHold(reservationId, Instant.now().plus(RESERVATION_TTL), items);
+    public Optional<InventoryReservation> getByOrderId(String orderId) {
+        return reservationRepository.findByOrderId(orderId);
     }
 
-    public boolean release(InventoryHold hold) {
-        List<String> keys = new java.util.ArrayList<>();
-        keys.add(reservationKey(hold.reservationId()));
-        keys.addAll(stockKeys(hold.items()));
+    /**
+     * 주문 예약(GH #3 S3). 예약 ID = orderId(1주문 1예약 — 멱등 키). 트랜잭션 밖에서 호출해야 하며
+     * 순서가 계약이다: ① DB 원장 insert 커밋(리퍼가 항상 찾을 수 있는 진실의 원천을 먼저 확보)
+     * → ② Redis Lua(재고 검사+차감+예약 해시). ①과 ② 사이 크래시는 만료 후 리퍼가 release Lua
+     * return 3(해시 없음 — INCRBY 생략)으로 정리한다. 재시도(타임아웃 후 재호출)는 기존 RESERVED
+     * 원장을 승계하고 Lua를 재실행하므로(해시가 이미 있으면 2=성공) 크래시 창을 스스로 치유한다.
+     *
+     * @throws OutOfStockException 재고 부족(원장은 RELEASED로 전이)
+     * @throws ReservationConflictException 같은 orderId가 이미 RESERVED 외 상태(재예약 불가)
+     */
+    public InventoryHold reserveForOrder(String orderId, List<InventoryItem> items) {
+        InventoryReservation reservation = reservationRepository.findByOrderId(orderId).orElse(null);
+        if (reservation == null) {
+            List<ReservationLine> lines = items.stream()
+                    .map(item -> new ReservationLine(item.productId(), item.quantity()))
+                    .toList();
+            try {
+                reservation = reservationRepository.save(new InventoryReservation(
+                        orderId, orderId, Instant.now().plus(RESERVATION_TTL), lines));
+            } catch (DataIntegrityViolationException e) {
+                // 동시 중복 호출 — unique(order_id)/PK에서 진 쪽은 먼저 커밋된 원장을 승계한다(멱등).
+                reservation = reservationRepository.findByOrderId(orderId).orElseThrow(() -> e);
+            }
+        }
+        if (reservation.getStatus() != ReservationStatus.RESERVED) {
+            throw new ReservationConflictException(orderId, reservation.getStatus());
+        }
 
-        String[] args = hold.items().stream()
+        // 품목/수량은 요청이 아니라 원장을 권위로 삼는다 — 재시도 시 요청 내용이 달라져도 원장이 이긴다.
+        List<InventoryItem> ledgerItems = reservation.getLines().stream()
+                .map(line -> new InventoryItem(line.getProductId(), line.getQuantity()))
+                .toList();
+
+        List<String> keys = stockKeys(ledgerItems);
+        keys.add(reservationKey(reservation.getId()));
+        List<String> scriptArgs = new java.util.ArrayList<>(ledgerItems.stream()
                 .map(item -> String.valueOf(item.quantity()))
+                .toList());
+        scriptArgs.add(itemPayload(ledgerItems));
+        scriptArgs.add(String.valueOf(RESERVATION_HASH_TTL_SECONDS));
+
+        Long result = redisTemplate.execute(reserveScript, keys, scriptArgs.toArray(String[]::new));
+        if (result == null || result == 0L) {
+            markReleased(orderId);
+            throw new OutOfStockException(ledgerItems.getFirst().productId());
+        }
+        // 1(신규 차감) 또는 2(해시 이미 존재 — 재시도) 모두 성공.
+        return new InventoryHold(reservation.getId(), reservation.getExpiresAt(), ledgerItems);
+    }
+
+    /**
+     * 예약 해제(주문 생성 실패 보상 + 리퍼 만료 공용). RESERVED 원장만 대상으로 release Lua를
+     * 실행하고 원장을 RELEASED로 전이한다. 원장이 없거나 이미 다른 상태면 no-op(멱등).
+     *
+     * @return 이번 호출로 원장이 RELEASED로 전이됐으면 true — 리퍼는 이때만 만료 이벤트를 발행한다
+     */
+    public boolean releaseByOrderId(String orderId) {
+        InventoryReservation reservation = reservationRepository.findByOrderId(orderId).orElse(null);
+        if (reservation == null || reservation.getStatus() != ReservationStatus.RESERVED) {
+            return false;
+        }
+
+        List<String> keys = new java.util.ArrayList<>();
+        keys.add(reservationKey(reservation.getId()));
+        keys.addAll(reservation.getLines().stream()
+                .map(line -> stockKey(line.getProductId()))
+                .toList());
+        String[] args = reservation.getLines().stream()
+                .map(line -> String.valueOf(line.getQuantity()))
                 .toArray(String[]::new);
 
         Long result = redisTemplate.execute(releaseScript, keys, args);
-        return result != null && result == 1L;
-    }
-
-    public boolean confirm(String reservationId) {
-        Long result = redisTemplate.execute(confirmScript, List.of(reservationKey(reservationId)));
-        return result != null && result == 1L;
-    }
-
-    public void createReservationForOrder(String orderId, String reservationId, Instant expiresAt, List<InventoryItem> items) {
-        List<ReservationLine> lines = items.stream()
-                .map(item -> new ReservationLine(item.productId(), item.quantity()))
-                .toList();
-        reservationRepository.save(new InventoryReservation(reservationId, orderId, expiresAt, lines));
+        if (result == null || result == 0L) {
+            // 해시가 CONFIRMED/RESTOCKED — 결제 확정이 이긴 경합. 원장 전이는 confirm 경로가 맡는다.
+            return false;
+        }
+        // 1(복원), 3(해시 없음 — 미차감 크래시 창), 4(복원은 이전 시도에서 완료) 전부 원장만 전이.
+        reservation.release();
+        reservationRepository.save(reservation);
+        return true;
     }
 
     public void confirmByOrderId(String orderId) {
         InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
         reservation.confirm();
-        confirm(reservation.getId());
+        reservationRepository.save(reservation);
+        redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId())));
     }
 
     public void restockByOrderId(String orderId) {
@@ -175,6 +230,7 @@ public class InventoryService {
         if (!reservation.restock()) {
             return;
         }
+        reservationRepository.save(reservation);
         List<String> keys = new java.util.ArrayList<>();
         keys.add(reservationKey(reservation.getId()));
         keys.addAll(reservation.getLines().stream()
@@ -188,6 +244,20 @@ public class InventoryService {
         if (result == null || result == 0L) {
             throw new IllegalStateException("Restock failed for reservation: " + reservation.getId());
         }
+    }
+
+    private void markReleased(String orderId) {
+        reservationRepository.findByOrderId(orderId).ifPresent(reservation -> {
+            reservation.release();
+            reservationRepository.save(reservation);
+        });
+    }
+
+    private static String itemPayload(List<InventoryItem> items) {
+        return items.stream()
+                .map(item -> item.productId() + ":" + item.quantity())
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
     }
 
     private static List<String> stockKeys(List<InventoryItem> items) {

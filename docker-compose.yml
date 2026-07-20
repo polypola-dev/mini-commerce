@@ -122,6 +122,8 @@ services:
       # 토스페이먼츠 결제 승인(confirm)은 order-api만 호출 — admin/batch는 미주입(TossPaymentConfig
       # 기본값이 빈 문자열이라 부팅엔 무해, GH #9 C1).
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
+      # 재고 예약 사가(reserve/release/status + 한시 confirm)는 inventory-api REST 호출(GH #3 S3).
+      INVENTORY_BASE_URL: http://inventory-api:8084
       SERVER_PORT: "8081"
     ports:
       - "18081:8081"
@@ -165,6 +167,8 @@ services:
       BFF_SECRET_KEY: ${BFF_SECRET_KEY}
       # 관리자 주문취소가 Toss 환불을 실행하므로 order-api와 동일한 시크릿 키를 주입한다(GH #4).
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
+      # 관리자 주문취소의 재입고(restock)가 inventory-api REST 호출(GH #3 S3).
+      INVENTORY_BASE_URL: http://inventory-api:8084
       SERVER_PORT: "8082"
     ports:
       - "18082:8082"
@@ -231,6 +235,8 @@ services:
       DATABASE_PASSWORD: minicommerce
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # inventory.reservation.expired 발행(Modulith 아웃박스 → Kafka, GH #3 S3).
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SERVER_PORT: "8084"
     ports:
       - "18084:8084"

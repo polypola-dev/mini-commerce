@@ -3,7 +3,7 @@ package com.minicommerce.order;
 import com.minicommerce.order.application.OrderService;
 import com.minicommerce.order.application.PlaceOrderCommand;
 import com.minicommerce.order.application.port.out.InventoryPort;
-import com.minicommerce.order.application.port.out.InventoryPort.StockHold;
+import com.minicommerce.order.application.port.out.InventoryPort.ReservationState;
 import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
@@ -21,6 +21,7 @@ import com.minicommerce.order.domain.exception.OrderAlreadyProcessedException;
 import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
+import com.minicommerce.order.domain.exception.ReservationNotActiveException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("성공: 주문 생성 시 Redis 재고가 예약되고 DB에 주문 및 예약 정보가 정상 저장된다")
+    @DisplayName("성공: 주문 생성 시 orderId 선생성 → 재고 예약(멱등 키=orderId) → 저장 → 이벤트 발행")
     void createOrder_Success() {
         // given
         String productId = "prod-1";
@@ -71,33 +72,20 @@ class OrderServiceTest {
                 "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
-        StockHold expectedHold = new StockHold(
-                "res-1",
-                Instant.now().plusSeconds(600),
-                List.of(new StockItem(productId, 2L))
-        );
-
         ProductInfo productInfo = new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000));
-        Order mockSavedOrder = new Order("order-1", "cust-1", List.of(
-                new OrderLineDraft(productId, "테스트 상품", BigDecimal.valueOf(10000), 2L, null)
-        ));
 
-        when(inventoryPort.reserve(any())).thenReturn(expectedHold);
         when(productQueryPort.findProduct(productId)).thenReturn(productInfo);
-        when(orderRepository.save(any(Order.class))).thenReturn(mockSavedOrder);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         Order order = orderService.place(command, "cust-1");
 
-        // then
+        // then — 저장된 주문의 id와 reserve에 넘긴 멱등 키(orderId)가 일치한다(GH #3 S3)
         assertThat(order).isNotNull();
-        assertThat(order.getId()).isEqualTo("order-1");
-
-        verify(inventoryPort).reserve(any());
+        verify(inventoryPort).reserve(eq(order.getId()), eq(List.of(new StockItem(productId, 2L))));
         verify(orderRepository).save(any(Order.class));
-        verify(inventoryPort).createReservationForOrder(eq("order-1"), eq(expectedHold));
         verify(inventoryPort, never()).release(any());
-        verify(eventPublisher).publishOrderPlaced(any(), any(), any());
+        verify(eventPublisher).publishOrderPlaced(eq(order.getId()), eq("cust-1"), any());
     }
 
     @Test
@@ -111,16 +99,9 @@ class OrderServiceTest {
                 "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
-        StockHold expectedHold = new StockHold(
-                "res-1",
-                Instant.now().plusSeconds(600),
-                List.of(new StockItem(productId, 1L))
-        );
-
         ProductInfo productInfo = new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000));
         OptionInfo optionInfo = new OptionInfo(BigDecimal.valueOf(5000), "화이트");
 
-        when(inventoryPort.reserve(any())).thenReturn(expectedHold);
         when(productQueryPort.findProduct(productId)).thenReturn(productInfo);
         when(productQueryPort.findOption(optionId)).thenReturn(optionInfo);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -134,8 +115,8 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("실패: 상품이 존재하지 않으면 주문 생성이 실패하고 예약된 Redis 재고를 롤백(release)한다")
-    void createOrder_ProductNotFound_ShouldRollbackRedisInventory() {
+    @DisplayName("실패: 상품이 존재하지 않으면 reserve 이전에 실패한다 — 보상할 예약이 없다(GH #3 S3 재배열)")
+    void createOrder_ProductNotFound_failsBeforeReserve() {
         // given
         String productId = "prod-not-found";
         PlaceOrderCommand command = new PlaceOrderCommand(
@@ -143,13 +124,6 @@ class OrderServiceTest {
                 "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
 
-        StockHold expectedHold = new StockHold(
-                "res-1",
-                Instant.now().plusSeconds(600),
-                List.of(new StockItem(productId, 2L))
-        );
-
-        when(inventoryPort.reserve(any())).thenReturn(expectedHold);
         when(productQueryPort.findProduct(productId)).thenThrow(new IllegalStateException("Product not found: " + productId));
 
         // when & then
@@ -157,8 +131,50 @@ class OrderServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Product not found");
 
-        verify(inventoryPort).release(expectedHold);
+        verify(inventoryPort, never()).reserve(any(), any());
+        verify(inventoryPort, never()).release(any());
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("실패: 주문 저장이 실패하면 예약을 release(orderId)로 보상한다")
+    void createOrder_SaveFails_compensatesWithRelease() {
+        String productId = "prod-1";
+        PlaceOrderCommand command = new PlaceOrderCommand(
+                List.of(new PlaceOrderCommand.OrderItem(productId, 1L, null)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
+        );
+        when(productQueryPort.findProduct(productId))
+                .thenReturn(new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000)));
+        when(orderRepository.save(any(Order.class))).thenThrow(new IllegalStateException("db down"));
+
+        assertThatThrownBy(() -> orderService.place(command, "cust-1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("db down");
+
+        // reserve에 쓴 orderId 그대로 release가 호출된다
+        ArgumentCaptor<String> reservedOrderId = ArgumentCaptor.forClass(String.class);
+        verify(inventoryPort).reserve(reservedOrderId.capture(), any());
+        verify(inventoryPort).release(reservedOrderId.getValue());
+        verify(eventPublisher, never()).publishOrderPlaced(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("실패: 보상 release마저 실패해도 원 예외가 전파된다(리퍼 백스톱 전제)")
+    void createOrder_ReleaseAlsoFails_originalExceptionPropagates() {
+        String productId = "prod-1";
+        PlaceOrderCommand command = new PlaceOrderCommand(
+                List.of(new PlaceOrderCommand.OrderItem(productId, 1L, null)),
+                "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
+        );
+        when(productQueryPort.findProduct(productId))
+                .thenReturn(new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000)));
+        when(orderRepository.save(any(Order.class))).thenThrow(new IllegalStateException("db down"));
+        doThrow(new RuntimeException("inventory down")).when(inventoryPort).release(any());
+
+        assertThatThrownBy(() -> orderService.place(command, "cust-1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("db down");
     }
 
     @Test
@@ -170,6 +186,7 @@ class OrderServiceTest {
         ));
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(inventoryPort.status("order-1")).thenReturn(ReservationState.RESERVED);
         when(paymentGatewayPort.confirm(eq("pay-key-1"), eq("order-1"), any(BigDecimal.class)))
                 .thenReturn(new Confirmation("pay-key-1", "카드", Instant.now()));
 
@@ -225,6 +242,22 @@ class OrderServiceTest {
 
         assertThatThrownBy(() -> orderService.confirm("order-1", "attacker", "pay-key-1", BigDecimal.valueOf(10000)))
                 .isInstanceOf(OrderNotFoundException.class);
+
+        verify(paymentGatewayPort, never()).confirm(any(), any(), any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실패: 예약이 이미 해제(RELEASED)된 주문은 PG 승인 전에 ReservationNotActiveException(만료 경합 가드)")
+    void confirmPayment_ReservationReleased_rejectsBeforeGateway() {
+        Order pendingOrder = new Order("order-1", "cust-1", List.of(
+                new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
+        ));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
+        when(inventoryPort.status("order-1")).thenReturn(ReservationState.RELEASED);
+
+        assertThatThrownBy(() -> orderService.confirm("order-1", "cust-1", "pay-key-1", BigDecimal.valueOf(10000)))
+                .isInstanceOf(ReservationNotActiveException.class);
 
         verify(paymentGatewayPort, never()).confirm(any(), any(), any());
         verify(orderRepository, never()).save(any());

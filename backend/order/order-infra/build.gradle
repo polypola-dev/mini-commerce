@@ -4,9 +4,16 @@ dependencies {
     // EventExternalizationConfig가 Kafka 토픽으로 라우팅한다.
     implementation project(':order:order-events')
     implementation project(':order:order-domain')
-    implementation project(':inventory:inventory-core')
+    // inventory는 REST로만 호출한다(GH #3 S3, 전략 c) — in-process InventoryAdapter를
+    // InventoryRestAdapter로 대체하면서 inventory-core 컴파일 의존을 제거했다. 만료 이벤트
+    // 계약(InventoryReservationExpiredEvent)만 inventory-events로 의존한다 — 이것이 core 내부에
+    // 손대지 않는다는 경계를 Gradle 모듈 그래프가 물리적으로 강제한다(inventory-core 미선언).
+    implementation project(':inventory:inventory-events')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // InventoryReservationExpiredKafkaListener(@KafkaListener)용. 실제 리스너 활성화·역직렬화
+    // 설정은 app.batch.enabled=true인 order-batch가 소유한다(다른 BOOT 앱은 조건부로 비활성).
+    implementation 'org.springframework.kafka:spring-kafka'
     // catalog는 REST로만 호출한다(ADR-005 S2) — 모듈 의존 대신 spring-web의 RestClient만 사용.
     // Jackson은 명시 의존해야 한다(shop-api를 통해 전이적으로 딸려오는 것에 기대지 않음) —
     // 안 하면 JSON HttpMessageConverter가 없어 RestClient가 UnknownContentTypeException을 던진다.

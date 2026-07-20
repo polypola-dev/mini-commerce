@@ -52,6 +52,13 @@ spring:
       # order-api와 동일한 이유(Modulith ByteArrayJsonMessageConverter가 byte[]를 넘김) —
       # 미발행 이벤트 재시도 스윕(IncompleteEventSweeper)도 같은 externalizer를 타므로 동일하게 맞춘다.
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    # inventory.reservation.expired 구독(GH #3 S3 — InventoryEventKafkaConsumer). 발행측
+    # (inventory-api Modulith)이 JSON byte[]로 보내므로 shop-api 컨슈머와 동일하게 맞춘다.
+    consumer:
+      group-id: order-batch
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   modulith:
     republish-outstanding-events-on-restart: true
     events:
@@ -62,13 +69,17 @@ spring:
 
 app:
   batch:
-    # 재고 만료 리퍼(inventory.ExpiredReservationReleaser)와 그 리스너
-    # (order-infra.ReservationExpiredEventListener)를 이 프로세스에서만 활성화한다(ADR-005 S4).
-    # @EnableScheduling 유무만으로 격리하면 Modulith 이벤트 재발행 경로가 열려 있어 다른 부팅
-    # 앱이 실수로 재처리할 수 있다(아키텍처 리뷰에서 지적) — 명시적 플래그로 이중 방어한다.
+    # inventory.reservation.expired 컨슈머(order-infra의 InventoryReservationExpiredKafkaListener)를
+    # 이 프로세스에서만 활성화한다(GH #3 S3). order-api/order-admin도 order-infra를 물고 있어
+    # 게이팅이 없으면 리스너가 3개 프로세스에서 뜬다(그쪽엔 consumer 역직렬화 설정도 없다).
+    # (재고 만료 리퍼는 inventory-api로 이관됐고, 그쪽 app.batch.enabled는 별도 프로세스 설정이다.)
     enabled: true
   catalog:
     base-url: ${CATALOG_BASE_URL:http://localhost:8080}
+  inventory:
+    # order-infra의 InventoryRestAdapter가 전이의존으로 항상 조립되므로 호스트를 명시한다
+    # (order-admin의 CATALOG_BASE_URL과 같은 이유 — 이 프로세스는 런타임에 호출하지 않는다).
+    base-url: ${INVENTORY_BASE_URL:http://localhost:8084}
 
 # OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
 # 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal

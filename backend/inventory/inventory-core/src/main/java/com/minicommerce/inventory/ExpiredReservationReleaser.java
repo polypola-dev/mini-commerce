@@ -10,11 +10,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * order-batch 프로세스에서만 활성화한다({@code app.batch.enabled=true}, ADR-005 S4). order-api/
- * order-admin도 이 클래스를 컴포넌트스캔 범위에 두지만(inventory가 공통 의존이라), 명시적 플래그로
- * 게이팅해 "스케줄링 애너테이션 부재"에만 의존한 암묵적 격리보다 안전하게 이중화한다.
- * order-batch가 replica 2개 이상이어도 한 인스턴스만 실행하도록 @SchedulerLock으로 막는다
- * (LockProvider 설정은 order-batch의 SchedulerLockConfig가 소유).
+ * 만료된 재고 예약(RESERVED + expires_at 경과)을 해제하는 리퍼 — TTL 사가의 백스톱.
+ *
+ * <p>inventory 완전분리(GH #3 S3) 후에는 inventory-api가 이 빈을 소유한다
+ * ({@code app.batch.enabled=true} — 과거 order-batch에서 이관, LockProvider도 inventory-api의
+ * SchedulerLockConfig가 소유). 해제 성공 시 {@link InventoryReservationExpiredEvent}를 발행하고,
+ * inventory-api의 Modulith 아웃박스가 Kafka {@code inventory.reservation.expired}로 외부화해
+ * order-batch가 주문을 EXPIRED로 전이한다.
+ *
+ * <p>release Lua가 "해시 없음"(reserve의 원장 커밋↔Lua 사이 크래시 창)을 return 3으로 구분해
+ * INCRBY 없이 원장만 RELEASED로 전이한다 — 재고 누수와 원장 고착을 모두 방지(InventoryService 참고).
  */
 @Component
 @ConditionalOnProperty(name = "app.batch.enabled", havingValue = "true")
@@ -43,16 +48,9 @@ public class ExpiredReservationReleaser {
         );
 
         for (InventoryReservation reservation : expired) {
-            InventoryHold hold = new InventoryHold(
-                    reservation.getId(),
-                    reservation.getExpiresAt(),
-                    reservation.getLines().stream()
-                            .map(line -> new InventoryItem(line.getProductId(), line.getQuantity()))
-                            .toList()
-            );
-            if (inventoryService.release(hold)) {
-                reservation.release();
-                eventPublisher.publishEvent(new ReservationExpiredEvent(reservation.getId(), reservation.getOrderId()));
+            if (inventoryService.releaseByOrderId(reservation.getOrderId())) {
+                eventPublisher.publishEvent(new InventoryReservationExpiredEvent(
+                        reservation.getId(), reservation.getOrderId(), Instant.now()));
             }
         }
     }

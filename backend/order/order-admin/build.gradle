@@ -1,6 +1,6 @@
 // MSA S4: 관리자 전용 주문 BOOT 모듈. OrderRepository를 직접 다루므로 order-domain/order-infra만
-// 필요하다(inventory는 order-infra의 ReservationExpiredEventListener가 이벤트 타입 참조 때문에
-// 물고 있는 전이 의존 — 이 프로세스에서는 @EnableScheduling이 없어 실제로 동작하지 않는다, ADR-005 S4).
+// 필요하다. inventory 접근(주문취소 재입고)은 REST(InventoryRestAdapter)로만 한다(GH #3 S3) —
+// 과거 ReservationExpiredEventListener 때문에 물고 있던 inventory 전이 의존은 제거됐다.
 // Micrometer 브릿지 대신 OTel 공식 스타터로 전환(GH #8) — Trace/Metric/Log를 한 벤더 패키지로 통일.
 dependencyManagement {
     imports {
@@ -15,7 +15,6 @@ dependencies {
     implementation project(':shared-web')
     implementation project(':order:order-domain')
     implementation project(':order:order-infra')
-    implementation project(':inventory:inventory-core')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

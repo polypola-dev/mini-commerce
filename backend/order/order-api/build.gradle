@@ -16,9 +16,8 @@ dependencies {
     implementation project(':shared-web')
     implementation project(':order:order-domain')
     implementation project(':order:order-infra')
-    implementation project(':inventory:inventory-core')
-    // catalog는 REST로만 호출한다(ADR-005 S2) — order-infra가 RestClient로 부르므로
-    // 모듈 의존(project(':catalog'))은 넣지 않는다.
+    // catalog/inventory는 REST로만 호출한다(ADR-005 S2, GH #3 S3) — order-infra가 RestClient로
+    // 부르므로 모듈 의존(project(':catalog')/':inventory:inventory-core')은 넣지 않는다.
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

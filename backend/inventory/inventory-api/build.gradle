@@ -1,5 +1,5 @@
-// GH #3 전략(c): inventory 완전분리 BOOT 모듈 — 전용 inventorydb 소유(Flyway).
-// S1은 스켈레톤(웹 표면 없음). 재고 조회/설정 REST는 S2, 예약 사가 API/이벤트는 S3에서 이관한다.
+// GH #3 전략(c): inventory 완전분리 BOOT 모듈 — 전용 inventorydb 소유(Flyway) + 예약 사가 REST +
+// 만료 리퍼 + inventory.reservation.expired 이벤트 외부화(Modulith 아웃박스 → Kafka).
 // OTel 스타터 구성은 order-api build.gradle 주석 참고(Micrometer 브릿지와 공존 금지).
 dependencyManagement {
     imports {
@@ -10,6 +10,8 @@ dependencyManagement {
 
 dependencies {
     implementation project(':inventory:inventory-core')
+    // 이벤트 계약(GH #3 S3): InventoryEventExternalizationConfig가 Kafka 토픽으로 라우팅한다.
+    implementation project(':inventory:inventory-events')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -20,7 +22,15 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // 리퍼(ExpiredReservationReleaser) 소유 이관(GH #3 S3) — LockProvider(Redis)는 이 앱이 제공한다.
+    implementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
+    implementation "net.javacrumbs.shedlock:shedlock-provider-redis-spring:${shedlockVersion}"
+    // 만료 이벤트 아웃박스(event_publication → Kafka externalization).
+    implementation "org.springframework.modulith:spring-modulith-starter-core:${springModulithVersion}"
+    implementation "org.springframework.modulith:spring-modulith-starter-jpa:${springModulithVersion}"
+    implementation "org.springframework.modulith:spring-modulith-events-kafka:${springModulithVersion}"
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.springframework.modulith:spring-modulith-starter-test:${springModulithVersion}"
 }

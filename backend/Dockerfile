@@ -14,6 +14,7 @@ COPY gradle/ gradle/
 COPY shared-core/build.gradle shared-core/
 COPY shared-web/build.gradle shared-web/
 COPY catalog/build.gradle catalog/
+COPY inventory/inventory-events/build.gradle inventory/inventory-events/
 COPY inventory/inventory-core/build.gradle inventory/inventory-core/
 COPY inventory/inventory-api/build.gradle inventory/inventory-api/
 COPY shop-api/build.gradle shop-api/

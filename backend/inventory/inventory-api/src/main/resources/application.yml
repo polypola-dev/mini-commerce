@@ -5,6 +5,13 @@ spring:
   # k8s terminationGracePeriodSeconds). shop-api/order-api와 동일 계약.
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  task:
+    scheduling:
+      shutdown:
+        # 실행 중인 리퍼(만료 예약 해제)가 있으면 종료 전에 완료를 기다린다(F4 — order-batch에서
+        # 리퍼와 함께 이관된 계약). ShedLock 락도 정상 해제된다.
+        await-termination: true
+        await-termination-period: 25s
   threads:
     virtual:
       enabled: true
@@ -28,6 +35,34 @@ spring:
       password: ${REDIS_PASSWORD:}
       ssl:
         enabled: ${REDIS_SSL:false}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Modulith events-kafka(ByteArrayJsonMessageConverter)가 JSON byte[]를 넘기므로 그대로 통과
+      # (order-api application.yml 주석 참고 — String으로 두면 SerializationException).
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+  modulith:
+    # 미발행 inventory.reservation.expired의 재시도. order 쪽과 달리 별도 스위퍼를 두지 않고
+    # 재시작 시 재발행으로 갈음한다 — 컨슈머(order-batch expire)가 멱등(PENDING_PAYMENT 가드)이라
+    # 안전하다. 레플리카 2+ 스케일 시 스위퍼 필요성 재검토(architecture/inventory.md 부채).
+    republish-outstanding-events-on-restart: true
+    events:
+      jdbc:
+        schema-initialization:
+          # event_publication 테이블은 Flyway V1이 소유(GH #11 원칙) — Modulith 자체 초기화 끔.
+          enabled: false
+
+app:
+  batch:
+    # 만료 리퍼(ExpiredReservationReleaser)는 이 프로세스가 소유한다(GH #3 S3 — order-batch에서
+    # 이관). 다른 부팅 앱(order-*)은 inventory-core가 클래스패스에서 빠져 게이팅이 불필요해졌지만,
+    # 명시적 플래그 이중 방어는 그대로 유지한다.
+    enabled: true
 
 server:
   port: ${SERVER_PORT:8084}

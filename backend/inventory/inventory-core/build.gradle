@@ -1,5 +1,7 @@
 dependencies {
     implementation project(':shared-core')
+    // ExpiredReservationReleaser가 만료 이벤트(InventoryReservationExpiredEvent)를 발행한다(GH #3 S3).
+    implementation project(':inventory:inventory-events')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

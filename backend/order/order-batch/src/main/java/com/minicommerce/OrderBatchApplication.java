@@ -3,18 +3,16 @@ package com.minicommerce;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.modulith.Modulith;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * order-batch 부팅 모듈의 진입점(MSA S4).
- * inventory의 ExpiredReservationReleaser(@Scheduled)와 order-infra의
- * ReservationExpiredEventListener(@ApplicationModuleListener, 비동기)를 이 프로세스가 전담
- * 실행한다 — order-api는 고객/관리자 웹 트래픽에만 집중하도록 두 애너테이션을 여기로 옮겼다.
- * IncompleteEventSweeper가 order-api에서 발행된 미발행(outstanding) 이벤트도 함께 스윕한다.
+ * order-batch 부팅 모듈의 진입점(MSA S4 → GH #3 S3).
+ * IncompleteEventSweeper(@Scheduled)가 order-api/order-admin이 orderdb 아웃박스에 남긴
+ * 미발행 이벤트를 스윕해 Kafka로 재시도 발행하고, InventoryEventKafkaConsumer가
+ * inventory.reservation.expired를 구독해 주문을 EXPIRED로 전이한다.
+ * 재고 만료 리퍼(ExpiredReservationReleaser)는 inventory 완전분리와 함께 inventory-api로 이관됐다.
  */
 @Modulith
-@EnableAsync
 @EnableScheduling
 @SpringBootApplication
 public class OrderBatchApplication {

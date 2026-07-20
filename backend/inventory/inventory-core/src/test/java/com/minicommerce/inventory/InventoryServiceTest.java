@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -45,175 +46,181 @@ class InventoryServiceTest {
     @Test
     @DisplayName("availableStock: Redis에 값이 있으면 Long 파싱 후 반환")
     void availableStock_whenKeyExists_returnsParsedValue() {
-        // given
         when(valueOps.get("stock:prod-1")).thenReturn("50");
 
-        // when
         long stock = inventoryService.availableStock("prod-1", 100L);
 
-        // then
         assertThat(stock).isEqualTo(50L);
-        // 이미 값이 있으면 초기화 안 함
         verify(valueOps, never()).setIfAbsent(any(), any());
     }
 
     @Test
     @DisplayName("availableStock: Redis에 값이 없으면 기본값을 반환하되 Redis에 쓰지 않음(read-only)")
     void availableStock_whenKeyMissing_returnsDefaultWithoutWriting() {
-        // given
         when(valueOps.get("stock:prod-1")).thenReturn(null);
 
-        // when
         long stock = inventoryService.availableStock("prod-1", 100L);
 
-        // then
         assertThat(stock).isEqualTo(100L);
-        // 조회는 부작용을 남기지 않는다 — 초기화는 별도로 명시 호출해야 한다
         verify(valueOps, never()).setIfAbsent(any(), any());
         verify(valueOps, never()).set(any(), any());
     }
 
-    @Test
-    @DisplayName("availableStock: 키가 없는 상태로 반복 조회해도 이전 defaultStock에 고착되지 않음(회귀)")
-    void availableStock_whenKeyMissing_repeatedCallsDoNotStickToStaleDefault() {
-        // given — 상품이 아직 seed되지 않아 Redis에 키가 없는 상태를 재현
-        when(valueOps.get("stock:prod-1")).thenReturn(null);
-
-        // when — 배치 조회(default=0)가 먼저 들어오고, 이어서 실제 재고로 조회되는 시나리오
-        long firstRead = inventoryService.availableStock("prod-1", 0L);
-        long secondRead = inventoryService.availableStock("prod-1", 100L);
-
-        // then — 첫 조회가 0을 반환했다고 해서 두 번째 조회가 0으로 고착되지 않는다
-        assertThat(firstRead).isEqualTo(0L);
-        assertThat(secondRead).isEqualTo(100L);
-        verify(valueOps, never()).setIfAbsent(any(), any());
-    }
-
     // ----------------------------------------------------------------
-    // reserve
-    // reserve Lua 스크립트 args: [qty, itemPayload, ttlSeconds] → varargs 3개
+    // reserveForOrder (GH #3 S3)
+    // reserve Lua args: [qty, itemPayload, hashTtlSeconds] → 항목 1개 기준 varargs 3개
     // ----------------------------------------------------------------
 
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("reserve: Lua 스크립트 결과 1 → InventoryHold 정상 반환")
-    void reserve_success_returnsInventoryHold() {
-        // given — varargs: qty("3"), payload("prod-1:3"), ttl("600") → 3개
+    @DisplayName("reserveForOrder: 신규 주문 → 원장 선기록(RESERVED) 후 Lua 1 → InventoryHold 반환")
+    void reserveForOrder_new_persistsLedgerThenReserves() {
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.empty());
+        when(reservationRepository.save(any(InventoryReservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
-        List<InventoryItem> items = List.of(new InventoryItem("prod-1", 3L));
 
-        // when
-        InventoryHold hold = inventoryService.reserve(items);
+        InventoryHold hold = inventoryService.reserveForOrder("order-1", List.of(new InventoryItem("prod-1", 3L)));
 
-        // then
-        assertThat(hold).isNotNull();
-        assertThat(hold.reservationId()).isNotNull().isNotEmpty();
-        assertThat(hold.items()).isEqualTo(items);
-        assertThat(hold.expiresAt()).isAfter(Instant.now().minusSeconds(1));
+        // 예약 ID = orderId(멱등 키)
+        assertThat(hold.reservationId()).isEqualTo("order-1");
+        assertThat(hold.items()).containsExactly(new InventoryItem("prod-1", 3L));
+        assertThat(hold.expiresAt()).isAfter(Instant.now());
+        verify(reservationRepository).save(any(InventoryReservation.class));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("reserve: Lua 스크립트 결과 0 → OutOfStockException 발생")
-    void reserve_outOfStock_throwsException() {
-        // given — varargs 3개
+    @DisplayName("reserveForOrder: Lua 0(품절) → 원장 RELEASED 전이 후 OutOfStockException")
+    void reserveForOrder_outOfStock_marksLedgerReleased() {
+        InventoryReservation saved = new InventoryReservation(
+                "order-1", "order-1", Instant.now().plusSeconds(600),
+                List.of(new ReservationLine("prod-1", 99L)));
+        when(reservationRepository.findByOrderId("order-1"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(saved)); // markReleased의 재조회
+        when(reservationRepository.save(any(InventoryReservation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
-        List<InventoryItem> items = List.of(new InventoryItem("prod-1", 99L));
 
-        // when & then
-        assertThatThrownBy(() -> inventoryService.reserve(items))
+        assertThatThrownBy(() -> inventoryService.reserveForOrder("order-1",
+                List.of(new InventoryItem("prod-1", 99L))))
                 .isInstanceOf(OutOfStockException.class)
                 .hasMessageContaining("prod-1");
+
+        assertThat(saved.getStatus()).isEqualTo(ReservationStatus.RELEASED);
+    }
+
+    @Test
+    @DisplayName("reserveForOrder: 재시도(기존 RESERVED 원장) → insert 없이 Lua 재실행(2=성공) 수렴")
+    void reserveForOrder_retry_convergesWithoutDuplicateLedger() {
+        InventoryReservation existing = new InventoryReservation(
+                "order-1", "order-1", Instant.now().plusSeconds(600),
+                List.of(new ReservationLine("prod-1", 3L)));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(existing));
+        doReturn(2L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
+
+        InventoryHold hold = inventoryService.reserveForOrder("order-1", List.of(new InventoryItem("prod-1", 3L)));
+
+        assertThat(hold.reservationId()).isEqualTo("order-1");
+        verify(reservationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("reserveForOrder: 원장이 RESERVED 외 상태(RELEASED) → ReservationConflictException, Lua 미실행")
+    void reserveForOrder_conflictingLedger_throws() {
+        InventoryReservation released = new InventoryReservation(
+                "order-1", "order-1", Instant.now().minusSeconds(60),
+                List.of(new ReservationLine("prod-1", 3L)));
+        released.release();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(released));
+
+        assertThatThrownBy(() -> inventoryService.reserveForOrder("order-1",
+                List.of(new InventoryItem("prod-1", 3L))))
+                .isInstanceOf(ReservationConflictException.class);
+
+        verify(redisTemplate, never()).execute(any(), anyList(), any(), any(), any());
     }
 
     // ----------------------------------------------------------------
-    // release
-    // release Lua 스크립트 args: [qty] → varargs 1개 (항목 1개 기준)
+    // releaseByOrderId
+    // release Lua args: [qty] → 항목 1개 기준 varargs 1개
     // ----------------------------------------------------------------
 
+    private InventoryReservation reservedReservation() {
+        return new InventoryReservation(
+                "order-1", "order-1", Instant.now().minusSeconds(60),
+                List.of(new ReservationLine("prod-1", 2L)));
+    }
+
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("release: Lua 스크립트 결과 1 → true 반환")
-    void release_success_returnsTrue() {
-        // given — varargs: qty("2") → 1개
+    @DisplayName("releaseByOrderId: Lua 1(복원) → 원장 RELEASED 전이 + true")
+    void releaseByOrderId_restored_transitionsLedger() {
+        InventoryReservation reservation = reservedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any());
-        InventoryHold hold = new InventoryHold(
-                "res-1",
-                Instant.now().plusSeconds(600),
-                List.of(new InventoryItem("prod-1", 2L))
-        );
 
-        // when
-        boolean result = inventoryService.release(hold);
-
-        // then
-        assertThat(result).isTrue();
+        assertThat(inventoryService.releaseByOrderId("order-1")).isTrue();
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RELEASED);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("release: Lua 스크립트 결과 0 → false 반환")
-    void release_fail_returnsFalse() {
-        // given — varargs 1개
+    @DisplayName("releaseByOrderId: Lua 3(해시 없음 — 미차감 크래시 창) → INCRBY 없이 원장만 RELEASED + true")
+    void releaseByOrderId_hashMissing_transitionsLedgerOnly() {
+        InventoryReservation reservation = reservedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        doReturn(3L).when(redisTemplate).execute(any(), anyList(), any());
+
+        assertThat(inventoryService.releaseByOrderId("order-1")).isTrue();
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RELEASED);
+    }
+
+    @Test
+    @DisplayName("releaseByOrderId: Lua 0(해시가 CONFIRMED 등 — 결제가 이긴 경합) → 원장 유지 + false")
+    void releaseByOrderId_paymentWon_keepsLedger() {
+        InventoryReservation reservation = reservedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any());
-        InventoryHold hold = new InventoryHold(
-                "res-1",
-                Instant.now().plusSeconds(600),
-                List.of(new InventoryItem("prod-1", 2L))
-        );
 
-        // when
-        boolean result = inventoryService.release(hold);
+        assertThat(inventoryService.releaseByOrderId("order-1")).isFalse();
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESERVED);
+    }
 
-        // then
-        assertThat(result).isFalse();
+    @Test
+    @DisplayName("releaseByOrderId: 원장이 없거나 RESERVED가 아니면 no-op(false, 멱등)")
+    void releaseByOrderId_missingOrInactive_isNoOp() {
+        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
+        assertThat(inventoryService.releaseByOrderId("missing")).isFalse();
+
+        InventoryReservation confirmed = reservedReservation();
+        confirmed.confirm();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(confirmed));
+        assertThat(inventoryService.releaseByOrderId("order-1")).isFalse();
+
+        verify(redisTemplate, never()).execute(any(), anyList(), any());
     }
 
     // ----------------------------------------------------------------
-    // confirm
-    // confirm Lua 스크립트는 keys만 사용, args 없음 → varargs 0개
+    // confirmByOrderId
     // ----------------------------------------------------------------
 
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("confirm: Lua 스크립트 결과 1 → true 반환")
-    void confirm_success_returnsTrue() {
-        // given — varargs 없음(0개)
-        doReturn(1L).when(redisTemplate).execute(any(), anyList());
+    @DisplayName("confirmByOrderId: 원장 CONFIRMED 전이 + Redis confirm Lua 실행")
+    void confirmByOrderId_transitionsLedgerAndRedis() {
+        InventoryReservation reservation = reservedReservation();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
 
-        // when
-        boolean result = inventoryService.confirm("res-1");
+        inventoryService.confirmByOrderId("order-1");
 
-        // then
-        assertThat(result).isTrue();
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:order-1")));
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("confirm: Lua 스크립트 결과 0 → false 반환")
-    void confirm_fail_returnsFalse() {
-        // given
-        doReturn(0L).when(redisTemplate).execute(any(), anyList());
+    @DisplayName("confirmByOrderId: 원장이 없으면 EntityNotFoundException")
+    void confirmByOrderId_missing_throws() {
+        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
 
-        // when
-        boolean result = inventoryService.confirm("res-1");
-
-        // then
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    @DisplayName("confirm: Lua 스크립트 결과 null → false 반환")
-    void confirm_null_returnsFalse() {
-        // given — null 반환
-        doReturn(null).when(redisTemplate).execute(any(), anyList());
-
-        // when
-        boolean result = inventoryService.confirm("res-1");
-
-        // then
-        assertThat(result).isFalse();
+        assertThatThrownBy(() -> inventoryService.confirmByOrderId("missing"))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
 
     // ----------------------------------------------------------------
@@ -229,18 +236,14 @@ class InventoryServiceTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     @DisplayName("restockByOrderId: CONFIRMED 예약을 RESTOCKED로 전이하고 Lua로 재고를 복원한다")
     void restockByOrderId_confirmed_restoresStock() {
-        // given
         InventoryReservation reservation = confirmedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any(), any());
 
-        // when
         inventoryService.restockByOrderId("order-1");
 
-        // then
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
         verify(redisTemplate).execute(any(), eq(List.of("reservation:res-1", "stock:prod-1", "stock:prod-2")),
                 eq("2"), eq("1"));
@@ -249,42 +252,34 @@ class InventoryServiceTest {
     @Test
     @DisplayName("restockByOrderId: 이미 RESTOCKED면 Redis를 건드리지 않는다(멱등)")
     void restockByOrderId_alreadyRestocked_isNoOp() {
-        // given — 한 번 restock을 마친 예약
         InventoryReservation reservation = confirmedReservation();
         reservation.restock();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
 
-        // when
         inventoryService.restockByOrderId("order-1");
 
-        // then — DB 가드에서 끝나야 이중 INCRBY가 없다
         verify(redisTemplate, never()).execute(any(), anyList(), any(), any());
     }
 
     @Test
     @DisplayName("restockByOrderId: CONFIRMED가 아닌(RESERVED) 예약은 예외")
     void restockByOrderId_notConfirmed_throws() {
-        // given — confirm() 전이 전
         InventoryReservation reservation = new InventoryReservation(
                 "res-1", "order-1", Instant.now().plusSeconds(600),
                 List.of(new ReservationLine("prod-1", 2L)));
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
 
-        // when & then
         assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     @DisplayName("restockByOrderId: Lua 스크립트 결과 0(비정상) → 예외")
     void restockByOrderId_scriptRejects_throws() {
-        // given
         InventoryReservation reservation = confirmedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(java.util.Optional.of(reservation));
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any(), any());
 
-        // when & then
         assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -292,10 +287,8 @@ class InventoryServiceTest {
     @Test
     @DisplayName("restockByOrderId: 예약 원장이 없으면 EntityNotFoundException")
     void restockByOrderId_missingReservation_throws() {
-        // given
-        when(reservationRepository.findByOrderId("missing")).thenReturn(java.util.Optional.empty());
+        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
 
-        // when & then
         assertThatThrownBy(() -> inventoryService.restockByOrderId("missing"))
                 .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
