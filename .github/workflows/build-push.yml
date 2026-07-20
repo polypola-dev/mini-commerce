@@ -156,3 +156,29 @@ jobs:
           labels: ${{ steps.meta-order-batch.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ---- inventory-api ----
+      - name: 메타데이터 (inventory-api)
+        id: meta-inventory-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/inventory-api
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: 빌드·푸시 (inventory-api)
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            MODULE=inventory/inventory-api
+            PORT=8084
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.meta-inventory-api.outputs.tags }}
+          labels: ${{ steps.meta-inventory-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

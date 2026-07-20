@@ -17,5 +17,6 @@ resources:
   - order-api.yaml
   - order-admin.yaml
   - order-batch.yaml
+  - inventory-api.yaml
   - ingress.yaml
   - network-policy.yaml

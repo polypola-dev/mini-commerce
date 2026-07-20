@@ -8,9 +8,11 @@ kind: ConfigMap
 metadata:
   name: app-config
 data:
-  # DB는 인스턴스 하나에 DB 2개 — shop-api는 minicommerce, order 계열은 orderdb (MSA S3-3b)
+  # DB는 인스턴스 하나에 DB 3개 — shop-api는 minicommerce, order 계열은 orderdb (MSA S3-3b),
+  # inventory-api는 inventorydb (GH #3 전략 c)
   SHOP_DATABASE_URL: jdbc:postgresql://postgres:5432/minicommerce
   ORDER_DATABASE_URL: jdbc:postgresql://postgres:5432/orderdb
+  INVENTORY_DATABASE_URL: jdbc:postgresql://postgres:5432/inventorydb
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   REDIS_SSL: "false"
@@ -19,7 +21,7 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: mini-commerce-kafka-bootstrap:9092
   # 서비스간 호출 — Service 포트를 compose 시절 포트와 동일하게 유지해 URL 계약 불변
   CATALOG_BASE_URL: http://shop-api:8080
-  INVENTORY_BASE_URL: http://order-api:8081
+  INVENTORY_BASE_URL: http://inventory-api:8084
   CORS_ALLOWED_ORIGINS: http://localhost:3000
   SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
   SUPABASE_URL: https://wzdifkwupleogfixibiv.supabase.co

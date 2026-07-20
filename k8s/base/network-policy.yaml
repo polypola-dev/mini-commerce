@@ -61,6 +61,8 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # 외부(고객) 진입 전용 — 서비스간 인바운드 계약 없음. 과거 shop-api→order-api(재고 조회)는
+    # inventory 완전분리(GH #3)로 shop-api→inventory-api로 이동해 제거됐다.
     - from:
         - namespaceSelector:
             matchLabels:
@@ -69,12 +71,41 @@ spec:
             matchLabels:
               app.kubernetes.io/name: ingress-nginx
               app.kubernetes.io/component: controller
-        # INVENTORY_BASE_URL 소비자 — shop-api(/internal 재고 조회)
+      ports:
+        - port: 8081
+          protocol: TCP
+---
+# inventory-api 인바운드 — 재고 조회/예약 사가 소비자 (GH #3). ingress-nginx는 미포함
+# (/internal 전용, 외부 비노출). Kafka(order.paid/canceled 구독)는 Strimzi 자동 netpol 소관.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-inventory-api
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: inventory-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # INVENTORY_BASE_URL 소비자 — shop-api(재고 조회), order-api(예약/해제/상태).
+        # order-admin/order-batch는 현재 미호출이지만 order-infra 전이의존으로 클라이언트가
+        # 조립되고 env 계약을 갖는다(shop-api netpol의 order-batch 허용과 동일 논리).
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: shop-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-api
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-admin
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order-batch
       ports:
-        - port: 8081
+        - port: 8084
           protocol: TCP
 ---
 # order-admin은 외부(관리자) 진입 전용 — 서비스간 인바운드 계약 없음

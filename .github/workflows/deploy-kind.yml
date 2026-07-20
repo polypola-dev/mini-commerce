@@ -70,11 +70,11 @@ jobs:
           # compose 파일 보간용 더미 — build에는 쓰이지 않는 값
           BFF_SECRET_KEY: ci-dummy
           SUPABASE_SERVICE_ROLE_KEY: ci-dummy
-        run: docker compose build shop-api order-api order-admin order-batch
+        run: docker compose build shop-api order-api order-admin order-batch inventory-api
 
       - name: 이미지 kind 주입
         run: |
-          for img in mini-commerce-shop-api mini-commerce-order-api mini-commerce-order-admin mini-commerce-order-batch; do
+          for img in mini-commerce-shop-api mini-commerce-order-api mini-commerce-order-admin mini-commerce-order-batch mini-commerce-inventory-api; do
             kind load docker-image "$img:latest" --name mini-commerce
           done
 
@@ -86,10 +86,10 @@ jobs:
 
       - name: 롤아웃·초기화 Job 대기
         run: |
-          for d in shop-api order-api order-admin order-batch; do
+          for d in shop-api order-api order-admin order-batch inventory-api; do
             kubectl rollout status deploy/$d -n mini-commerce --timeout=420s
           done
-          kubectl wait --for=condition=complete job/orderdb-init -n mini-commerce --timeout=180s
+          kubectl wait --for=condition=complete job/db-init -n mini-commerce --timeout=180s
 
       - name: 스모크 테스트 (ingress 단일 진입점 경유)
         run: |
@@ -114,11 +114,11 @@ jobs:
           kubectl describe nodes || true
           kubectl get pods -A -o wide || true
           kubectl get events -n mini-commerce --sort-by=.lastTimestamp | tail -40 || true
-          for d in shop-api order-api order-admin order-batch; do
+          for d in shop-api order-api order-admin order-batch inventory-api; do
             echo "=== deploy/$d 로그 ==="
             kubectl logs -n mini-commerce deploy/$d --tail=60 --all-containers || true
           done
-          echo "=== orderdb-init 로그 ==="
-          kubectl logs -n mini-commerce job/orderdb-init --tail=20 || true
+          echo "=== db-init 로그 ==="
+          kubectl logs -n mini-commerce job/db-init --tail=20 || true
           echo "=== kafka 상태 ==="
           kubectl get kafka,kafkanodepool -n mini-commerce -o wide || true

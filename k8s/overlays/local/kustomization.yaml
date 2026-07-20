@@ -37,6 +37,9 @@ images:
   - name: mini-commerce/order-batch
     newName: mini-commerce-order-batch
     newTag: latest
+  - name: mini-commerce/inventory-api
+    newName: mini-commerce-inventory-api
+    newTag: latest
 
 patches:
   # shop-api만 시드 데이터 로드 (local 프로파일 = 시드 on/off 스위치, F5 프로파일 전략)
