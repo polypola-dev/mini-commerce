@@ -67,6 +67,14 @@ public class InventoryReservation {
         }
     }
 
+    /**
+     * 결제가 이긴 경합(payment-wins, GH #3 S4/D-C)에서 RELEASED/EXPIRED 예약을 CONFIRMED로 강제한다.
+     * 결제가 이미 승인된 주문이므로 재고 재차감(호출자 Lua)과 함께 원장을 확정 상태로 되돌린다.
+     */
+    public void forceConfirm() {
+        status = ReservationStatus.CONFIRMED;
+    }
+
     public void release() {
         if (status == ReservationStatus.RESERVED) {
             status = ReservationStatus.RELEASED;

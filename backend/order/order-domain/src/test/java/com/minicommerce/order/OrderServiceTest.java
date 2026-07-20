@@ -199,7 +199,7 @@ class OrderServiceTest {
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.PAID);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
         assertThat(result.getPaymentKey()).isEqualTo("pay-key-1");
-        verify(inventoryPort).confirmByOrderId("order-1");
+        // 재고 확정은 동기 호출이 아니라 OrderPaid 발행으로 위임된다(GH #3 S4 코레오그래피).
         verify(eventPublisher).publishOrderPaid(eq("order-1"), eq("cust-1"), any());
     }
 
@@ -335,9 +335,9 @@ class OrderServiceTest {
         Order result = orderService.cancel("order-1", "cust-1", "고객 변심");
 
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
-        InOrder inOrder = inOrder(paymentGatewayPort, inventoryPort, orderRepository, eventPublisher);
+        // 재입고는 동기 호출이 아니라 OrderCanceled 발행으로 위임된다(GH #3 S4 코레오그래피).
+        InOrder inOrder = inOrder(paymentGatewayPort, orderRepository, eventPublisher);
         inOrder.verify(paymentGatewayPort).cancel("pay-key-1", "고객 변심");
-        inOrder.verify(inventoryPort).restockByOrderId("order-1");
         inOrder.verify(orderRepository).save(any(Order.class));
         inOrder.verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
     }
@@ -351,7 +351,6 @@ class OrderServiceTest {
                 .isInstanceOf(OrderNotFoundException.class);
 
         verify(paymentGatewayPort, never()).cancel(any(), any());
-        verify(inventoryPort, never()).restockByOrderId(any());
         verify(orderRepository, never()).save(any());
     }
 
@@ -367,7 +366,6 @@ class OrderServiceTest {
                 .isInstanceOf(OrderCancelNotAllowedException.class);
 
         verify(paymentGatewayPort, never()).cancel(any(), any());
-        verify(inventoryPort, never()).restockByOrderId(any());
         verify(orderRepository, never()).save(any());
     }
 
@@ -381,30 +379,27 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(inventoryPort, never()).restockByOrderId(any());
         verify(orderRepository, never()).save(any());
         verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test
-    @DisplayName("실패: 환불 성공 후 재입고 예외 시 save/이벤트 없이 전파(주문은 PAID 유지, 재시도 가능)")
-    void cancel_RestockFails_propagatesAndOrderStaysPaid() {
+    @DisplayName("실패: 환불 성공 후 로컬 저장 예외 시 이벤트 없이 전파(주문은 PAID 유지, 재시도 가능)")
+    void cancel_LocalSaveFails_propagatesAndOrderStaysPaid() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
         when(paymentGatewayPort.cancel(any(), any())).thenReturn(new Cancellation(Instant.now()));
-        doThrow(new RuntimeException("redis down")).when(inventoryPort).restockByOrderId("order-1");
+        when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("db down"));
 
         assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(orderRepository, never()).save(any());
         verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test
-    @DisplayName("성공: 관리자 취소 경로는 소유권을 검증하지 않고 취소한다")
+    @DisplayName("성공: 관리자 취소 경로는 소유권을 검증하지 않고 취소한다(재입고는 OrderCanceled 발행으로 위임)")
     void cancelByAdmin_Success_noOwnershipCheck() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
@@ -414,7 +409,6 @@ class OrderServiceTest {
         Order result = orderService.cancelByAdmin("order-1", "관리자 취소");
 
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
-        verify(inventoryPort).restockByOrderId("order-1");
         verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
     }
 }

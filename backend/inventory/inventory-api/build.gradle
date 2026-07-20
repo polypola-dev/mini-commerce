@@ -12,6 +12,9 @@ dependencies {
     implementation project(':inventory:inventory-core')
     // 이벤트 계약(GH #3 S3): InventoryEventExternalizationConfig가 Kafka 토픽으로 라우팅한다.
     implementation project(':inventory:inventory-events')
+    // order 이벤트 계약(GH #3 S4): OrderEventKafkaConsumer가 order.paid/order.canceled를 구독해
+    // confirm/restock을 조율한다(shop-api notification과 동일하게 계약 소비 방향).
+    implementation project(':order:order-events')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

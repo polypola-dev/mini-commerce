@@ -96,28 +96,5 @@ public class InventoryRestAdapter implements InventoryPort {
         }
     }
 
-    @Override
-    public void confirmByOrderId(String orderId) {
-        settle(orderId, "confirm");
-    }
-
-    @Override
-    public void restockByOrderId(String orderId) {
-        settle(orderId, "restock");
-    }
-
-    private void settle(String orderId, String action) {
-        try {
-            restClient.post()
-                    .uri("/internal/inventory/reservations/{orderId}/" + action, orderId)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (HttpClientErrorException e) {
-            // 404(원장 없음)/409 등 — 재시도로 해소되지 않는 상태 오류.
-            throw new IllegalStateException("Inventory " + action + " rejected for order " + orderId
-                    + ": " + e.getResponseBodyAsString(), e);
-        } catch (HttpServerErrorException | ResourceAccessException e) {
-            throw new InventoryUnavailableException("Inventory " + action + " failed for order " + orderId, e);
-        }
-    }
+    // confirm/restock은 REST가 아니라 order.paid/order.canceled 발행으로 트리거된다(GH #3 S4).
 }

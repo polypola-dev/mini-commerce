@@ -145,7 +145,8 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
         Confirmation confirmation = paymentGatewayPort.confirm(paymentKey, orderId, amount);
         order.markPaid(confirmation.paymentKey());
         order = orderRepository.save(order);
-        inventoryPort.confirmByOrderId(orderId);
+        // 재고 확정은 동기 호출하지 않는다(GH #3 S4) — OrderPaid 발행이 inventory-api의 confirm
+        // 코레오그래피를 구동한다. 아웃박스(event_publication) + order-batch 스윕이 유실을 방지한다.
         eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());
         return order;
     }
@@ -172,10 +173,11 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
             throw new OrderCancelNotAllowedException(order.getId());
         }
         // PG 환불 선행(동기). 성공 후 로컬 실패 시 주문이 PAID로 남아 같은 엔드포인트 재시도로 수렴한다
-        // (어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑). 재입고를 save보다 앞에 둬 재입고 실패 시에도 재시도 가능.
+        // (어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑). 재고 재입고는 동기 호출하지 않는다
+        // (GH #3 S4) — OrderCanceled 발행이 inventory-api의 restock 코레오그래피를 구동하고,
+        // 아웃박스 + order-batch 스윕이 유실을 방지한다(inventory restock은 RESTOCKED 멱등).
         paymentGatewayPort.cancel(order.getPaymentKey(), reason);
         try {
-            inventoryPort.restockByOrderId(order.getId());
             order.markCanceled();
             Order saved = orderRepository.save(order);
             eventPublisher.publishOrderCanceled(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());

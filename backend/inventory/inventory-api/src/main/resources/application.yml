@@ -46,6 +46,13 @@ spring:
       # Modulith events-kafka(ByteArrayJsonMessageConverter)가 JSON byte[]를 넘기므로 그대로 통과
       # (order-api application.yml 주석 참고 — String으로 두면 SerializationException).
       value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    # order.paid/order.canceled 구독(GH #3 S4 — OrderEventKafkaConsumer). 발행측(order Modulith)이
+    # JSON byte[]로 보내므로 shop-api notification 컨슈머와 동일하게 맞춘다.
+    consumer:
+      group-id: inventory
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
   modulith:
     # 미발행 inventory.reservation.expired의 재시도. order 쪽과 달리 별도 스위퍼를 두지 않고
     # 재시작 시 재발행으로 갈음한다 — 컨슈머(order-batch expire)가 멱등(PENDING_PAYMENT 가드)이라

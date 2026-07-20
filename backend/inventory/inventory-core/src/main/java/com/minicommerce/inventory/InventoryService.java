@@ -5,6 +5,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class InventoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
 
     private static final Duration RESERVATION_TTL = Duration.ofMinutes(10);
     // 예약 해시 TTL(24h) — 예약 만료(10분)와 의도적으로 분리한다(GH #3 S3). 만료의 권위는 DB
@@ -86,6 +90,27 @@ public class InventoryService {
 
             redis.call('HSET', KEYS[1], 'status', 'CONFIRMED')
             redis.call('EXPIRE', KEYS[1], 86400)
+            return 1
+            """, Long.class);
+
+    // 결제가 이긴 경합(payment-wins, GH #3 설계 D-C). 리퍼가 먼저 예약을 RELEASED로 만든 뒤
+    // order.paid가 도착한 경우 — 결제는 이미 승인됐으므로 재고를 다시 차감(DECRBY)하고 CONFIRMED로
+    // 강제한다(순간 음수 재고 허용). 이미 CONFIRMED/RESTOCKED면 스킵(2)해 재전달·이중차감을 막는다.
+    // 해시가 TTL로 소멸했어도 DB 원장이 가드를 통과한 상태이므로 DECRBY 후 해시를 재기록한다.
+    private final DefaultRedisScript<Long> forceConfirmScript = new DefaultRedisScript<>("""
+            local reservationKey = KEYS[1]
+            local status = redis.call('HGET', reservationKey, 'status')
+
+            if status == 'CONFIRMED' or status == 'RESTOCKED' then
+              return 2
+            end
+
+            for i = 2, #KEYS do
+              redis.call('DECRBY', KEYS[i], tonumber(ARGV[i - 1]))
+            end
+
+            redis.call('HSET', reservationKey, 'status', 'CONFIRMED')
+            redis.call('EXPIRE', reservationKey, 86400)
             return 1
             """, Long.class);
 
@@ -215,12 +240,46 @@ public class InventoryService {
         return true;
     }
 
+    /**
+     * 결제 확정(order.paid 소비, GH #3 S4 코레오그래피). 정상 경로는 RESERVED→CONFIRMED.
+     * 리퍼가 먼저 예약을 RELEASED로 만든 경합에서는 재고를 다시 차감하고 CONFIRMED로 강제한다
+     * (payment-wins, D-C). CONFIRMED는 멱등 no-op, RESTOCKED는 이미 취소·재입고된 주문이라
+     * 결제 확정을 적용하지 않고 경고만 남긴다(정상 흐름에선 발생 불가 — 재전달 방어).
+     */
     public void confirmByOrderId(String orderId) {
         InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
-        reservation.confirm();
-        reservationRepository.save(reservation);
-        redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId())));
+        ReservationStatus before = reservation.getStatus();
+        switch (before) {
+            case CONFIRMED -> {
+                return; // 멱등: 이미 확정됨
+            }
+            case RESTOCKED -> {
+                log.warn("order.paid for already-restocked reservation orderId={} — skipping confirm", orderId);
+                return;
+            }
+            case RESERVED -> {
+                reservation.confirm();
+                reservationRepository.save(reservation);
+                redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId())));
+            }
+            case RELEASED, EXPIRED -> {
+                // payment-wins: 리퍼가 이긴 경합. 결제는 승인됐으므로 재고를 다시 차감하고 확정한다.
+                log.warn("payment won the expiry race for orderId={} (reservation was {}) — force-confirming, "
+                        + "stock may go momentarily negative", orderId, before);
+                reservation.forceConfirm();
+                reservationRepository.save(reservation);
+                List<String> keys = new java.util.ArrayList<>();
+                keys.add(reservationKey(reservation.getId()));
+                keys.addAll(reservation.getLines().stream()
+                        .map(line -> stockKey(line.getProductId()))
+                        .toList());
+                String[] args = reservation.getLines().stream()
+                        .map(line -> String.valueOf(line.getQuantity()))
+                        .toArray(String[]::new);
+                redisTemplate.execute(forceConfirmScript, keys, args);
+            }
+        }
     }
 
     public void restockByOrderId(String orderId) {

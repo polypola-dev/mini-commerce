@@ -203,8 +203,8 @@ class InventoryServiceTest {
     // ----------------------------------------------------------------
 
     @Test
-    @DisplayName("confirmByOrderId: 원장 CONFIRMED 전이 + Redis confirm Lua 실행")
-    void confirmByOrderId_transitionsLedgerAndRedis() {
+    @DisplayName("confirmByOrderId: RESERVED → 원장 CONFIRMED 전이 + Redis confirm Lua(재고 불변)")
+    void confirmByOrderId_reserved_transitionsLedgerAndRedis() {
         InventoryReservation reservation = reservedReservation();
         when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
 
@@ -212,6 +212,48 @@ class InventoryServiceTest {
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         verify(redisTemplate).execute(any(), eq(List.of("reservation:order-1")));
+    }
+
+    @Test
+    @DisplayName("confirmByOrderId: 이미 CONFIRMED면 멱등 no-op(Redis 미접근)")
+    void confirmByOrderId_alreadyConfirmed_isNoOp() {
+        InventoryReservation reservation = reservedReservation();
+        reservation.confirm();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+
+        inventoryService.confirmByOrderId("order-1");
+
+        verify(redisTemplate, never()).execute(any(), anyList());
+        verify(redisTemplate, never()).execute(any(), anyList(), any());
+    }
+
+    @Test
+    @DisplayName("confirmByOrderId: RELEASED(리퍼가 이긴 경합) → force-confirm으로 재차감 + CONFIRMED 강제(payment-wins)")
+    void confirmByOrderId_released_forceConfirms() {
+        InventoryReservation reservation = reservedReservation();
+        reservation.release(); // 리퍼가 먼저 해제
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        doReturn(1L).when(redisTemplate).execute(any(), anyList(), any());
+
+        inventoryService.confirmByOrderId("order-1");
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+        // force-confirm Lua는 예약키 + stock 키를 함께 넘긴다(재차감)
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:order-1", "stock:prod-1")), eq("2"));
+    }
+
+    @Test
+    @DisplayName("confirmByOrderId: 이미 RESTOCKED(취소·재입고된 주문)면 확정 미적용 + 경고(재전달 방어)")
+    void confirmByOrderId_alreadyRestocked_skips() {
+        InventoryReservation reservation = reservedReservation();
+        reservation.confirm();
+        reservation.restock();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+
+        inventoryService.confirmByOrderId("order-1");
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
+        verify(redisTemplate, never()).execute(any(), anyList(), any());
     }
 
     @Test

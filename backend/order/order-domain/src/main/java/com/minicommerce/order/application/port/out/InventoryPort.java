@@ -26,9 +26,6 @@ public interface InventoryPort {
     /** 결제 승인 전 사전 가드용 상태 조회 — 만료 경합 창 축소(GH #3 설계 D-B). */
     ReservationState status(String orderId);
 
-    /** S3 한시 동기 경로 — S4에서 order.paid 구독(코레오그래피)으로 대체 후 제거. */
-    void confirmByOrderId(String orderId);
-
-    /** S3 한시 동기 경로 — S4에서 order.canceled 구독(코레오그래피)으로 대체 후 제거. */
-    void restockByOrderId(String orderId);
+    // confirm/restock은 order가 동기 호출하지 않는다 — order.paid/order.canceled 발행이
+    // inventory-api의 코레오그래피 구독을 구동한다(GH #3 S4).
 }
