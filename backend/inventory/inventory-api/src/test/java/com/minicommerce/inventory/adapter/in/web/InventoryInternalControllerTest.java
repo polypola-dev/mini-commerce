@@ -1,4 +1,4 @@
-package com.minicommerce.inventory;
+package com.minicommerce.inventory.adapter.in.web;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,39 +19,44 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.minicommerce.inventory.application.port.in.GetStocksUseCase;
+import com.minicommerce.inventory.application.port.in.SetStockUseCase;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryInternalControllerTest {
 
     @Mock
-    private InventoryService inventoryService;
+    private GetStocksUseCase getStocksUseCase;
+
+    @Mock
+    private SetStockUseCase setStockUseCase;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new InventoryInternalController(inventoryService)).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(new InventoryInternalController(getStocksUseCase, setStockUseCase))
+                .build();
     }
 
     @Test
-    @DisplayName("GET /internal/inventory/stocks?ids=a,b: 각 id의 availableStock(default 0)을 Map으로 반환")
+    @DisplayName("GET /internal/inventory/stocks?ids=a,b: 유즈케이스 결과 Map을 그대로 반환")
     void availableStocks_returns_map_for_each_id() throws Exception {
-        when(inventoryService.availableStock("a", 0L)).thenReturn(5L);
-        when(inventoryService.availableStock("b", 0L)).thenReturn(3L);
+        when(getStocksUseCase.availableStocks(List.of("a", "b"))).thenReturn(Map.of("a", 5L, "b", 3L));
 
         mockMvc.perform(get("/internal/inventory/stocks").param("ids", "a,b")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.a").value(5))
                 .andExpect(jsonPath("$.b").value(3));
-
-        verify(inventoryService).availableStock("a", 0L);
-        verify(inventoryService).availableStock("b", 0L);
     }
 
     @Test
     @DisplayName("GET /internal/inventory/stocks (ids 없음): 빈 Map 반환")
     void availableStocks_returns_empty_when_no_ids() throws Exception {
+        when(getStocksUseCase.availableStocks(null)).thenReturn(Map.of());
+
         mockMvc.perform(get("/internal/inventory/stocks").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{}"));
@@ -58,7 +65,7 @@ class InventoryInternalControllerTest {
     @Test
     @DisplayName("PUT /internal/inventory/stock/{id}: setStock 호출 후 갱신된 재고 반환")
     void setStock_updates_and_returns_available_stock() throws Exception {
-        when(inventoryService.availableStock("p1", 50L)).thenReturn(50L);
+        when(setStockUseCase.setStock("p1", 50L)).thenReturn(50L);
 
         mockMvc.perform(put("/internal/inventory/stock/p1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -66,6 +73,6 @@ class InventoryInternalControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("50"));
 
-        verify(inventoryService).setStock("p1", 50L);
+        verify(setStockUseCase).setStock("p1", 50L);
     }
 }
