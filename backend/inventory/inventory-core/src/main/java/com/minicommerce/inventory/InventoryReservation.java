@@ -75,15 +75,27 @@ public class InventoryReservation {
         status = ReservationStatus.CONFIRMED;
     }
 
+    /**
+     * 결제가 이긴 경합인데 재고가 이미 다른 주문에 채여 force-confirm이 불가능한 경우 예약을 OVERSOLD로 표시한다
+     * (payment-wins force-confirm이 오버셀을 만난 상태 — 이후 주문은 정직하게 자동 취소+환불로 처리한다).
+     */
+    public void markOversold() {
+        status = ReservationStatus.OVERSOLD;
+    }
+
     public void release() {
         if (status == ReservationStatus.RESERVED) {
             status = ReservationStatus.RELEASED;
         }
     }
 
-    /** 확정된 재고를 취소로 되돌린다. 이미 RESTOCKED면 이중 복원 방지를 위해 no-op(false 반환). */
+    /**
+     * 확정된 재고를 취소로 되돌린다. 이미 RESTOCKED면 이중 복원 방지를 위해 no-op(false 반환).
+     * OVERSOLD 예약도 no-op(false) — force-confirm이 재고 부족으로 DECRBY를 아예 하지 않았으므로
+     * 되돌려줄 재고가 없다(order.canceled 소비 시 IllegalStateException으로 인한 컨슈머 무한 재시도 방지).
+     */
     public boolean restock() {
-        if (status == ReservationStatus.RESTOCKED) {
+        if (status == ReservationStatus.RESTOCKED || status == ReservationStatus.OVERSOLD) {
             return false;
         }
         if (status != ReservationStatus.CONFIRMED) {

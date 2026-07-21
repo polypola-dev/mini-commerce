@@ -1,5 +1,9 @@
 package com.minicommerce.inventory;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
@@ -7,10 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class InventoryService {
@@ -25,8 +31,14 @@ public class InventoryService {
     // 해시 TTL과 동일한 값으로, "해시 없음 = Redis 차감이 없었음" 불변식을 성립시킨다.
     private static final long RESERVATION_HASH_TTL_SECONDS = 86_400L;
 
+    // 오버셀 발생 상품 구분용 태그 키(어떤 상품에서 얼마나 자주 오버셀되는지 관측 — 한정판 추적 목적).
+    private static final AttributeKey<String> PRODUCT_ID_KEY = AttributeKey.stringKey("product_id");
+
     private final StringRedisTemplate redisTemplate;
     private final InventoryReservationRepository reservationRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    // payment-wins force-confirm이 재고 소진(오버셀)으로 실패한 예약 라인 수량을 상품별로 집계한다.
+    private final LongCounter oversoldCounter;
 
     private final DefaultRedisScript<Long> reserveScript = new DefaultRedisScript<>("""
             local reservationKey = KEYS[#KEYS]
@@ -95,14 +107,25 @@ public class InventoryService {
 
     // 결제가 이긴 경합(payment-wins, GH #3 설계 D-C). 리퍼가 먼저 예약을 RELEASED로 만든 뒤
     // order.paid가 도착한 경우 — 결제는 이미 승인됐으므로 재고를 다시 차감(DECRBY)하고 CONFIRMED로
-    // 강제한다(순간 음수 재고 허용). 이미 CONFIRMED/RESTOCKED면 스킵(2)해 재전달·이중차감을 막는다.
-    // 해시가 TTL로 소멸했어도 DB 원장이 가드를 통과한 상태이므로 DECRBY 후 해시를 재기록한다.
+    // 강제한다. 단 reserve와 동일한 2-패스 구조로, 먼저 전 품목의 재고를 검사해 하나라도 부족하면
+    // 아무것도 차감하지 않고 0을 반환한다 — 리퍼가 풀어준 재고를 이미 다른 주문이 채간 경우
+    // (오버셀)를 막기 위함이다. 이미 CONFIRMED/RESTOCKED면 스킵(2)해 재전달·이중차감을 막는다.
+    // 반환값: 1=재차감 후 CONFIRMED, 2=이미 확정/재입고(멱등 스킵), 0=재고 부족(force-confirm 불가 — 호출자가 오버셀 처리).
+    // 해시가 TTL로 소멸했어도 DB 원장이 가드를 통과한 상태이므로 통과 시 DECRBY 후 해시를 재기록한다.
     private final DefaultRedisScript<Long> forceConfirmScript = new DefaultRedisScript<>("""
             local reservationKey = KEYS[1]
             local status = redis.call('HGET', reservationKey, 'status')
 
             if status == 'CONFIRMED' or status == 'RESTOCKED' then
               return 2
+            end
+
+            for i = 2, #KEYS do
+              local stock = tonumber(redis.call('GET', KEYS[i]) or '0')
+              local quantity = tonumber(ARGV[i - 1])
+              if stock < quantity then
+                return 0
+              end
             end
 
             for i = 2, #KEYS do
@@ -137,9 +160,16 @@ public class InventoryService {
             return 1
             """, Long.class);
 
-    public InventoryService(StringRedisTemplate redisTemplate, InventoryReservationRepository reservationRepository) {
+    public InventoryService(StringRedisTemplate redisTemplate, InventoryReservationRepository reservationRepository,
+            ApplicationEventPublisher eventPublisher, OpenTelemetry openTelemetry) {
         this.redisTemplate = redisTemplate;
         this.reservationRepository = reservationRepository;
+        this.eventPublisher = eventPublisher;
+        this.oversoldCounter = openTelemetry.getMeter("inventory-api")
+                .counterBuilder("inventory.reservation.oversold")
+                .setDescription("payment-wins force-confirm이 재고 소진으로 실패한(오버셀) 예약 라인 수량")
+                .setUnit("{item}")
+                .build();
     }
 
     public void setStock(String productId, long stock) {
@@ -242,10 +272,13 @@ public class InventoryService {
 
     /**
      * 결제 확정(order.paid 소비, GH #3 S4 코레오그래피). 정상 경로는 RESERVED→CONFIRMED.
-     * 리퍼가 먼저 예약을 RELEASED로 만든 경합에서는 재고를 다시 차감하고 CONFIRMED로 강제한다
-     * (payment-wins, D-C). CONFIRMED는 멱등 no-op, RESTOCKED는 이미 취소·재입고된 주문이라
-     * 결제 확정을 적용하지 않고 경고만 남긴다(정상 흐름에선 발생 불가 — 재전달 방어).
+     * 리퍼가 먼저 예약을 RELEASED로 만든 경합에서는 재고가 실제로 남아있는지 확인한 뒤에만 재차감+CONFIRMED로
+     * 강제한다(payment-wins, D-C). 리퍼가 풀어준 재고를 이미 다른 주문이 채가 재고가 없으면(오버셀) 강제 확정
+     * 대신 예약을 OVERSOLD로 표시하고 {@link InventoryReservationOversoldEvent}를 발행해 주문 자동 취소+환불을
+     * 요청한다. CONFIRMED는 멱등 no-op, RESTOCKED/OVERSOLD는 이미 종결된 주문이라 확정을 적용하지 않고
+     * 경고만 남긴다(재전달 방어).
      */
+    @Transactional
     public void confirmByOrderId(String orderId) {
         InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
@@ -258,17 +291,19 @@ public class InventoryService {
                 log.warn("order.paid for already-restocked reservation orderId={} — skipping confirm", orderId);
                 return;
             }
+            case OVERSOLD -> {
+                // 이미 오버셀로 판정돼 자동 취소+환불이 요청된 예약(order.paid 재전달). 멱등 스킵 — 이벤트 재발행 안 함.
+                log.warn("order.paid for already-oversold reservation orderId={} — skipping confirm", orderId);
+                return;
+            }
             case RESERVED -> {
                 reservation.confirm();
                 reservationRepository.save(reservation);
                 redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId())));
             }
             case RELEASED, EXPIRED -> {
-                // payment-wins: 리퍼가 이긴 경합. 결제는 승인됐으므로 재고를 다시 차감하고 확정한다.
-                log.warn("payment won the expiry race for orderId={} (reservation was {}) — force-confirming, "
-                        + "stock may go momentarily negative", orderId, before);
-                reservation.forceConfirm();
-                reservationRepository.save(reservation);
+                // payment-wins: 리퍼가 이긴 경합. Lua를 먼저 실행해 재고가 실제로 남아있는지 확인한 뒤에만
+                // 원장을 확정한다(Lua 실패 시 원장이 CONFIRMED로 앞서가는 결함 방지).
                 List<String> keys = new java.util.ArrayList<>();
                 keys.add(reservationKey(reservation.getId()));
                 keys.addAll(reservation.getLines().stream()
@@ -277,7 +312,28 @@ public class InventoryService {
                 String[] args = reservation.getLines().stream()
                         .map(line -> String.valueOf(line.getQuantity()))
                         .toArray(String[]::new);
-                redisTemplate.execute(forceConfirmScript, keys, args);
+                Long result = redisTemplate.execute(forceConfirmScript, keys, args);
+                if (result != null && (result == 1L || result == 2L)) {
+                    // 재고가 남아있어 재차감 성공(또는 이미 확정된 멱등) — 결제 승인대로 확정한다.
+                    log.warn("payment won the expiry race for orderId={} (reservation was {}) — force-confirming, "
+                            + "stock may go momentarily negative", orderId, before);
+                    reservation.forceConfirm();
+                    reservationRepository.save(reservation);
+                } else {
+                    // 0/null: 리퍼가 풀어준 재고를 이미 다른 주문이 채감 — force-confirm 불가(오버셀).
+                    // 정직하게 예약을 OVERSOLD로 표시하고 주문 자동 취소+환불을 요청한다.
+                    log.warn("payment won the expiry race for orderId={} but stock was already claimed by another "
+                            + "order — cannot force-confirm, marking oversold and requesting cancel+refund", orderId);
+                    reservation.markOversold();
+                    reservationRepository.save(reservation);
+                    // 상품별 오버셀 수량을 관측 — 어떤 상품(특히 한정판)에서 얼마나 자주 발생하는지 태그로 구분.
+                    for (ReservationLine line : reservation.getLines()) {
+                        oversoldCounter.add(line.getQuantity(),
+                                Attributes.of(PRODUCT_ID_KEY, line.getProductId()));
+                    }
+                    eventPublisher.publishEvent(new InventoryReservationOversoldEvent(
+                            reservation.getId(), orderId, Instant.now()));
+                }
             }
         }
     }

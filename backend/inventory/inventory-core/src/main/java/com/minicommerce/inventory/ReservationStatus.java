@@ -5,5 +5,6 @@ public enum ReservationStatus {
     CONFIRMED,
     RELEASED,
     EXPIRED,
-    RESTOCKED
+    RESTOCKED,
+    OVERSOLD
 }

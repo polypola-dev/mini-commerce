@@ -4,11 +4,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.LongCounterBuilder;
+import io.opentelemetry.api.metrics.Meter;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,13 +38,34 @@ class InventoryServiceTest {
     @Mock
     private InventoryReservationRepository reservationRepository;
 
-    @InjectMocks
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private OpenTelemetry openTelemetry;
+
+    @Mock
+    private Meter meter;
+
+    @Mock
+    private LongCounterBuilder counterBuilder;
+
+    @Mock
+    private LongCounter oversoldCounter;
+
     private InventoryService inventoryService;
 
     @BeforeEach
     void setUp() {
         // opsForValue() 호출 시 mock ValueOperations 반환
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // OTel 계측 체인 스텁 — 생성자에서 오버셀 카운터를 빌드하므로 주입 전에 준비한다.
+        when(openTelemetry.getMeter("inventory-api")).thenReturn(meter);
+        when(meter.counterBuilder("inventory.reservation.oversold")).thenReturn(counterBuilder);
+        when(counterBuilder.setDescription(anyString())).thenReturn(counterBuilder);
+        when(counterBuilder.setUnit(anyString())).thenReturn(counterBuilder);
+        when(counterBuilder.build()).thenReturn(oversoldCounter);
+        inventoryService = new InventoryService(redisTemplate, reservationRepository, eventPublisher, openTelemetry);
     }
 
     // ----------------------------------------------------------------
@@ -254,6 +283,44 @@ class InventoryServiceTest {
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
         verify(redisTemplate, never()).execute(any(), anyList(), any());
+    }
+
+    @Test
+    @DisplayName("confirmByOrderId: RELEASED인데 재고가 이미 채임(Lua 0) → OVERSOLD 표시 + 오버셀 이벤트 발행(자동 취소+환불 요청)")
+    void confirmByOrderId_released_stockAlreadyClaimed_marksOversoldAndPublishes() {
+        InventoryReservation reservation = reservedReservation();
+        reservation.release(); // 리퍼가 먼저 해제
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        doReturn(0L).when(redisTemplate).execute(any(), anyList(), any());
+
+        inventoryService.confirmByOrderId("order-1");
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.OVERSOLD);
+        ArgumentCaptor<InventoryReservationOversoldEvent> captor =
+                ArgumentCaptor.forClass(InventoryReservationOversoldEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().reservationId()).isEqualTo("order-1");
+        assertThat(captor.getValue().orderId()).isEqualTo("order-1");
+
+        // 오버셀 카운터가 상품별 수량(prod-1, 2)으로 증가했는지 검증(product_id 태그 구분).
+        ArgumentCaptor<Attributes> attrCaptor = ArgumentCaptor.forClass(Attributes.class);
+        verify(oversoldCounter).add(eq(2L), attrCaptor.capture());
+        assertThat(attrCaptor.getValue().get(AttributeKey.stringKey("product_id"))).isEqualTo("prod-1");
+    }
+
+    @Test
+    @DisplayName("confirmByOrderId: 이미 OVERSOLD(취소+환불 요청됨)면 멱등 스킵 + 이벤트 재발행 안 함(재전달 방어)")
+    void confirmByOrderId_alreadyOversold_isNoOpWithoutRepublish() {
+        InventoryReservation reservation = reservedReservation();
+        reservation.release();
+        reservation.markOversold();
+        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+
+        inventoryService.confirmByOrderId("order-1");
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.OVERSOLD);
+        verify(redisTemplate, never()).execute(any(), anyList(), any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

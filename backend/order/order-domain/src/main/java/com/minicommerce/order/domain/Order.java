@@ -98,7 +98,7 @@ public class Order {
     /** 결제 완료된 주문을 취소한다(PG 환불 + 재입고 이후 호출). PAID가 아니면 취소 불가. */
     public void markCanceled() {
         if (status != OrderStatus.PAID) {
-            throw new OrderCancelNotAllowedException(id);
+            throw new OrderCancelNotAllowedException(id, status);
         }
         status = OrderStatus.CANCELED;
     }

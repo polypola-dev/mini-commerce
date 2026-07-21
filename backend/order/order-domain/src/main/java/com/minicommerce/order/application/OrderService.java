@@ -174,7 +174,7 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
 
     private Order doCancel(Order order, String reason) {
         if (order.getStatus() != OrderStatus.PAID) {
-            throw new OrderCancelNotAllowedException(order.getId());
+            throw new OrderCancelNotAllowedException(order.getId(), order.getStatus());
         }
         // PG 환불 선행(동기, DB 트랜잭션 밖 — GH #21). 성공 후 로컬 실패 시 주문이 PAID로 남아
         // 같은 엔드포인트 재시도로 수렴한다(어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑).

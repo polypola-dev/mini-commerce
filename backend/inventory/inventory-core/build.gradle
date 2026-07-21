@@ -1,5 +1,16 @@
+// 오버셀 관측 메트릭(inventory.reservation.oversold)을 OTel Java API로 직접 계측한다. inventory-api/
+// order-api와 동일하게 Micrometer 브릿지 대신 OTel로 통일한다(공존 금지). BOOT 모듈(inventory-api)이
+// opentelemetry-spring-boot-starter로 OpenTelemetry 빈을 자동 등록하므로 여기선 API만 컴파일 클래스패스에 둔다.
+dependencyManagement {
+    imports {
+        mavenBom 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.29.0'
+    }
+}
+
 dependencies {
     implementation project(':shared-core')
+    // 오버셀 카운터 계측용 OTel API(버전은 위 BOM이 관리). Meter/LongCounter/Attributes만 쓴다.
+    implementation 'io.opentelemetry:opentelemetry-api'
     // ExpiredReservationReleaser가 만료 이벤트(InventoryReservationExpiredEvent)를 발행한다(GH #3 S3).
     implementation project(':inventory:inventory-events')
 
