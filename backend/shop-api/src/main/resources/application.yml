@@ -72,6 +72,9 @@ app:
   security:
     jwks-url: ${SUPABASE_JWKS_URL:https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json}
     bff-secret-key: ${BFF_SECRET_KEY}
+    # 서비스간 /internal 인증(B3, ADR-020). 수신(catalog의 /internal/products)과 발신
+    # (InventoryClient→inventory-api) 양쪽에 쓰인다. 콤마 구분 복수 키는 무중단 로테이션용.
+    internal-api-key: ${INTERNAL_API_KEY}
   supabase:
     url: ${SUPABASE_URL:https://wzdifkwupleogfixibiv.supabase.co}
     service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}

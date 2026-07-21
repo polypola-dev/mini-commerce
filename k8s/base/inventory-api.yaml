@@ -73,6 +73,12 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: KAFKA_BOOTSTRAP_SERVERS
+            # 이 서비스의 웹 API는 전부 /internal이라 이 키가 유일한 앱 레이어 방어다(B3, ADR-020)
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: INTERNAL_API_KEY
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

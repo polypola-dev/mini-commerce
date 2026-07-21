@@ -45,6 +45,8 @@ app:
   security:
     jwks-url: ${SUPABASE_JWKS_URL:https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json}
     bff-secret-key: ${BFF_SECRET_KEY}
+    # 서비스간 /internal 인증(B3, ADR-020) — 관리자 주문취소의 restock 호출에 첨부된다.
+    internal-api-key: ${INTERNAL_API_KEY}
 
 # OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
 # 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal

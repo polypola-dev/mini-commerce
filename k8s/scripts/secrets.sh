@@ -23,6 +23,7 @@ render_manifest() {
   : "${BFF_SECRET_KEY:?.env에 BFF_SECRET_KEY가 없습니다}"
   : "${SUPABASE_SERVICE_ROLE_KEY:?.env에 SUPABASE_SERVICE_ROLE_KEY가 없습니다}"
   : "${TOSS_SECRET_KEY:?.env에 TOSS_SECRET_KEY가 없습니다}"
+  : "${INTERNAL_API_KEY:?.env에 INTERNAL_API_KEY가 없습니다}"
   cat <<EOF
 apiVersion: v1
 kind: Secret
@@ -39,6 +40,9 @@ stringData:
   BFF_SECRET_KEY: "$BFF_SECRET_KEY"
   SUPABASE_SERVICE_ROLE_KEY: "$SUPABASE_SERVICE_ROLE_KEY"
   TOSS_SECRET_KEY: "$TOSS_SECRET_KEY"
+  # 서비스간 /internal 인증(B3, ADR-020). 로테이션 중에는 콤마 구분 복수 키를 넣는다 —
+  # 수신측이 목록 전체를 허용하므로 신키 배포 → 발신 전환 → 구키 제거를 무중단으로 할 수 있다.
+  INTERNAL_API_KEY: "$INTERNAL_API_KEY"
 EOF
 }
 

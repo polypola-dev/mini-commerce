@@ -80,6 +80,10 @@ app:
     # order-infra의 InventoryRestAdapter가 전이의존으로 항상 조립되므로 호스트를 명시한다
     # (order-admin의 CATALOG_BASE_URL과 같은 이유 — 이 프로세스는 런타임에 호출하지 않는다).
     base-url: ${INVENTORY_BASE_URL:http://localhost:8084}
+  security:
+    # base-url과 같은 이유로 필요하다(B3, ADR-020) — order-infra의 RestClient 빈이 전이의존으로
+    # 조립되면서 이 값을 요구한다. 이 프로세스는 /internal을 호출하지도 노출하지도 않는다.
+    internal-api-key: ${INTERNAL_API_KEY}
 
 # OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
 # 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal

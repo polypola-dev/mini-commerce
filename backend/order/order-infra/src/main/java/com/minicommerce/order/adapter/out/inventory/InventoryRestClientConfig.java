@@ -1,5 +1,6 @@
 package com.minicommerce.order.adapter.out.inventory;
 
+import com.minicommerce.global.InternalApiContract;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +18,15 @@ class InventoryRestClientConfig {
 
     @Bean
     RestClient inventorySagaRestClient(RestClient.Builder builder,
-                                       @Value("${app.inventory.base-url:http://localhost:8084}") String baseUrl) {
+                                       @Value("${app.inventory.base-url:http://localhost:8084}") String baseUrl,
+                                       @Value("${app.security.internal-api-key}") String internalApiKey) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(2_000);
         requestFactory.setReadTimeout(5_000);
-        return builder.baseUrl(baseUrl).requestFactory(requestFactory).build();
+        // 서비스간 인증 헤더(B3, ADR-020) — 수신측 inventory-api의 InternalAuthFilter가 검증한다.
+        return builder.baseUrl(baseUrl)
+                .requestFactory(requestFactory)
+                .defaultHeader(InternalApiContract.INTERNAL_KEY_HEADER, internalApiKey)
+                .build();
     }
 }

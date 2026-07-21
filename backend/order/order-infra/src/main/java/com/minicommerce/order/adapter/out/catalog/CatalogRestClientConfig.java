@@ -1,5 +1,6 @@
 package com.minicommerce.order.adapter.out.catalog;
 
+import com.minicommerce.global.InternalApiContract;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +17,11 @@ class CatalogRestClientConfig {
     // ObservationRestClientCustomizer가 적용돼 분산 트레이스 자동계측이 붙는다(Issue #7).
     @Bean
     RestClient catalogRestClient(RestClient.Builder builder,
-                                 @Value("${app.catalog.base-url:http://localhost:8080}") String baseUrl) {
-        return builder.baseUrl(baseUrl).build();
+                                 @Value("${app.catalog.base-url:http://localhost:8080}") String baseUrl,
+                                 @Value("${app.security.internal-api-key}") String internalApiKey) {
+        // 서비스간 인증 헤더(B3, ADR-020) — 수신측 shop-api의 InternalAuthFilter가 검증한다.
+        return builder.baseUrl(baseUrl)
+                .defaultHeader(InternalApiContract.INTERNAL_KEY_HEADER, internalApiKey)
+                .build();
     }
 }

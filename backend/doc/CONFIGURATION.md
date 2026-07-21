@@ -55,6 +55,7 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 | `BFF_SECRET_KEY` | BFF 게이트웨이 검증 키 | SEC |
 | `SUPABASE_URL` | Supabase 프로젝트 URL | CM |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase admin API 키 | SEC |
+| `INTERNAL_API_KEY` | 서비스간 `/internal` 인증 (B3, ADR-020) — 수신(catalog)·발신(→inventory-api) 겸용 | SEC |
 
 ### order-api
 
@@ -67,6 +68,7 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 | `BFF_SECRET_KEY` | " | SEC |
 | `TOSS_SECRET_KEY` | 토스페이먼츠 결제 승인 API Basic 인증 시크릿 키 (C1) | SEC |
 | `INVENTORY_BASE_URL` | order→inventory-api 예약 사가 REST (GH #3) | CM |
+| `INTERNAL_API_KEY` | 서비스간 `/internal` 인증 (B3, ADR-020) — **발신 전용**(order-api는 `/internal` 미노출) | SEC |
 
 ### order-admin
 
@@ -74,7 +76,8 @@ order-api와 동일하되 **Kafka 없음** (`KAFKA_BOOTSTRAP_SERVERS` 불필요 
 `CATALOG_BASE_URL`/`INVENTORY_BASE_URL`은 현재 미호출이지만 order-infra 전이의존으로 조립되므로
 명시 유지(compose 주석 참고). `TOSS_SECRET_KEY`(SEC)는 관리자 주문취소가 Toss 환불을 실행하므로
 필요(GH #4) — order-api와 동일 값. 재입고는 order.canceled 발행으로 위임(S4 코레오그래피)이라
-inventory-api를 동기 호출하지 않는다.
+inventory-api를 동기 호출하지 않는다. `INTERNAL_API_KEY`(SEC)는 order-api와 동일하게 발신용으로
+필요하다(B3, ADR-020).
 
 ### order-batch
 
@@ -83,6 +86,7 @@ inventory-api를 동기 호출하지 않는다.
 | `KAFKA_BOOTSTRAP_SERVERS` | 미발행 이벤트 스윕 재발행 + `inventory.reservation.expired` 구독 | CM |
 | `CATALOG_BASE_URL` | order-infra 전이의존 조립용 | CM |
 | `INVENTORY_BASE_URL` | order-infra 전이의존 조립용(미호출) | CM |
+| `INTERNAL_API_KEY` | order-infra 전이의존 조립용(미호출) — RestClient 빈이 요구 (B3, ADR-020) | SEC |
 
 웹 API가 없어 `CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY` 불필요.
 
@@ -91,6 +95,7 @@ inventory-api를 동기 호출하지 않는다.
 | 변수 | 용도 | k8s |
 |---|---|---|
 | `KAFKA_BOOTSTRAP_SERVERS` | `order.paid`/`order.canceled` 구독 + `inventory.reservation.expired` 발행 | CM |
+| `INTERNAL_API_KEY` | 서비스간 `/internal` 인증 (B3, ADR-020) — 이 서비스의 **유일한** 앱 레이어 방어 | SEC |
 
 전용 `inventorydb`(Flyway 단독 소유). 외부(ingress) 미노출 — 전부 `/internal`이라
 `CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY`/`TOSS_SECRET_KEY` 불필요(shared-web 미의존).

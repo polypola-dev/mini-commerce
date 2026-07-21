@@ -70,6 +70,10 @@ app:
     # 이관). 다른 부팅 앱(order-*)은 inventory-core가 클래스패스에서 빠져 게이팅이 불필요해졌지만,
     # 명시적 플래그 이중 방어는 그대로 유지한다.
     enabled: true
+  security:
+    # 이 서비스의 웹 API는 전부 /internal이라 이 키가 유일한 앱 레이어 방어다(B3, ADR-020).
+    # 호출자는 order-api(예약 사가)와 shop-api(재고 조회/설정). 콤마 구분 복수 키는 로테이션용.
+    internal-api-key: ${INTERNAL_API_KEY}
 
 server:
   port: ${SERVER_PORT:8084}

@@ -74,6 +74,13 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: CATALOG_BASE_URL
+            # CATALOG_BASE_URL과 같은 이유 — order-infra의 RestClient 빈 조립용 (B3, ADR-020).
+            # 이 프로세스는 /internal을 호출하지도 노출하지도 않는다.
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: INTERNAL_API_KEY
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

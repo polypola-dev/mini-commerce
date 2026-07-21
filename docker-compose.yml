@@ -73,6 +73,9 @@ services:
       CORS_ALLOWED_ORIGINS: http://localhost:3000
       SUPABASE_JWKS_URL: https://wzdifkwupleogfixibiv.supabase.co/auth/v1/.well-known/jwks.json
       BFF_SECRET_KEY: ${BFF_SECRET_KEY}
+      # 서비스간 /internal 인증(B3, ADR-020) — catalog의 /internal/products 수신 검증과
+      # inventory-api로 나가는 재고 호출 양쪽에 쓰인다.
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     ports:
       - "18080:8080"
@@ -124,6 +127,8 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
       # 재고 예약 사가(reserve/release/status + 한시 confirm)는 inventory-api REST 호출(GH #3 S3).
       INVENTORY_BASE_URL: http://inventory-api:8084
+      # 서비스간 /internal 인증(B3, ADR-020) — 발신 전용(order-api는 /internal 미노출).
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       SERVER_PORT: "8081"
     ports:
       - "18081:8081"
@@ -169,6 +174,8 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
       # 관리자 주문취소의 재입고(restock)가 inventory-api REST 호출(GH #3 S3).
       INVENTORY_BASE_URL: http://inventory-api:8084
+      # 서비스간 /internal 인증(B3, ADR-020) — 발신 전용.
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       SERVER_PORT: "8082"
     ports:
       - "18082:8082"
@@ -205,6 +212,9 @@ services:
       REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       CATALOG_BASE_URL: http://shop-api:8080
+      # CATALOG_BASE_URL과 같은 이유(B3, ADR-020) — order-infra의 RestClient 빈이 전이의존으로
+      # 조립되면서 요구한다. 이 프로세스는 /internal을 호출하지도 노출하지도 않는다.
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       SERVER_PORT: "8083"
     # F6/F4 — shop-api의 mem_limit/stop_grace_period 주석 참고. 배치는 트래픽이 없어 limit을
     # 낮춰도 되지만(산정표: backend/doc/CONFIGURATION.md), 로컬은 검증 단순화를 위해 통일한다.
@@ -237,6 +247,8 @@ services:
       REDIS_PORT: 6379
       # inventory.reservation.expired 발행(Modulith 아웃박스 → Kafka, GH #3 S3).
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # 이 서비스의 웹 API는 전부 /internal이라 이 키가 유일한 앱 레이어 방어다(B3, ADR-020).
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       SERVER_PORT: "8084"
     ports:
       - "18084:8084"

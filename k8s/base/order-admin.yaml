@@ -93,6 +93,12 @@ spec:
                 secretKeyRef:
                   name: app-secrets
                   key: TOSS_SECRET_KEY
+            # 서비스간 /internal 인증(B3, ADR-020) — 주문취소 restock 호출에 첨부
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: INTERNAL_API_KEY
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
