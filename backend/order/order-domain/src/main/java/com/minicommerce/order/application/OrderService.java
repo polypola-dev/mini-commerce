@@ -7,7 +7,6 @@ import com.minicommerce.order.application.port.in.GetOrdersUseCase;
 import com.minicommerce.order.application.port.in.PlaceOrderUseCase;
 import com.minicommerce.order.application.port.out.InventoryPort;
 import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
-import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort.Confirmation;
@@ -32,8 +31,15 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 클래스 레벨 {@code @Transactional}을 두지 않는다(GH #21) — place/confirm/cancel이 inventory-api·
+ * PG 원격 호출을 포함하는데, 이를 로컬 DB 트랜잭션(Hikari 커넥션 점유) 안에 두면 원격 서비스
+ * 지연이 곧바로 커넥션 풀 고갈로 번진다. 원격 호출은 이 클래스에서 트랜잭션 없이 실행하고,
+ * 저장+아웃박스 이벤트 발행만 {@link OrderPersistenceService}(자체 {@code @Transactional})에
+ * 위임한다. 순수 조회(getOrders/getOrder)와 원격 호출이 없는 expire()는 필요한 곳에만
+ * 메서드 레벨로 트랜잭션을 명시한다.
+ */
 @Service
-@Transactional
 public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, CancelOrderUseCase, GetOrdersUseCase, ExpireOrderUseCase {
 
     private static final Log log = LogFactory.getLog(OrderService.class);
@@ -41,21 +47,21 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
     private final ProductQueryPort productQueryPort;
     private final InventoryPort inventoryPort;
     private final OrderRepository orderRepository;
-    private final OrderEventPublisher eventPublisher;
     private final PaymentGatewayPort paymentGatewayPort;
+    private final OrderPersistenceService orderPersistenceService;
 
     public OrderService(
             ProductQueryPort productQueryPort,
             InventoryPort inventoryPort,
             OrderRepository orderRepository,
-            OrderEventPublisher eventPublisher,
-            PaymentGatewayPort paymentGatewayPort
+            PaymentGatewayPort paymentGatewayPort,
+            OrderPersistenceService orderPersistenceService
     ) {
         this.productQueryPort = productQueryPort;
         this.inventoryPort = inventoryPort;
         this.orderRepository = orderRepository;
-        this.eventPublisher = eventPublisher;
         this.paymentGatewayPort = paymentGatewayPort;
+        this.orderPersistenceService = orderPersistenceService;
     }
 
     @Override
@@ -76,21 +82,21 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
                 .toList();
 
         // orderId를 선생성해 예약 멱등 키로 사용한다(예약 ID = orderId, GH #3 S3). 원격 reserve가
-        // 타임아웃 후 재시도돼도 inventory 쪽에서 이중 차감 없이 수렴한다.
+        // 타임아웃 후 재시도돼도 inventory 쪽에서 이중 차감 없이 수렴한다. 이 호출은 DB 트랜잭션
+        // 밖에서 실행된다(GH #21) — Hikari 커넥션을 물지 않은 채 원격 서비스를 기다린다.
         String orderId = UUID.randomUUID().toString();
         List<StockItem> stockItems = command.items().stream()
                 .map(i -> new StockItem(i.productId(), i.quantity()))
                 .toList();
         inventoryPort.reserve(orderId, stockItems);
 
+        Order newOrder = new Order(
+                orderId, customerId, lines,
+                command.shippingRecipient(), command.shippingPhone(),
+                command.shippingAddress(), command.shippingDetailAddress(), command.shippingZipCode()
+        );
         try {
-            Order order = orderRepository.save(new Order(
-                    orderId, customerId, lines,
-                    command.shippingRecipient(), command.shippingPhone(),
-                    command.shippingAddress(), command.shippingDetailAddress(), command.shippingZipCode()
-            ));
-            eventPublisher.publishOrderPlaced(order.getId(), order.getCustomerId(), order.getTotalAmount());
-            return order;
+            return orderPersistenceService.persistPlacedOrder(newOrder);
         } catch (RuntimeException e) {
             try {
                 inventoryPort.release(orderId);
@@ -136,7 +142,7 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
         }
         // 결제 승인 전 예약 상태 사전 가드(GH #3 설계 D-B) — 리퍼가 이미 해제한 예약이면 PG 승인
         // 전에 거절해 만료↔결제 경합 창을 좁힌다. CONFIRMED는 이전 시도가 재고 확정까지 마치고
-        // 끊긴 재시도 경로라 통과시킨다.
+        // 끊긴 재시도 경로라 통과시킨다. status()/confirm() 둘 다 DB 트랜잭션 밖에서 실행된다(GH #21).
         InventoryPort.ReservationState reservationState = inventoryPort.status(orderId);
         if (reservationState != InventoryPort.ReservationState.RESERVED
                 && reservationState != InventoryPort.ReservationState.CONFIRMED) {
@@ -144,11 +150,9 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
         }
         Confirmation confirmation = paymentGatewayPort.confirm(paymentKey, orderId, amount);
         order.markPaid(confirmation.paymentKey());
-        order = orderRepository.save(order);
         // 재고 확정은 동기 호출하지 않는다(GH #3 S4) — OrderPaid 발행이 inventory-api의 confirm
         // 코레오그래피를 구동한다. 아웃박스(event_publication) + order-batch 스윕이 유실을 방지한다.
-        eventPublisher.publishOrderPaid(order.getId(), order.getCustomerId(), order.getTotalAmount());
-        return order;
+        return orderPersistenceService.persistConfirmedPayment(order);
     }
 
     @Override
@@ -172,16 +176,14 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
         if (order.getStatus() != OrderStatus.PAID) {
             throw new OrderCancelNotAllowedException(order.getId());
         }
-        // PG 환불 선행(동기). 성공 후 로컬 실패 시 주문이 PAID로 남아 같은 엔드포인트 재시도로 수렴한다
-        // (어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑). 재고 재입고는 동기 호출하지 않는다
-        // (GH #3 S4) — OrderCanceled 발행이 inventory-api의 restock 코레오그래피를 구동하고,
-        // 아웃박스 + order-batch 스윕이 유실을 방지한다(inventory restock은 RESTOCKED 멱등).
+        // PG 환불 선행(동기, DB 트랜잭션 밖 — GH #21). 성공 후 로컬 실패 시 주문이 PAID로 남아
+        // 같은 엔드포인트 재시도로 수렴한다(어댑터가 ALREADY_CANCELED_PAYMENT를 성공으로 매핑).
+        // 재고 재입고는 동기 호출하지 않는다(GH #3 S4) — OrderCanceled 발행이 inventory-api의
+        // restock 코레오그래피를 구동하고, 아웃박스 + order-batch 스윕이 유실을 방지한다.
         paymentGatewayPort.cancel(order.getPaymentKey(), reason);
         try {
             order.markCanceled();
-            Order saved = orderRepository.save(order);
-            eventPublisher.publishOrderCanceled(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());
-            return saved;
+            return orderPersistenceService.persistCanceledOrder(order);
         } catch (RuntimeException e) {
             log.warn("Refund succeeded but local cancel failed for orderId=" + order.getId()
                     + ", paymentKey=" + order.getPaymentKey() + " — order stays PAID, retry cancel", e);
@@ -190,6 +192,7 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
     }
 
     @Override
+    @Transactional
     public void expire(String orderId) {
         orderRepository.findById(orderId).ifPresent(order -> {
             order.markExpired();

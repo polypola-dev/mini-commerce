@@ -1,11 +1,11 @@
 package com.minicommerce.order;
 
+import com.minicommerce.order.application.OrderPersistenceService;
 import com.minicommerce.order.application.OrderService;
 import com.minicommerce.order.application.PlaceOrderCommand;
 import com.minicommerce.order.application.port.out.InventoryPort;
 import com.minicommerce.order.application.port.out.InventoryPort.ReservationState;
 import com.minicommerce.order.application.port.out.InventoryPort.StockItem;
-import com.minicommerce.order.application.port.out.OrderEventPublisher;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort;
 import com.minicommerce.order.application.port.out.PaymentGatewayPort.Cancellation;
@@ -51,19 +51,19 @@ class OrderServiceTest {
     @Mock
     private OrderRepository orderRepository;
     @Mock
-    private OrderEventPublisher eventPublisher;
-    @Mock
     private PaymentGatewayPort paymentGatewayPort;
+    @Mock
+    private OrderPersistenceService orderPersistenceService;
 
     private OrderService orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(productQueryPort, inventoryPort, orderRepository, eventPublisher, paymentGatewayPort);
+        orderService = new OrderService(productQueryPort, inventoryPort, orderRepository, paymentGatewayPort, orderPersistenceService);
     }
 
     @Test
-    @DisplayName("성공: 주문 생성 시 orderId 선생성 → 재고 예약(멱등 키=orderId) → 저장 → 이벤트 발행")
+    @DisplayName("성공: 주문 생성 시 orderId 선생성 → 재고 예약(멱등 키=orderId) → 저장 위임(OrderPersistenceService)")
     void createOrder_Success() {
         // given
         String productId = "prod-1";
@@ -75,17 +75,18 @@ class OrderServiceTest {
         ProductInfo productInfo = new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000));
 
         when(productQueryPort.findProduct(productId)).thenReturn(productInfo);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderPersistenceService.persistPlacedOrder(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         Order order = orderService.place(command, "cust-1");
 
-        // then — 저장된 주문의 id와 reserve에 넘긴 멱등 키(orderId)가 일치한다(GH #3 S3)
+        // then — 저장된 주문의 id와 reserve에 넘긴 멱등 키(orderId)가 일치한다(GH #3 S3).
+        // 저장+이벤트 발행은 OrderPersistenceService에 위임되고(GH #21), 그 내부 동작은
+        // OrderPersistenceServiceTest가 검증한다.
         assertThat(order).isNotNull();
         verify(inventoryPort).reserve(eq(order.getId()), eq(List.of(new StockItem(productId, 2L))));
-        verify(orderRepository).save(any(Order.class));
+        verify(orderPersistenceService).persistPlacedOrder(any(Order.class));
         verify(inventoryPort, never()).release(any());
-        verify(eventPublisher).publishOrderPlaced(eq(order.getId()), eq("cust-1"), any());
     }
 
     @Test
@@ -104,14 +105,14 @@ class OrderServiceTest {
 
         when(productQueryPort.findProduct(productId)).thenReturn(productInfo);
         when(productQueryPort.findOption(optionId)).thenReturn(optionInfo);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderPersistenceService.persistPlacedOrder(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         Order order = orderService.place(command, "cust-1");
 
         // then: 단가 10000 + 추가금액 5000 = 15000
         assertThat(order.getTotalAmount()).isEqualByComparingTo(BigDecimal.valueOf(15000));
-        verify(orderRepository).save(any(Order.class));
+        verify(orderPersistenceService).persistPlacedOrder(any(Order.class));
     }
 
     @Test
@@ -133,7 +134,7 @@ class OrderServiceTest {
 
         verify(inventoryPort, never()).reserve(any(), any());
         verify(inventoryPort, never()).release(any());
-        verify(orderRepository, never()).save(any(Order.class));
+        verify(orderPersistenceService, never()).persistPlacedOrder(any());
     }
 
     @Test
@@ -146,7 +147,7 @@ class OrderServiceTest {
         );
         when(productQueryPort.findProduct(productId))
                 .thenReturn(new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000)));
-        when(orderRepository.save(any(Order.class))).thenThrow(new IllegalStateException("db down"));
+        when(orderPersistenceService.persistPlacedOrder(any(Order.class))).thenThrow(new IllegalStateException("db down"));
 
         assertThatThrownBy(() -> orderService.place(command, "cust-1"))
                 .isInstanceOf(IllegalStateException.class)
@@ -156,7 +157,6 @@ class OrderServiceTest {
         ArgumentCaptor<String> reservedOrderId = ArgumentCaptor.forClass(String.class);
         verify(inventoryPort).reserve(reservedOrderId.capture(), any());
         verify(inventoryPort).release(reservedOrderId.getValue());
-        verify(eventPublisher, never()).publishOrderPlaced(any(), any(), any());
     }
 
     @Test
@@ -169,7 +169,7 @@ class OrderServiceTest {
         );
         when(productQueryPort.findProduct(productId))
                 .thenReturn(new ProductInfo(productId, "테스트 상품", BigDecimal.valueOf(10000)));
-        when(orderRepository.save(any(Order.class))).thenThrow(new IllegalStateException("db down"));
+        when(orderPersistenceService.persistPlacedOrder(any(Order.class))).thenThrow(new IllegalStateException("db down"));
         doThrow(new RuntimeException("inventory down")).when(inventoryPort).release(any());
 
         assertThatThrownBy(() -> orderService.place(command, "cust-1"))
@@ -178,14 +178,15 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("성공: 결제 승인 시 금액 대조 후 게이트웨이 승인 → PAID 저장 + paymentKey 기록 + 재고 확정 + OrderPaid 발행")
+    @DisplayName("성공: 결제 승인 시 금액 대조 후 게이트웨이 승인 → PAID 상태로 저장 위임 + paymentKey 기록")
     void confirmPayment_Success() {
         // given
         Order pendingOrder = new Order("order-1", "cust-1", List.of(
                 new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
         ));
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(pendingOrder));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderPersistenceService.persistConfirmedPayment(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(inventoryPort.status("order-1")).thenReturn(ReservationState.RESERVED);
         when(paymentGatewayPort.confirm(eq("pay-key-1"), eq("order-1"), any(BigDecimal.class)))
                 .thenReturn(new Confirmation("pay-key-1", "카드", Instant.now()));
@@ -193,14 +194,13 @@ class OrderServiceTest {
         // when
         Order result = orderService.confirm("order-1", "cust-1", "pay-key-1", BigDecimal.valueOf(10000));
 
-        // then
+        // then — 저장 위임 직전 도메인 객체가 이미 PAID로 전이돼 있어야 한다. 실제 저장+
+        // OrderPaid 발행 동작은 OrderPersistenceServiceTest가 검증한다(GH #21).
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-        verify(orderRepository).save(captor.capture());
+        verify(orderPersistenceService).persistConfirmedPayment(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.PAID);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.PAID);
         assertThat(result.getPaymentKey()).isEqualTo("pay-key-1");
-        // 재고 확정은 동기 호출이 아니라 OrderPaid 발행으로 위임된다(GH #3 S4 코레오그래피).
-        verify(eventPublisher).publishOrderPaid(eq("order-1"), eq("cust-1"), any());
     }
 
     @Test
@@ -215,7 +215,7 @@ class OrderServiceTest {
                 .isInstanceOf(PaymentAmountMismatchException.class);
 
         verify(paymentGatewayPort, never()).confirm(any(), any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistConfirmedPayment(any());
     }
 
     @Test
@@ -229,7 +229,7 @@ class OrderServiceTest {
                 .isInstanceOf(OrderAlreadyProcessedException.class);
 
         verify(paymentGatewayPort, never()).confirm(any(), any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistConfirmedPayment(any());
     }
 
     @Test
@@ -244,7 +244,7 @@ class OrderServiceTest {
                 .isInstanceOf(OrderNotFoundException.class);
 
         verify(paymentGatewayPort, never()).confirm(any(), any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistConfirmedPayment(any());
     }
 
     @Test
@@ -260,7 +260,7 @@ class OrderServiceTest {
                 .isInstanceOf(ReservationNotActiveException.class);
 
         verify(paymentGatewayPort, never()).confirm(any(), any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistConfirmedPayment(any());
     }
 
     @Test
@@ -271,7 +271,7 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.confirm("missing", "cust-1", "pay-key-1", BigDecimal.valueOf(10000)))
                 .isInstanceOf(OrderNotFoundException.class);
 
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistConfirmedPayment(any());
     }
 
     @Test
@@ -286,7 +286,8 @@ class OrderServiceTest {
         // when
         orderService.expire("order-1");
 
-        // then
+        // then — expire()는 원격 호출이 없어 OrderPersistenceService를 거치지 않고
+        // orderRepository를 직접 쓴다(GH #21 범위 밖, 변경 없음).
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.EXPIRED);
@@ -325,25 +326,25 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("성공: 주문 취소 시 환불 → 재입고 → save → OrderCanceled 발행 순서로 처리되고 CANCELED가 된다")
+    @DisplayName("성공: 주문 취소 시 환불 → 저장 위임 순서로 처리되고 CANCELED가 된다")
     void cancel_Success() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderPersistenceService.persistCanceledOrder(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(paymentGatewayPort.cancel("pay-key-1", "고객 변심")).thenReturn(new Cancellation(Instant.now()));
 
         Order result = orderService.cancel("order-1", "cust-1", "고객 변심");
 
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
-        // 재입고는 동기 호출이 아니라 OrderCanceled 발행으로 위임된다(GH #3 S4 코레오그래피).
-        InOrder inOrder = inOrder(paymentGatewayPort, orderRepository, eventPublisher);
+        // 환불(원격, 트랜잭션 밖)이 저장 위임(로컬 트랜잭션)보다 먼저 실행돼야 한다(GH #21).
+        InOrder inOrder = inOrder(paymentGatewayPort, orderPersistenceService);
         inOrder.verify(paymentGatewayPort).cancel("pay-key-1", "고객 변심");
-        inOrder.verify(orderRepository).save(any(Order.class));
-        inOrder.verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
+        inOrder.verify(orderPersistenceService).persistCanceledOrder(any(Order.class));
     }
 
     @Test
-    @DisplayName("실패: 타인 주문 취소 시도 → OrderNotFoundException, 환불/재입고/저장 없음")
+    @DisplayName("실패: 타인 주문 취소 시도 → OrderNotFoundException, 환불/저장 없음")
     void cancel_OtherUsersOrder_throws() {
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder()));
 
@@ -351,11 +352,11 @@ class OrderServiceTest {
                 .isInstanceOf(OrderNotFoundException.class);
 
         verify(paymentGatewayPort, never()).cancel(any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistCanceledOrder(any());
     }
 
     @Test
-    @DisplayName("실패: PAID가 아닌 주문(PENDING_PAYMENT) 취소 → OrderCancelNotAllowedException, 환불/재입고/저장 없음")
+    @DisplayName("실패: PAID가 아닌 주문(PENDING_PAYMENT) 취소 → OrderCancelNotAllowedException, 환불/저장 없음")
     void cancel_NotPaid_throws() {
         Order pending = new Order("order-1", "cust-1", List.of(
                 new OrderLineDraft("prod-1", "테스트 상품", BigDecimal.valueOf(10000), 1L, null)
@@ -366,11 +367,11 @@ class OrderServiceTest {
                 .isInstanceOf(OrderCancelNotAllowedException.class);
 
         verify(paymentGatewayPort, never()).cancel(any(), any());
-        verify(orderRepository, never()).save(any());
+        verify(orderPersistenceService, never()).persistCanceledOrder(any());
     }
 
     @Test
-    @DisplayName("실패: 환불 예외 시 재입고/저장/이벤트 없이 전파(주문은 PAID 유지)")
+    @DisplayName("실패: 환불 예외 시 저장/이벤트 없이 전파(주문은 PAID 유지)")
     void cancel_RefundFails_propagatesWithoutLocalChanges() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
@@ -379,23 +380,20 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(orderRepository, never()).save(any());
-        verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
+        verify(orderPersistenceService, never()).persistCanceledOrder(any());
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test
-    @DisplayName("실패: 환불 성공 후 로컬 저장 예외 시 이벤트 없이 전파(주문은 PAID 유지, 재시도 가능)")
+    @DisplayName("실패: 환불 성공 후 로컬 저장 예외 시 전파(주문은 PAID 유지, 재시도 가능)")
     void cancel_LocalSaveFails_propagatesAndOrderStaysPaid() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
         when(paymentGatewayPort.cancel(any(), any())).thenReturn(new Cancellation(Instant.now()));
-        when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("db down"));
+        when(orderPersistenceService.persistCanceledOrder(any(Order.class))).thenThrow(new RuntimeException("db down"));
 
         assertThatThrownBy(() -> orderService.cancel("order-1", "cust-1", "고객 변심"))
                 .isInstanceOf(RuntimeException.class);
-
-        verify(eventPublisher, never()).publishOrderCanceled(any(), any(), any());
     }
 
     @Test
@@ -403,12 +401,13 @@ class OrderServiceTest {
     void cancelByAdmin_Success_noOwnershipCheck() {
         Order order = paidOrder();
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderPersistenceService.persistCanceledOrder(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(paymentGatewayPort.cancel("pay-key-1", "관리자 취소")).thenReturn(new Cancellation(Instant.now()));
 
         Order result = orderService.cancelByAdmin("order-1", "관리자 취소");
 
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELED);
-        verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any());
+        verify(orderPersistenceService).persistCanceledOrder(any(Order.class));
     }
 }
