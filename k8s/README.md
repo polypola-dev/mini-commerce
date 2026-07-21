@@ -13,7 +13,7 @@ k8s 전환(ROADMAP G계열, GH #9 에픽) 산출물 디렉토리.
   base가 앱 4종, `overlays/local/network-policy.yaml`이 postgres/redis 소유. Kafka는
   Strimzi 자동 생성 정책 소관
 - `scripts/secrets.sh` + `secrets/app-secrets.enc.yaml` — Secret 관리 (G8, ADR-013). 원천은 `.env`, enc 파일은 SOPS/age 암호화 파생물(수동 편집 금지). age 개인키는 `~/.config/sops/age/keys.txt` — **리포 밖 백업 필수**(유실해도 .env에서 seal 재생성은 가능)
-- `doc/` — k8s 관련 ADR·문서
+- k8s 관련 ADR은 `docs/ADR/`에 전체 ADR과 함께 모여 있다(ADR-008~019)
 
 ## 로컬 배포 (전체 순서)
 
@@ -38,10 +38,9 @@ k8s/scripts/secrets.sh apply
 # (namespace가 아직 없다고 나오면 kubectl apply -k k8s/overlays/local을 먼저 한 번)
 
 # 4. 이미지 빌드·주입 (compose가 빌드 담당)
-docker compose build shop-api order-api order-admin order-batch
-for img in mini-commerce-shop-api mini-commerce-order-api mini-commerce-order-admin mini-commerce-order-batch; do
-  kind load docker-image "$img:latest" --name mini-commerce
-done
+# 대상 목록은 overlays/local/kustomization.yaml의 images.newName이 단일 출처 —
+# 서비스 추가 시 그 파일만 고치면 이 스크립트가 자동으로 따라간다.
+k8s/scripts/build-and-load.sh
 
 # 5. Ingress 컨트롤러 (G6 — host 80/443은 kind cluster.yaml이 control-plane에 매핑)
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx

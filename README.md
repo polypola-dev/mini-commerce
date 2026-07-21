@@ -112,6 +112,6 @@ Grafana는 `http://localhost:3001`에서 익명 Admin으로 접속 가능하며 
 - [backend/order/README.md](backend/order/README.md) — 주문 도메인 상세: 헥사고날 레이어, 결제/취소환불 흐름, 이벤트 아웃박스
 - [backend/doc/ARCHITECTURE.md](backend/doc/ARCHITECTURE.md) — 도메인 보호 강제 규칙(전체 백엔드 공통)
 - [backend/doc/CONFIGURATION.md](backend/doc/CONFIGURATION.md) — 서비스별 환경변수 계약, 프로파일 정책
-- [k8s/doc/](k8s/doc/) — 인프라 전환 ADR(kind, Kustomize, Strimzi, ingress-nginx, SOPS, NetworkPolicy, 관측성 등)
+- [docs/ADR/](docs/ADR/) — 아키텍처 의사결정 기록 전체(ADR-001~007 서비스 아키텍처, ADR-008~019 인프라 전환: kind, Kustomize, Strimzi, ingress-nginx, SOPS, NetworkPolicy, 관측성 등)
 - [ROADMAP.md](ROADMAP.md) — 트랙별(버그/보안/커머스 기능/아키텍처/테스트·CI-CD/k8s 전환/관측성/운영) 진행상황
 - [docs/architecture/system-overview.html](docs/architecture/system-overview.html) — 전체 시스템 아키텍처 다이어그램(요청 흐름, 배포 토폴로지)
