@@ -48,6 +48,35 @@ app:
     # 서비스간 /internal 인증(B3, ADR-020) — 관리자 주문취소의 restock 호출에 첨부된다.
     internal-api-key: ${INTERNAL_API_KEY}
 
+# 서비스간 동기 REST 호출 서킷브레이커(D6). 값·근거는 order-api application.yml과 동일하다
+# (order-infra의 어댑터가 전이의존으로 조립되므로 인스턴스 정의도 같이 따라온다).
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 3s
+        slowCallRateThreshold: 100
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        # readiness/health에 서킷 상태를 넣지 않는다 — 아래 management 주석과 같은 이유.
+        registerHealthIndicator: false
+    instances:
+      catalog:
+        baseConfig: default
+        ignoreExceptions:
+          - jakarta.persistence.EntityNotFoundException
+      inventory:
+        baseConfig: default
+        ignoreExceptions:
+          # 품절·예약 충돌은 inventory-api가 정상 동작 중이라는 증거다(order-api 주석 참고).
+          - com.minicommerce.order.domain.exception.OutOfStockException
+          - java.lang.IllegalStateException
+
 # OTel 공식 스타터(GH #8, shop-api 스파이크 GH #7 후속으로 정식 반영). Trace/Metric/Log 3축을
 # 각각 다른 백엔드(Tempo/Prometheus/Loki)로 보내야 해서 시그널별 endpoint를 명시한다 — per-signal
 # endpoint는 (공용 endpoint와 달리) 경로를 자동으로 안 붙여주므로 각자 실제 수신 경로까지 적는다.

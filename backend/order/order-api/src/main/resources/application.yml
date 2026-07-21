@@ -72,6 +72,44 @@ app:
     # 노출하지 않으므로 수신 필터가 없다(catalog·inventory-api로 나가는 호출에만 첨부).
     internal-api-key: ${INTERNAL_API_KEY}
 
+# 서비스간 동기 REST 호출 서킷브레이커(D6). order-infra가 여는 간선은 order→catalog와
+# order→inventory-api 둘이다.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        # 트래픽이 적은 시간대에 호출 1~2건 실패로 서킷이 열리지 않도록 최소 호출 수를 둔다.
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        # 응답은 오는데 느린 경우도 장애로 센다. slowCallRateThreshold=100은 "전부 느릴 때만"
+        # 여는 보수적 설정이다.
+        slowCallDurationThreshold: 3s
+        slowCallRateThreshold: 100
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        # readiness/health에 서킷 상태를 넣지 않는다 — 아래 management 주석과 같은 이유(외부 의존
+        # 순단 시 전 레플리카가 동시에 LB에서 빠지는 연쇄 장애 방지). 상태는 OTel 메트릭으로만 본다.
+        registerHealthIndicator: false
+    instances:
+      catalog:
+        baseConfig: default
+        ignoreExceptions:
+          # 없는 상품/옵션(catalog 404 → 어댑터가 변환)은 정상 비즈니스 응답이다. 실패로 세면
+          # 잘못된 productId를 반복 조회하는 것만으로 멀쩡한 catalog가 끊긴다.
+          - jakarta.persistence.EntityNotFoundException
+      inventory:
+        baseConfig: default
+        ignoreExceptions:
+          # 품절은 inventory-api가 정상 동작 중이라는 증거다. 이걸 실패로 세면 인기 상품 하나가
+          # 품절된 것만으로 서킷이 열려 다른 모든 상품의 주문까지 끊긴다 — 가장 중요한 제외 항목.
+          - com.minicommerce.order.domain.exception.OutOfStockException
+          # 예약 충돌(409)·잘못된 요청(400)은 이쪽 요청 조립 문제이거나 정상 흐름이다.
+          # 어느 쪽도 재고 서비스의 건강 상태를 뜻하지 않는다(InventoryRestAdapter 주석 참고).
+          - java.lang.IllegalStateException
+
 server:
   port: ${SERVER_PORT:8081}
   # 롤링 업데이트 중 처리 중이던 주문 요청 유실 방지(F4) — 새 요청을 먼저 끊고 진행 중 요청을

@@ -4,6 +4,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // 재고 조회 폴백 캐시(D6). inventory-api가 끊겼을 때 마지막 성공값을 돌려주려고
+    // catalog:stock:* 네임스페이스에만 읽고 쓴다 — inventory-api의 원장 키(stock:*,
+    // reservation:*)는 건드리지 않는다.
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // catalog→inventory 서킷브레이커(D6). @CircuitBreaker는 AOP 프록시로 동작하므로
+    // starter-aop가 함께 있어야 한다.
+    implementation "io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'com.h2database:h2'

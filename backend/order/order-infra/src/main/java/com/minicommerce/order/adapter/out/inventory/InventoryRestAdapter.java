@@ -3,6 +3,8 @@ package com.minicommerce.order.adapter.out.inventory;
 import com.minicommerce.order.application.port.out.InventoryPort;
 import com.minicommerce.order.domain.exception.InventoryUnavailableException;
 import com.minicommerce.order.domain.exception.OutOfStockException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +19,16 @@ import org.springframework.web.client.RestClient;
  * inventory-api 원격 호출 어댑터(GH #3 S3) — 과거 in-process InventoryAdapter를 대체한다.
  * 에러 계약: 409의 ProblemDetail type으로 도메인 예외를 복원(out-of-stock → OutOfStockException),
  * 연결 실패/타임아웃/5xx → InventoryUnavailableException(order-api가 503으로 매핑).
+ *
+ * <p><b>서킷브레이커(D6)</b>: 서킷 실패로 세는 것은 {@code InventoryUnavailableException}
+ * (연결 실패/타임아웃/5xx)뿐이다. 품절({@code OutOfStockException})과 예약 충돌·잘못된 요청
+ * ({@code IllegalStateException})은 inventory-api가 <b>정상 동작 중</b>이라는 증거이므로
+ * {@code ignoreExceptions}로 통계에서 제외한다. 이걸 빠뜨리면 인기 상품 하나가 품절된 것만으로
+ * 서킷이 열려 멀쩡한 inventory-api로 가는 모든 주문이 끊긴다.
+ *
+ * <p>폴백은 서킷이 열린 경우({@link CallNotPermittedException})에만 걸고, 기존
+ * {@code InventoryUnavailableException} 계약으로 감싸 던진다 — order-api의
+ * {@code InventorySagaExceptionHandler}가 그대로 503으로 매핑한다.
  */
 @Component
 public class InventoryRestAdapter implements InventoryPort {
@@ -38,6 +50,7 @@ public class InventoryRestAdapter implements InventoryPort {
     }
 
     @Override
+    @CircuitBreaker(name = "inventory", fallbackMethod = "reserveFallback")
     public StockHold reserve(String orderId, List<StockItem> items) {
         ReservationRequest request = new ReservationRequest(orderId, items.stream()
                 .map(item -> new ReservationRequest.Item(item.productId(), item.quantity()))
@@ -71,7 +84,12 @@ public class InventoryRestAdapter implements InventoryPort {
         }
     }
 
+    StockHold reserveFallback(String orderId, List<StockItem> items, CallNotPermittedException cause) {
+        throw new InventoryUnavailableException("Inventory circuit open for reserve of order " + orderId, cause);
+    }
+
     @Override
+    @CircuitBreaker(name = "inventory", fallbackMethod = "releaseFallback")
     public void release(String orderId) {
         try {
             restClient.delete()
@@ -84,7 +102,12 @@ public class InventoryRestAdapter implements InventoryPort {
         }
     }
 
+    void releaseFallback(String orderId, CallNotPermittedException cause) {
+        throw new InventoryUnavailableException("Inventory circuit open for release of order " + orderId, cause);
+    }
+
     @Override
+    @CircuitBreaker(name = "inventory", fallbackMethod = "statusFallback")
     public ReservationState status(String orderId) {
         try {
             ReservationResponse response = restClient.get()
@@ -100,6 +123,10 @@ public class InventoryRestAdapter implements InventoryPort {
         } catch (HttpServerErrorException | ResourceAccessException e) {
             throw new InventoryUnavailableException("Inventory status query failed for order " + orderId, e);
         }
+    }
+
+    ReservationState statusFallback(String orderId, CallNotPermittedException cause) {
+        throw new InventoryUnavailableException("Inventory circuit open for status of order " + orderId, cause);
     }
 
     // confirm/restock은 REST가 아니라 order.paid/order.canceled 발행으로 트리거된다(GH #3 S4).
