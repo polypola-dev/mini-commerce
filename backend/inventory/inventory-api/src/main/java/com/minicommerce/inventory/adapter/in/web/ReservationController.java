@@ -4,9 +4,8 @@ import com.minicommerce.inventory.application.port.in.GetReservationUseCase;
 import com.minicommerce.inventory.application.port.in.ReleaseReservationUseCase;
 import com.minicommerce.inventory.application.port.in.ReservationView;
 import com.minicommerce.inventory.application.port.in.ReserveStockUseCase;
-import com.minicommerce.inventory.application.port.in.ReserveStockUseCase.ReserveCommand;
 import com.minicommerce.inventory.application.port.in.ReserveStockUseCase.ReserveResult;
-import com.minicommerce.inventory.application.port.in.SettleReservationUseCase;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,8 +48,8 @@ class ReservationController {
     }
 
     @PostMapping
-    ResponseEntity<ReservationView> reserve(@RequestBody ReserveCommand command) {
-        ReserveResult result = reserveStockUseCase.reserve(command);
+    ResponseEntity<ReservationView> reserve(@Valid @RequestBody ReserveRequest request) {
+        ReserveResult result = reserveStockUseCase.reserve(request.toCommand());
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK)
                 .body(result.view());
     }

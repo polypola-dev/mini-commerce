@@ -4,8 +4,10 @@ import com.minicommerce.inventory.OutOfStockException;
 import com.minicommerce.inventory.ReservationConflictException;
 import jakarta.persistence.EntityNotFoundException;
 import java.net.URI;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -30,6 +32,23 @@ class InventoryApiExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setType(URI.create("https://mini-commerce.local/problems/reservation-conflict"));
         problem.setTitle("Reservation conflict");
+        return problem;
+    }
+
+    /**
+     * 본문 검증 실패 → 400. 이전에는 {@code items}가 null이면 유즈케이스에서 NPE가 나 500으로
+     * 응답했다 — 호출자 잘못이 서버 장애로 보여 RED 대시보드/알림을 오염시키고, order-infra의
+     * 어댑터가 이를 "inventory 불가"로 해석해 무의미한 보상 경로를 태우는 문제가 있었다.
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ProblemDetail handleInvalidRequest(MethodArgumentNotValidException exception) {
+        String detail = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+        problem.setType(URI.create("https://mini-commerce.local/problems/invalid-request"));
+        problem.setTitle("Invalid request");
         return problem;
     }
 

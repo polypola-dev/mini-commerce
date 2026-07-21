@@ -60,6 +60,12 @@ public class InventoryRestAdapter implements InventoryPort {
             // reservation-conflict: 신규 orderId(UUID) 예약에서는 정상 흐름상 나오지 않는다.
             throw new IllegalStateException("Reservation conflict for order " + orderId
                     + ": " + e.getResponseBodyAsString(), e);
+        } catch (HttpClientErrorException.BadRequest e) {
+            // 본문 검증 실패 — inventory-api가 아니라 이쪽 요청 조립이 잘못됐다는 뜻이다.
+            // InventoryUnavailableException으로 감싸면 재시도·보상이 붙는데 몇 번을 보내도
+            // 같은 400이라 무의미하다. reservation-conflict와 같이 버그로 드러낸다.
+            throw new IllegalStateException("Malformed reserve request for order " + orderId
+                    + ": " + e.getResponseBodyAsString(), e);
         } catch (HttpServerErrorException | ResourceAccessException e) {
             throw new InventoryUnavailableException("Inventory reserve failed for order " + orderId, e);
         }

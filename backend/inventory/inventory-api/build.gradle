@@ -21,6 +21,9 @@ dependencies {
     implementation project(':shared-web')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // 예약 요청 본문 검증(ReserveRequest) — 누락 필드가 유즈케이스에서 NPE→500이 되던 것을
+    // 경계에서 400으로 막는다. shop-api/order-api의 *Request 레코드와 같은 관례.
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
     implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0'
