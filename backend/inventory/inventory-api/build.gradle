@@ -15,6 +15,10 @@ dependencies {
     // order 이벤트 계약(GH #3 S4): OrderEventKafkaConsumer가 order.paid/order.canceled를 구독해
     // confirm/restock을 조율한다(shop-api notification과 동일하게 계약 소비 방향).
     implementation project(':order:order-events')
+    // /internal 서비스간 인증 필터(B3, ADR-020). 이 모듈은 JWT/CORS가 불필요하지만(웹 UI 미노출)
+    // InternalAuthFilter를 shop-api와 공유하려고 shared-web을 의존한다 — java-jwt 등이 런타임
+    // 전이의존으로 딸려오나 implementation 스코프라 컴파일 표면에는 노출되지 않는다.
+    implementation project(':shared-web')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

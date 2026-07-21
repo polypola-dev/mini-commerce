@@ -33,7 +33,8 @@
 |---|---|---|---|
 | B1 | P0 | ✅ **완료(2026-07-13, GH #12 close)** — RLS 자체는 2026-07-04 사용자가 Supabase 콘솔에서 직접 활성화(critical `rls_disabled_in_public` 해소). 백엔드는 Session Pooler `postgres` 롤(BYPASSRLS)로 접속하고 프론트는 Data API 미사용이라, 12개 테이블 전부 "RLS on + 정책 0"(default-deny)을 의도된 상태로 확정 — 명시적 정책은 추가하지 않음(중복+permissive 오설정 위험). 신규 테이블 자동 보호용 `ensure_rls` 이벤트 트리거 유지. 근거는 `backend/db/supabase/README.md` | advisor critical 0건 확인 후 종결. `rls_enabled_no_policy`(INFO)는 의도된 상태로 방치 |
 | B2 | P0 | ✅ **완료(2026-07-13, GH #12, commit 13ff710)** — `SECURITY DEFINER` 함수(`rls_auto_enable`)의 EXECUTE 권한을 `PUBLIC/anon/authenticated`에서 REVOKE(`backend/db/supabase/rls_hardening.sql`), 프로덕션 Supabase에 적용. advisor 재검증으로 `security_definer_function_executable`(WARN) 2건 해소 확인 | `auth_leaked_password_protection`(WARN)은 Pro 플랜 전용 기능이라 무료 티어에서 액션 불가 — 잔여 방치 |
-| B3 | P0 | `/internal/**` 서비스간 API 무인증 상태 해소 — 내부 토큰/mTLS, k8s 전환 시 NetworkPolicy 병행 | order-api 헬스체크가 "인증 안 걸림"을 활용 중일 정도로 완전 개방 |
+| B3 | P0 | ✅ **완료(2026-07-21, ADR-020)** — `X-Internal-Key` 공유 시크릿 헤더 + `InternalAuthFilter`(shared-web). 불일치 시 **404**(엔드포인트 존재 비노출, ADR-014 부정 테스트의 판정 기준과 일치), SHA-256 다이제스트 비교(키 길이·목록 위치 누출 방지), 콤마 구분 복수 키로 무중단 로테이션, 미설정 시 기동 fail-fast. 수신은 shop-api·inventory-api 둘뿐(order-api는 `/internal` 미노출 발신 전용), 헤더 상수는 shared-core `InternalApiContract`. `/actuator/**`는 대상 밖(F2 probe 유지). inventory-api는 shared-web 의존 추가 + 설정 클래스를 `com.minicommerce.global`에 배치(Modulith 비노출 하위 패키지 참조 위반 회피). `INTERNAL_API_KEY`(SEC) — .env 원천 + SOPS 봉인, 5개 앱 배선. mTLS/서비스 메시는 free tier 리소스 대비 실익이 낮아 기각 | **롤아웃 2단 분리 필수**: 발신(헤더 전송) 배포 → 수신(검증 강제) 배포. 동시 배포 시 롤링 중 "신규 수신 + 구버전 발신" 조합에서 404. 한계(호출자별 신원·만료 없음)와 **Kafka 축 잔여 부채**는 ADR-020 참고 |
+| B9 | — | **미확정** — Kafka 서비스간 인증(Strimzi SASL/mTLS 리스너 + 앱 5종 클라이언트). B3가 REST 3간선만 덮었고 Kafka 3간선(order→shop-api notification, order→inventory-api, inventory→order-infra)은 무인증 plaintext(ADR-011)로 남아 `/internal`이 갖던 것과 구조적으로 동일한 부채. 서비스 메시 도입 여부와 얽혀 있어 **구현 여부 자체를 미결로 둔다** | 방어는 여전히 NetworkPolicy(ADR-014) 단일 레이어 |
 | B4 | P1 | docker-compose 하드코딩 크리덴셜(`minicommerce/minicommerce`) 및 시크릿 주입 방식 정리 — `.env` 표준화 → k8s Secret으로 승계 | BFF_SECRET_KEY, SERVICE_ROLE_KEY 포함 |
 | B5 | P1 | API rate limiting — 로그인/주문/리뷰 엔드포인트 브루트포스·도배 방어 (Redis 기반) | 현재 전무 |
 | B6 | P1 | 의존성 취약점 스캔 자동화 — Dependabot + 이미지 Trivy 스캔 | CI 자체가 없음 (E1 선행) |
@@ -134,7 +135,7 @@
 ## 총 67개 — 착수 순서 제안
 
 1. ~~**방향 결정 (P0 · 모든 트랙의 전제)**: I2(운영 환경 ADR)~~ ✅ **완료 (2026-07-06)** — OCI Always Free 기반 k8s 이전으로 확정, ADR-007 기록
-2. **즉시 (P0 · 서비스 신뢰 기반)**: ~~E1(CI) → D1/F3(Flyway) → B1/B2(RLS) → A6/F1(기동 결합 제거) → F2(probe)~~ ✅ 전부 완료 — **잔여는 B3(internal 인증)뿐**
+2. ~~**즉시 (P0 · 서비스 신뢰 기반)**: E1(CI) → D1/F3(Flyway) → B1/B2(RLS) → A6/F1(기동 결합 제거) → F2(probe) → B3(internal 인증)~~ ✅ **전부 완료(2026-07-21, ADR-020으로 B3 종결)** — P0 잔여 없음
 3. **커머스 완성 (P0~P1)**: ~~C1(PG 연동) → C2(환불, GH #4)~~ ✅ 완료 — **다음은 C3/C4(배송지·위시리스트 백엔드화)**
 4. **k8s 전환**: ~~G1/G2(클러스터·매니페스트) → G3~G5(워크로드) → G8(Secret) → G6(Ingress) → G11 1단계(CI kind 배포) → H계열(관측성)~~ ✅ 전부 완료 — **잔여는 G7(HPA, P2)·G11 2단계(Argo CD, OKE 구축 선행)뿐**
 5. ~~**학습 에픽 (P2)**: D3(inventory 분리 사가, GH #3)~~ ✅ **완료(2026-07-20, ADR-019)** — 독립 서비스+DB 완전분리, 하이브리드 분산 사가 전환

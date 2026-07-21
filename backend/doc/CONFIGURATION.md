@@ -98,7 +98,9 @@ inventory-api를 동기 호출하지 않는다. `INTERNAL_API_KEY`(SEC)는 order
 | `INTERNAL_API_KEY` | 서비스간 `/internal` 인증 (B3, ADR-020) — 이 서비스의 **유일한** 앱 레이어 방어 | SEC |
 
 전용 `inventorydb`(Flyway 단독 소유). 외부(ingress) 미노출 — 전부 `/internal`이라
-`CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY`/`TOSS_SECRET_KEY` 불필요(shared-web 미의존).
+`CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY`/`TOSS_SECRET_KEY` 불필요.
+B3(ADR-020) 이후 `InternalAuthFilter` 재사용을 위해 shared-web을 의존한다 — JWT/CORS 배선은
+여전히 없고, java-jwt 등은 implementation 스코프의 런타임 전이의존으로만 딸려온다.
 
 ## Graceful shutdown 계약 (F4)
 

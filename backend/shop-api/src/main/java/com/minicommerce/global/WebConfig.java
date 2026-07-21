@@ -1,6 +1,7 @@
 package com.minicommerce.global;
 
 import com.minicommerce.global.security.AdminAuthorizationFilter;
+import com.minicommerce.global.security.InternalAuthFilter;
 import com.minicommerce.global.security.JwtVerificationFilter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,15 +21,18 @@ public class WebConfig implements WebMvcConfigurer {
     private final List<String> allowedOrigins;
     private final String jwksUrl;
     private final String bffSecretKey;
+    private final String internalApiKey;
 
     public WebConfig(
             @Value("${app.cors.allowed-origins}") List<String> allowedOrigins,
             @Value("${app.security.jwks-url}") String jwksUrl,
-            @Value("${app.security.bff-secret-key}") String bffSecretKey
+            @Value("${app.security.bff-secret-key}") String bffSecretKey,
+            @Value("${app.security.internal-api-key}") String internalApiKey
     ) {
         this.allowedOrigins = allowedOrigins;
         this.jwksUrl = jwksUrl;
         this.bffSecretKey = bffSecretKey;
+        this.internalApiKey = internalApiKey;
     }
 
     @Override
@@ -50,6 +54,19 @@ public class WebConfig implements WebMvcConfigurer {
                 "/api/cart/*",
                 "/api/notifications"
         );
+        registrationBean.setOrder(1);
+        return registrationBean;
+    }
+
+    /**
+     * catalog의 {@code /internal/products/**} 서비스간 인증(B3, ADR-020). 호출자는 order-api다.
+     * {@code /actuator/**}는 의도적으로 대상 밖 — F2의 probe 경로는 무인증이어야 kubelet이 접근한다.
+     */
+    @Bean
+    public FilterRegistrationBean<InternalAuthFilter> internalAuthFilter() {
+        FilterRegistrationBean<InternalAuthFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new InternalAuthFilter(internalApiKey));
+        registrationBean.addUrlPatterns("/internal/*");
         registrationBean.setOrder(1);
         return registrationBean;
     }

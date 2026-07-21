@@ -27,6 +27,7 @@
 | [ADR-017](ADR-017-image-pipeline-ghcr.md) | 이미지 파이프라인 — Dockerfile 캐시(E5) + GHCR multi-arch(E4) | 승인 (2026-07-14) |
 | [ADR-018](ADR-018-observability-k8s-integration.md) | 관측성 k8s 통합 — kube-prometheus-stack + Tempo/Loki + OTel Collector | 승인 (2026-07-15) |
 | [ADR-019](ADR-019-inventory-service-extraction.md) | inventory 완전분리 — 별도 서비스+DB, 하이브리드 분산 사가(전략 c) | 승인 (2026-07-20), 경합 정책 개정 (2026-07-21) |
+| [ADR-020](ADR-020-internal-api-authentication.md) | 서비스간 `/internal` 인증 — 공유 시크릿 헤더(B3), ADR-014의 앱 레이어 짝 | 승인 (2026-07-21) |
 
 ## 컨벤션
 
