@@ -5,6 +5,10 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     healthCheckPath: /api/products
+    # 운영 배포 동결(ADR-007) — OKE 이전 완료 전까지 이 서비스는 폐기 대상 구버전으로
+    # 고정 유지한다. autoDeploy 기본값(true)이 push마다 재배포를 실제로 시도해
+    # Flyway baseline-version 설정 오류(V1이 기존 스키마와 충돌)로 크래시가 났었다.
+    autoDeploy: false
     envVars:
       - key: DATABASE_URL
         sync: false
