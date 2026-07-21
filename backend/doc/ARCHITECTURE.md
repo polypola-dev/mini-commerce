@@ -19,7 +19,9 @@
 - 현재: **Gradle 멀티모듈**(ADR-004 Step B, 진행 중 — 진행상황은
   [멀티모듈 전환 GitHub Issue #1](https://github.com/polypola-dev/mini-commerce/issues/1) 참조).
   `shared-core`(순수) / `shared-web`(스프링 의존 허용) 분리 완료(Phase 3). `catalog` / `inventory`
-  분리 완료(Phase 4, 공개 API `ProductReader`/`InventoryService` 경유). `order/order-domain`
+  분리 완료(Phase 4). **`inventory`는 GH #3(ADR-019)로 독립 서비스+DB 완전분리** —
+  `inventory:{inventory-events,inventory-core,inventory-api}`이며 order는 REST/Kafka 계약으로만
+  접근(inventory-core 컴파일 의존 없음). `order/order-domain`
   (jakarta.persistence·spring-web 의존 0) / `order/order-infra` 분리 완료(Phase 5).
   `order/order-admin` / `order/order-batch`도 BOOT 모듈로 전환 완료(Phase 6 스켈레톤,
   최소 `@SpringBootApplication` 진입점만 — 실제 컨트롤러/배치 Job 이관은 크로스프로세스
@@ -104,7 +106,7 @@ adapter.in(web) → application → domain ← application ← adapter.out(persi
 |---|---|---|---|
 | `order` | 헥사고날(domain/application/adapter) | ✅ 도메인 순수화 완료(POJO), 멀티모듈 전환 진행 중 | [architecture/order.md](architecture/order.md) |
 | `catalog` | 레거시 플랫(Entity+Controller+Service+Repository) | ✅ Gradle 모듈 분리 완료, 내부는 ⚠️ 미전환 | [architecture/catalog.md](architecture/catalog.md) |
-| `inventory` | 레거시 플랫 | ✅ Gradle 모듈 분리 완료, 내부는 ⚠️ 미전환 | [architecture/inventory.md](architecture/inventory.md) |
+| `inventory` | 레거시 플랫(core) + 헥사고날(api 표면) | ✅ **독립 서비스+DB 완전분리(GH #3, ADR-019)**, core 내부는 ⚠️ 미전환 | [architecture/inventory.md](architecture/inventory.md) |
 | `cart` | 레거시 플랫 | ⚠️ 미전환 | [architecture/cart.md](architecture/cart.md) |
 | `review` | 레거시 플랫 | ⚠️ 미전환 | [architecture/review.md](architecture/review.md) |
 | `notification` | 레거시 플랫 | ⚠️ 미전환 | [architecture/notification.md](architecture/notification.md) |

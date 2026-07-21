@@ -28,17 +28,17 @@ k8s에서 시드가 필요한 로컬 클러스터(kind)라면 `SPRING_PROFILES_A
 
 k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV 기본값 사용(필요 시만 덮어씀).
 
-### 공통 (4개 서비스 전부)
+### 공통 (5개 서비스 전부)
 
 | 변수 | 용도 | 기본값(yml) | k8s |
 |---|---|---|---|
-| `DATABASE_URL` | JDBC URL (shop-api→minicommerce, order-*→orderdb) | localhost | CM |
+| `DATABASE_URL` | JDBC URL (shop-api→minicommerce, order-*→orderdb, inventory-api→inventorydb) | localhost | CM |
 | `DATABASE_USERNAME` | DB 계정 | minicommerce | SEC |
 | `DATABASE_PASSWORD` | DB 비밀번호 | minicommerce | SEC |
 | `REDIS_HOST` / `REDIS_PORT` | Redis 접속 | localhost:6379 | CM |
 | `REDIS_PASSWORD` | Redis 비밀번호 (Upstash 대비) | (빈값) | SEC |
 | `REDIS_SSL` | Redis TLS (Upstash 대비) | false | CM |
-| `SERVER_PORT` | 서비스 포트 | 8080~8083 | CM |
+| `SERVER_PORT` | 서비스 포트 | 8080~8084 | CM |
 | `OTEL_SERVICE_NAME` | 텔레메트리 서비스명 | 모듈별 기본값 | CM |
 | `OTLP_TRACES_ENDPOINT` / `OTLP_METRICS_ENDPOINT` / `OTLP_LOGS_ENDPOINT` | 시그널별 OTLP 수신처 (H1에서 Collector 단일 endpoint로 단순화 예정) | tempo/prometheus/loki | CM |
 | `JAVA_OPTS` | JVM 플래그 통째 교체 (F6) | 이미지: `-XX:MaxRAMPercentage=75.0` | 이미지 |
@@ -49,7 +49,7 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 |---|---|---|
 | `SPRING_PROFILES_ACTIVE` | `local`일 때만 시드 로드 (위 프로파일 전략) | CM (로컬 클러스터만) |
 | `KAFKA_BOOTSTRAP_SERVERS` | notification 컨슈머 | CM |
-| `INVENTORY_BASE_URL` | catalog→order-api 내부 재고 API (ADR-005) | CM |
+| `INVENTORY_BASE_URL` | catalog→inventory-api 내부 재고 API (GH #3, ADR-019) | CM |
 | `CORS_ALLOWED_ORIGINS` | 브라우저 직접 호출 허용 오리진 (B8에서 축소 검토) | CM |
 | `SUPABASE_JWKS_URL` | JWT 서명 검증 | CM |
 | `BFF_SECRET_KEY` | BFF 게이트웨이 검증 키 | SEC |
@@ -66,21 +66,34 @@ k8s 매핑: **CM** = ConfigMap, **SEC** = Secret, **이미지** = Dockerfile ENV
 | `SUPABASE_JWKS_URL` | " | CM |
 | `BFF_SECRET_KEY` | " | SEC |
 | `TOSS_SECRET_KEY` | 토스페이먼츠 결제 승인 API Basic 인증 시크릿 키 (C1) | SEC |
+| `INVENTORY_BASE_URL` | order→inventory-api 예약 사가 REST (GH #3) | CM |
 
 ### order-admin
 
 order-api와 동일하되 **Kafka 없음** (`KAFKA_BOOTSTRAP_SERVERS` 불필요 — 이벤트 발행/소비 안 함).
-`CATALOG_BASE_URL`은 현재 미호출이지만 order-infra 전이의존으로 조립되므로 명시 유지(compose 주석 참고).
-`TOSS_SECRET_KEY`(SEC)는 관리자 주문취소가 Toss 환불을 실행하므로 필요(GH #4) — order-api와 동일 값.
+`CATALOG_BASE_URL`/`INVENTORY_BASE_URL`은 현재 미호출이지만 order-infra 전이의존으로 조립되므로
+명시 유지(compose 주석 참고). `TOSS_SECRET_KEY`(SEC)는 관리자 주문취소가 Toss 환불을 실행하므로
+필요(GH #4) — order-api와 동일 값. 재입고는 order.canceled 발행으로 위임(S4 코레오그래피)이라
+inventory-api를 동기 호출하지 않는다.
 
 ### order-batch
 
 | 변수 | 용도 | k8s |
 |---|---|---|
-| `KAFKA_BOOTSTRAP_SERVERS` | 미발행 이벤트 스윕 재발행 | CM |
+| `KAFKA_BOOTSTRAP_SERVERS` | 미발행 이벤트 스윕 재발행 + `inventory.reservation.expired` 구독 | CM |
 | `CATALOG_BASE_URL` | order-infra 전이의존 조립용 | CM |
+| `INVENTORY_BASE_URL` | order-infra 전이의존 조립용(미호출) | CM |
 
 웹 API가 없어 `CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY` 불필요.
+
+### inventory-api
+
+| 변수 | 용도 | k8s |
+|---|---|---|
+| `KAFKA_BOOTSTRAP_SERVERS` | `order.paid`/`order.canceled` 구독 + `inventory.reservation.expired` 발행 | CM |
+
+전용 `inventorydb`(Flyway 단독 소유). 외부(ingress) 미노출 — 전부 `/internal`이라
+`CORS_ALLOWED_ORIGINS`/`SUPABASE_JWKS_URL`/`BFF_SECRET_KEY`/`TOSS_SECRET_KEY` 불필요(shared-web 미의존).
 
 ## Graceful shutdown 계약 (F4)
 
@@ -95,7 +108,7 @@ SIGTERM → java(PID 1, Dockerfile exec) → Spring graceful 단계(≤30s) → 
 |---|---|---|
 | 앱 | `spring.lifecycle.timeout-per-shutdown-phase` | **30s** |
 | 앱 | `server.shutdown: graceful` (Boot 3.4+ 기본이지만 명시) | — |
-| order-batch | `spring.task.scheduling.shutdown.await-termination(-period)` | true / 25s (앱 유예보다 짧게) |
+| order-batch, inventory-api | `spring.task.scheduling.shutdown.await-termination(-period)` | true / 25s (앱 유예보다 짧게 — 리퍼/스케줄 작업 정상 완료) |
 | compose | `stop_grace_period` | **35s** (> 앱 유예) |
 | k8s (G3에서 적용) | `terminationGracePeriodSeconds` | **40s** = preStop(5s) + 앱 유예(30s) + 여유 |
 | k8s (G3에서 적용) | `preStop: sleep 5` | Endpoint 제거 전파 지연 동안 신규 트래픽 수신 커버 |
@@ -116,6 +129,7 @@ compose `mem_limit: 1g`로 로컬에서 동일 조건 상시 검증 중.
 | order-api | 1Gi | 250m | 없음 | 재고 Lua/이벤트 발행 |
 | order-admin | 1Gi | 100m | 없음 | 관리 트래픽 소량 |
 | order-batch | 1Gi | 100m | 없음 | 스케줄 작업만, HPA 제외 대상(고정 replica) |
+| inventory-api | 1Gi | 250m | 없음 | 재고 Lua/예약 사가 REST + order 이벤트 컨슈머 + 만료 리퍼 |
 
 - **memory는 request=limit** (Guaranteed에 준하게) — JVM은 limit 기준으로 힙을 잡으므로
   request<limit 오버커밋은 노드 압박 시 OOMKill 우선순위만 높인다.

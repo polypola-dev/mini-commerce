@@ -8,9 +8,10 @@
 > 우선순위: **P0** = 해당 트랙에서 최우선(서비스 트랙이면 즉시 해결, k8s 트랙이면 착수 첫 단계),
 > **P1** = 다음 마일스톤, **P2** = 학습/개선 목표.
 >
-> 현재 구성: shop-api(catalog/cart/review/notification/BFF) + order-api(order/inventory) +
-> order-admin + order-batch, Kafka(KRaft 단일 브로커), Postgres(minicommerce/orderdb),
-> Redis, Tempo/Loki/Prometheus/Grafana — 전부 로컬 docker-compose 기반.
+> 현재 구성: shop-api(catalog/cart/review/notification/BFF) + order-api(order) + order-admin +
+> order-batch + inventory-api(GH #3 완전분리, ADR-019), Kafka(KRaft 단일 브로커),
+> Postgres(minicommerce/orderdb/inventorydb), Redis, Tempo/Loki/Prometheus/Grafana — 전부 로컬
+> docker-compose 기반.
 
 ---
 
@@ -60,7 +61,7 @@
 |---|---|---|---|
 | D1 | P0 | ✅ **완료(2026-07-11, GH #11, commit 307cd21)** — Flyway 도입, 4개 모듈 전부 `ddl-auto: validate`로 전환. shop-api·order-api가 각자 소유 스키마의 마이그레이션을 소유(F3와 동일 근거) | k8s 다중 레플리카 동시 DDL 사고 지점 해소. F계열 전체의 선행 조건 충족 |
 | D2 | P1 | ✅ **완료(2026-07-18, GH #5 close, commit 954d88e)** — `order:order-events` 계약 모듈 추출(의존성 0). 이벤트 record 3개(Canceled 포함 — 이슈 등록 후 C2에서 추가) 이동, 패키지는 `com.minicommerce.order` 유지(event_publication FQCN·Kafka 와이어 호환). shop-api 의존을 order-domain→order-events로 교체, `@ComponentScan` 정규식 우회 제거. **이슈 본문과 달리 order-domain은 재배선 불필요**(OrderEventPublisher 포트가 primitive 시그니처라 이벤트 미참조 — order-infra만 의존). 검증: build 그린 + kind에서 order.placed 발행→notifications SENT e2e | order-events 순수성 ArchUnit 강제는 D7 소관 |
-| D3 | P2 | inventory 별도 서비스+DB 추출 — 분산 사가 학습 에픽 (**GH #3**, 전략 c) | k8s 전환 후 진행 권장 |
+| D3 | P2 | ✅ **완료(2026-07-20, ADR-019)** — inventory 별도 서비스(inventory-api:8084)+전용 inventorydb 완전분리(**GH #3**, 전략 c). 하이브리드 분산 사가: reserve/release 동기 REST(예약 ID=orderId 멱등, 원장 커밋→Redis Lua 순서 계약, 해시 TTL 86400 분리로 재고 누수 버그 동시 해소), confirm/restock 코레오그래피(order.paid/order.canceled 구독, payment-wins force-confirm), 만료는 inventory.reservation.expired 발행→order-batch EXPIRED 전이. order-*는 inventory-core 컴파일 의존 제거(REST/Kafka 계약만). k8s base/overlays/netpol/db-init + CI(build-push/deploy-kind) 배선, kind 실배포 검증. orderdb 옛 테이블 V4 DROP. S1~S6 커밋 | inventory-core 내부 헥사고날 미전환은 D9 잔여. 운영 Supabase flyway_schema_history 공유는 OKE 이전 과제 |
 | D4 | P1 | Kafka consumer 재시도/DLQ 정책 수립 — 역직렬화 실패·처리 실패 시 유실 방지 | serializer 사고(a05581f) 전력 있음 |
 | D5 | P2 | 이벤트 스키마 관리 — JSON 유지 vs Avro/Protobuf+Schema Registry 결정 (ADR로) | D2 이후 |
 | D6 | P1 | Catalog↔Order 양방향 동기 REST 의존 완화 — 재고조회(INVENTORY_BASE_URL)·상품조회(CATALOG_BASE_URL) 상호 호출 구조에 서킷브레이커(Resilience4j)+타임아웃 도입 | obs 595 트레이드오프 문서화됨. 한쪽 다운 시 연쇄 장애 |
@@ -136,7 +137,7 @@
 2. **즉시 (P0 · 서비스 신뢰 기반)**: ~~E1(CI) → D1/F3(Flyway) → B1/B2(RLS) → A6/F1(기동 결합 제거) → F2(probe)~~ ✅ 전부 완료 — **잔여는 B3(internal 인증)뿐**
 3. **커머스 완성 (P0~P1)**: ~~C1(PG 연동) → C2(환불, GH #4)~~ ✅ 완료 — **다음은 C3/C4(배송지·위시리스트 백엔드화)**
 4. **k8s 전환**: ~~G1/G2(클러스터·매니페스트) → G3~G5(워크로드) → G8(Secret) → G6(Ingress) → G11 1단계(CI kind 배포) → H계열(관측성)~~ ✅ 전부 완료 — **잔여는 G7(HPA, P2)·G11 2단계(Argo CD, OKE 구축 선행)뿐**
-5. **학습 에픽 (P2)**: D3(inventory 분리 사가, GH #3)는 k8s 위에서 진행하면 배포·운영 학습 효과 극대화
+5. ~~**학습 에픽 (P2)**: D3(inventory 분리 사가, GH #3)~~ ✅ **완료(2026-07-20, ADR-019)** — 독립 서비스+DB 완전분리, 하이브리드 분산 사가 전환
 
 > ⚠️ 순서의 핵심: **F계열(앱 k8s-ready)을 끝내기 전에 G계열(매니페스트)을 시작하지 말 것.**
 > compose의 `depends_on` 봉합이 k8s에서 CrashLoopBackOff로 표면화되는 것이 전환 실패의 전형 패턴.
