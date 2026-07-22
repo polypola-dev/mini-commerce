@@ -21,6 +21,7 @@ import io.opentelemetry.api.metrics.Meter;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -28,6 +29,20 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
+
+    // id/orderId/productId가 uuid로 전환됐으므로(GH #20) 원장/조회 경계에는 유효 UUID를 쓴다.
+    // 단 Redis 키(stock:*, reservation:*)와 availableStock/setStock의 productId 매개변수는 원래도 String이라
+    // 그대로 문자열로 다룬다(서비스가 uuid.toString()으로 키를 만든다).
+    private static final String ORDER_1 = "00000000-0000-7000-8000-0000000000e1";
+    private static final UUID ORDER_1_UUID = UUID.fromString(ORDER_1);
+    private static final String PROD_1 = "00000000-0000-7000-8000-0000000000a1";
+    private static final UUID PROD_1_UUID = UUID.fromString(PROD_1);
+    private static final String PROD_2 = "00000000-0000-7000-8000-0000000000a2";
+    private static final UUID PROD_2_UUID = UUID.fromString(PROD_2);
+    private static final String RES_1 = "00000000-0000-7000-8000-0000000000f1";
+    private static final UUID RES_1_UUID = UUID.fromString(RES_1);
+    private static final String MISSING = "00000000-0000-7000-8000-00000000ffff";
+    private static final UUID MISSING_UUID = UUID.fromString(MISSING);
 
     @Mock
     private StringRedisTemplate redisTemplate;
@@ -69,7 +84,7 @@ class InventoryServiceTest {
     }
 
     // ----------------------------------------------------------------
-    // availableStock
+    // availableStock (productId는 Redis 키 매개변수 — 원래도 String, uuid 파싱 대상 아님)
     // ----------------------------------------------------------------
 
     @Test
@@ -103,16 +118,16 @@ class InventoryServiceTest {
     @Test
     @DisplayName("reserveForOrder: 신규 주문 → 원장 선기록(RESERVED) 후 Lua 1 → InventoryHold 반환")
     void reserveForOrder_new_persistsLedgerThenReserves() {
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.empty());
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.empty());
         when(reservationRepository.save(any(InventoryReservation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
 
-        InventoryHold hold = inventoryService.reserveForOrder("order-1", List.of(new InventoryItem("prod-1", 3L)));
+        InventoryHold hold = inventoryService.reserveForOrder(ORDER_1, List.of(new InventoryItem(PROD_1, 3L)));
 
         // 예약 ID = orderId(멱등 키)
-        assertThat(hold.reservationId()).isEqualTo("order-1");
-        assertThat(hold.items()).containsExactly(new InventoryItem("prod-1", 3L));
+        assertThat(hold.reservationId()).isEqualTo(ORDER_1);
+        assertThat(hold.items()).containsExactly(new InventoryItem(PROD_1, 3L));
         assertThat(hold.expiresAt()).isAfter(Instant.now());
         verify(reservationRepository).save(any(InventoryReservation.class));
     }
@@ -121,19 +136,19 @@ class InventoryServiceTest {
     @DisplayName("reserveForOrder: Lua 0(품절) → 원장 RELEASED 전이 후 OutOfStockException")
     void reserveForOrder_outOfStock_marksLedgerReleased() {
         InventoryReservation saved = new InventoryReservation(
-                "order-1", "order-1", Instant.now().plusSeconds(600),
-                List.of(new ReservationLine("prod-1", 99L)));
-        when(reservationRepository.findByOrderId("order-1"))
+                ORDER_1_UUID, ORDER_1_UUID, Instant.now().plusSeconds(600),
+                List.of(new ReservationLine(PROD_1_UUID, 99L)));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(saved)); // markReleased의 재조회
         when(reservationRepository.save(any(InventoryReservation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
 
-        assertThatThrownBy(() -> inventoryService.reserveForOrder("order-1",
-                List.of(new InventoryItem("prod-1", 99L))))
+        assertThatThrownBy(() -> inventoryService.reserveForOrder(ORDER_1,
+                List.of(new InventoryItem(PROD_1, 99L))))
                 .isInstanceOf(OutOfStockException.class)
-                .hasMessageContaining("prod-1");
+                .hasMessageContaining(PROD_1);
 
         assertThat(saved.getStatus()).isEqualTo(ReservationStatus.RELEASED);
     }
@@ -142,14 +157,14 @@ class InventoryServiceTest {
     @DisplayName("reserveForOrder: 재시도(기존 RESERVED 원장) → insert 없이 Lua 재실행(2=성공) 수렴")
     void reserveForOrder_retry_convergesWithoutDuplicateLedger() {
         InventoryReservation existing = new InventoryReservation(
-                "order-1", "order-1", Instant.now().plusSeconds(600),
-                List.of(new ReservationLine("prod-1", 3L)));
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(existing));
+                ORDER_1_UUID, ORDER_1_UUID, Instant.now().plusSeconds(600),
+                List.of(new ReservationLine(PROD_1_UUID, 3L)));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(existing));
         doReturn(2L).when(redisTemplate).execute(any(), anyList(), any(), any(), any());
 
-        InventoryHold hold = inventoryService.reserveForOrder("order-1", List.of(new InventoryItem("prod-1", 3L)));
+        InventoryHold hold = inventoryService.reserveForOrder(ORDER_1, List.of(new InventoryItem(PROD_1, 3L)));
 
-        assertThat(hold.reservationId()).isEqualTo("order-1");
+        assertThat(hold.reservationId()).isEqualTo(ORDER_1);
         verify(reservationRepository, never()).save(any());
     }
 
@@ -157,13 +172,13 @@ class InventoryServiceTest {
     @DisplayName("reserveForOrder: 원장이 RESERVED 외 상태(RELEASED) → ReservationConflictException, Lua 미실행")
     void reserveForOrder_conflictingLedger_throws() {
         InventoryReservation released = new InventoryReservation(
-                "order-1", "order-1", Instant.now().minusSeconds(60),
-                List.of(new ReservationLine("prod-1", 3L)));
+                ORDER_1_UUID, ORDER_1_UUID, Instant.now().minusSeconds(60),
+                List.of(new ReservationLine(PROD_1_UUID, 3L)));
         released.release();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(released));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(released));
 
-        assertThatThrownBy(() -> inventoryService.reserveForOrder("order-1",
-                List.of(new InventoryItem("prod-1", 3L))))
+        assertThatThrownBy(() -> inventoryService.reserveForOrder(ORDER_1,
+                List.of(new InventoryItem(PROD_1, 3L))))
                 .isInstanceOf(ReservationConflictException.class);
 
         verify(redisTemplate, never()).execute(any(), anyList(), any(), any(), any());
@@ -176,18 +191,18 @@ class InventoryServiceTest {
 
     private InventoryReservation reservedReservation() {
         return new InventoryReservation(
-                "order-1", "order-1", Instant.now().minusSeconds(60),
-                List.of(new ReservationLine("prod-1", 2L)));
+                ORDER_1_UUID, ORDER_1_UUID, Instant.now().minusSeconds(60),
+                List.of(new ReservationLine(PROD_1_UUID, 2L)));
     }
 
     @Test
     @DisplayName("releaseByOrderId: Lua 1(복원) → 원장 RELEASED 전이 + true")
     void releaseByOrderId_restored_transitionsLedger() {
         InventoryReservation reservation = reservedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any());
 
-        assertThat(inventoryService.releaseByOrderId("order-1")).isTrue();
+        assertThat(inventoryService.releaseByOrderId(ORDER_1)).isTrue();
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RELEASED);
     }
 
@@ -195,10 +210,10 @@ class InventoryServiceTest {
     @DisplayName("releaseByOrderId: Lua 3(해시 없음 — 미차감 크래시 창) → INCRBY 없이 원장만 RELEASED + true")
     void releaseByOrderId_hashMissing_transitionsLedgerOnly() {
         InventoryReservation reservation = reservedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(3L).when(redisTemplate).execute(any(), anyList(), any());
 
-        assertThat(inventoryService.releaseByOrderId("order-1")).isTrue();
+        assertThat(inventoryService.releaseByOrderId(ORDER_1)).isTrue();
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RELEASED);
     }
 
@@ -206,23 +221,23 @@ class InventoryServiceTest {
     @DisplayName("releaseByOrderId: Lua 0(해시가 CONFIRMED 등 — 결제가 이긴 경합) → 원장 유지 + false")
     void releaseByOrderId_paymentWon_keepsLedger() {
         InventoryReservation reservation = reservedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any());
 
-        assertThat(inventoryService.releaseByOrderId("order-1")).isFalse();
+        assertThat(inventoryService.releaseByOrderId(ORDER_1)).isFalse();
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESERVED);
     }
 
     @Test
     @DisplayName("releaseByOrderId: 원장이 없거나 RESERVED가 아니면 no-op(false, 멱등)")
     void releaseByOrderId_missingOrInactive_isNoOp() {
-        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
-        assertThat(inventoryService.releaseByOrderId("missing")).isFalse();
+        when(reservationRepository.findByOrderId(MISSING_UUID)).thenReturn(Optional.empty());
+        assertThat(inventoryService.releaseByOrderId(MISSING)).isFalse();
 
         InventoryReservation confirmed = reservedReservation();
         confirmed.confirm();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(confirmed));
-        assertThat(inventoryService.releaseByOrderId("order-1")).isFalse();
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(confirmed));
+        assertThat(inventoryService.releaseByOrderId(ORDER_1)).isFalse();
 
         verify(redisTemplate, never()).execute(any(), anyList(), any());
     }
@@ -235,12 +250,12 @@ class InventoryServiceTest {
     @DisplayName("confirmByOrderId: RESERVED → 원장 CONFIRMED 전이 + Redis confirm Lua(재고 불변)")
     void confirmByOrderId_reserved_transitionsLedgerAndRedis() {
         InventoryReservation reservation = reservedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-        verify(redisTemplate).execute(any(), eq(List.of("reservation:order-1")));
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:" + ORDER_1)));
     }
 
     @Test
@@ -248,9 +263,9 @@ class InventoryServiceTest {
     void confirmByOrderId_alreadyConfirmed_isNoOp() {
         InventoryReservation reservation = reservedReservation();
         reservation.confirm();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         verify(redisTemplate, never()).execute(any(), anyList());
         verify(redisTemplate, never()).execute(any(), anyList(), any());
@@ -261,14 +276,14 @@ class InventoryServiceTest {
     void confirmByOrderId_released_forceConfirms() {
         InventoryReservation reservation = reservedReservation();
         reservation.release(); // 리퍼가 먼저 해제
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any());
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         // force-confirm Lua는 예약키 + stock 키를 함께 넘긴다(재차감)
-        verify(redisTemplate).execute(any(), eq(List.of("reservation:order-1", "stock:prod-1")), eq("2"));
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:" + ORDER_1, "stock:" + PROD_1)), eq("2"));
     }
 
     @Test
@@ -277,9 +292,9 @@ class InventoryServiceTest {
         InventoryReservation reservation = reservedReservation();
         reservation.confirm();
         reservation.restock();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
         verify(redisTemplate, never()).execute(any(), anyList(), any());
@@ -290,22 +305,22 @@ class InventoryServiceTest {
     void confirmByOrderId_released_stockAlreadyClaimed_marksOversoldAndPublishes() {
         InventoryReservation reservation = reservedReservation();
         reservation.release(); // 리퍼가 먼저 해제
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any());
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.OVERSOLD);
         ArgumentCaptor<InventoryReservationOversoldEvent> captor =
                 ArgumentCaptor.forClass(InventoryReservationOversoldEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
-        assertThat(captor.getValue().reservationId()).isEqualTo("order-1");
-        assertThat(captor.getValue().orderId()).isEqualTo("order-1");
+        assertThat(captor.getValue().reservationId()).isEqualTo(ORDER_1);
+        assertThat(captor.getValue().orderId()).isEqualTo(ORDER_1);
 
         // 오버셀 카운터가 상품별 수량(prod-1, 2)으로 증가했는지 검증(product_id 태그 구분).
         ArgumentCaptor<Attributes> attrCaptor = ArgumentCaptor.forClass(Attributes.class);
         verify(oversoldCounter).add(eq(2L), attrCaptor.capture());
-        assertThat(attrCaptor.getValue().get(AttributeKey.stringKey("product_id"))).isEqualTo("prod-1");
+        assertThat(attrCaptor.getValue().get(AttributeKey.stringKey("product_id"))).isEqualTo(PROD_1);
     }
 
     @Test
@@ -314,9 +329,9 @@ class InventoryServiceTest {
         InventoryReservation reservation = reservedReservation();
         reservation.release();
         reservation.markOversold();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        inventoryService.confirmByOrderId("order-1");
+        inventoryService.confirmByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.OVERSOLD);
         verify(redisTemplate, never()).execute(any(), anyList(), any());
@@ -326,9 +341,9 @@ class InventoryServiceTest {
     @Test
     @DisplayName("confirmByOrderId: 원장이 없으면 EntityNotFoundException")
     void confirmByOrderId_missing_throws() {
-        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
+        when(reservationRepository.findByOrderId(MISSING_UUID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> inventoryService.confirmByOrderId("missing"))
+        assertThatThrownBy(() -> inventoryService.confirmByOrderId(MISSING))
                 .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
 
@@ -338,8 +353,8 @@ class InventoryServiceTest {
 
     private InventoryReservation confirmedReservation() {
         InventoryReservation reservation = new InventoryReservation(
-                "res-1", "order-1", Instant.now().plusSeconds(600),
-                List.of(new ReservationLine("prod-1", 2L), new ReservationLine("prod-2", 1L)));
+                RES_1_UUID, ORDER_1_UUID, Instant.now().plusSeconds(600),
+                List.of(new ReservationLine(PROD_1_UUID, 2L), new ReservationLine(PROD_2_UUID, 1L)));
         reservation.confirm();
         return reservation;
     }
@@ -348,13 +363,13 @@ class InventoryServiceTest {
     @DisplayName("restockByOrderId: CONFIRMED 예약을 RESTOCKED로 전이하고 Lua로 재고를 복원한다")
     void restockByOrderId_confirmed_restoresStock() {
         InventoryReservation reservation = confirmedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(1L).when(redisTemplate).execute(any(), anyList(), any(), any());
 
-        inventoryService.restockByOrderId("order-1");
+        inventoryService.restockByOrderId(ORDER_1);
 
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.RESTOCKED);
-        verify(redisTemplate).execute(any(), eq(List.of("reservation:res-1", "stock:prod-1", "stock:prod-2")),
+        verify(redisTemplate).execute(any(), eq(List.of("reservation:" + RES_1, "stock:" + PROD_1, "stock:" + PROD_2)),
                 eq("2"), eq("1"));
     }
 
@@ -363,9 +378,9 @@ class InventoryServiceTest {
     void restockByOrderId_alreadyRestocked_isNoOp() {
         InventoryReservation reservation = confirmedReservation();
         reservation.restock();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        inventoryService.restockByOrderId("order-1");
+        inventoryService.restockByOrderId(ORDER_1);
 
         verify(redisTemplate, never()).execute(any(), anyList(), any(), any());
     }
@@ -374,11 +389,11 @@ class InventoryServiceTest {
     @DisplayName("restockByOrderId: CONFIRMED가 아닌(RESERVED) 예약은 예외")
     void restockByOrderId_notConfirmed_throws() {
         InventoryReservation reservation = new InventoryReservation(
-                "res-1", "order-1", Instant.now().plusSeconds(600),
-                List.of(new ReservationLine("prod-1", 2L)));
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+                RES_1_UUID, ORDER_1_UUID, Instant.now().plusSeconds(600),
+                List.of(new ReservationLine(PROD_1_UUID, 2L)));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
 
-        assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
+        assertThatThrownBy(() -> inventoryService.restockByOrderId(ORDER_1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -386,19 +401,19 @@ class InventoryServiceTest {
     @DisplayName("restockByOrderId: Lua 스크립트 결과 0(비정상) → 예외")
     void restockByOrderId_scriptRejects_throws() {
         InventoryReservation reservation = confirmedReservation();
-        when(reservationRepository.findByOrderId("order-1")).thenReturn(Optional.of(reservation));
+        when(reservationRepository.findByOrderId(ORDER_1_UUID)).thenReturn(Optional.of(reservation));
         doReturn(0L).when(redisTemplate).execute(any(), anyList(), any(), any());
 
-        assertThatThrownBy(() -> inventoryService.restockByOrderId("order-1"))
+        assertThatThrownBy(() -> inventoryService.restockByOrderId(ORDER_1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("restockByOrderId: 예약 원장이 없으면 EntityNotFoundException")
     void restockByOrderId_missingReservation_throws() {
-        when(reservationRepository.findByOrderId("missing")).thenReturn(Optional.empty());
+        when(reservationRepository.findByOrderId(MISSING_UUID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> inventoryService.restockByOrderId("missing"))
+        assertThatThrownBy(() -> inventoryService.restockByOrderId(MISSING))
                 .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
 }

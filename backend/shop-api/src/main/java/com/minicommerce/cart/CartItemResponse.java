@@ -14,13 +14,13 @@ public record CartItemResponse(
 ) {
     public static CartItemResponse from(CartItem item) {
         return new CartItemResponse(
-                item.getId(),
-                item.getProductId(),
+                item.getId().toString(),
+                item.getProductId().toString(),
                 item.getProductName(),
                 item.getUnitPrice(),
                 item.getQuantity(),
                 item.getSubtotal(),
-                item.getSelectedOptionId(),
+                item.getSelectedOptionId() != null ? item.getSelectedOptionId().toString() : null,
                 item.getSelectedOptionValue()
         );
     }

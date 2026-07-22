@@ -9,8 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -42,21 +42,22 @@ class NotificationControllerTest {
     @Test
     @DisplayName("customerId로 알림 목록을 조회하면 200 OK와 알림 목록을 반환한다")
     void getMyNotifications_withCustomerId_returnsList() throws Exception {
-        // given
-        String customerId = "cust-1";
-        Notification notification = new Notification("order-1", customerId, NotificationType.ORDER_PLACED,
-                "주문이 접수되었습니다. 주문번호: order-1");
+        // given — id들이 uuid로 전환됐으므로 유효 UUID를 쓴다(GH #20).
+        String customerId = "00000000-0000-7000-8000-0000000000c1";
+        String orderId = "00000000-0000-7000-8000-0000000000e1";
+        Notification notification = new Notification(UUID.fromString(orderId), UUID.fromString(customerId),
+                NotificationType.ORDER_PLACED, "주문이 접수되었습니다. 주문번호: " + orderId);
         notification.prePersistForTest();
         notification.markSent();
 
-        when(repository.findByCustomerIdOrderByCreatedAtDesc(customerId))
+        when(repository.findByCustomerIdOrderByCreatedAtDesc(UUID.fromString(customerId)))
                 .thenReturn(List.of(notification));
 
         // when & then
         mockMvc.perform(get("/api/notifications")
                         .requestAttr("authenticatedUserId", customerId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].orderId").value("order-1"))
+                .andExpect(jsonPath("$[0].orderId").value(orderId))
                 .andExpect(jsonPath("$[0].customerId").value(customerId))
                 .andExpect(jsonPath("$[0].type").value("ORDER_PLACED"))
                 .andExpect(jsonPath("$[0].status").value("SENT"));

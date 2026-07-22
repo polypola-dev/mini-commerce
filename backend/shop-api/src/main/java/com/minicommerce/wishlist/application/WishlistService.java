@@ -2,10 +2,10 @@ package com.minicommerce.wishlist.application;
 
 import com.minicommerce.wishlist.application.port.in.ManageWishlistUseCase;
 import com.minicommerce.wishlist.application.port.out.WishlistRepositoryPort;
+import com.minicommerce.shared.UuidV7;
 import com.minicommerce.wishlist.domain.WishlistItem;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +33,7 @@ public class WishlistService implements ManageWishlistUseCase {
             return;
         }
         wishlistRepository.save(new WishlistItem(
-                UUID.randomUUID().toString(), customerId, productId, Instant.now()));
+                UuidV7.randomUUID().toString(), customerId, productId, Instant.now()));
     }
 
     @Override

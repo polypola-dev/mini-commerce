@@ -4,34 +4,37 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "products")
 public class Product {
     @Id
-    private String id;
+    private UUID id;
 
     private String name;
     private String description;
     private BigDecimal price;
     private long stock;
     private String imageUrl;
+    private String sku;
     private boolean active;
 
     protected Product() {
     }
 
-    public Product(String id, String name, String description, BigDecimal price, long stock, String imageUrl) {
+    public Product(UUID id, String name, String description, BigDecimal price, long stock, String imageUrl, String sku) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.imageUrl = imageUrl;
+        this.sku = sku;
         this.active = true;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -55,16 +58,21 @@ public class Product {
         return imageUrl;
     }
 
+    public String getSku() {
+        return sku;
+    }
+
     public boolean isActive() {
         return active;
     }
 
-    public void update(String name, String description, java.math.BigDecimal price, long stock, String imageUrl) {
+    public void update(String name, String description, java.math.BigDecimal price, long stock, String imageUrl, String sku) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.imageUrl = imageUrl;
+        this.sku = sku;
     }
 
     public void deactivate() {

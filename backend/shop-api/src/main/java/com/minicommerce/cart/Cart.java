@@ -11,12 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Entity
 @Table(name = "carts")
 public class Cart {
     @Id
-    private String id; // customerId
+    private UUID id; // customerId
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
     @OrderBy("addedAt DESC")
@@ -25,11 +26,11 @@ public class Cart {
     protected Cart() {
     }
 
-    public Cart(String customerId) {
+    public Cart(UUID customerId) {
         this.id = customerId;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -41,18 +42,18 @@ public class Cart {
         items.add(item);
     }
 
-    public Optional<CartItem> findItem(String productId, String selectedOptionId) {
+    public Optional<CartItem> findItem(UUID productId, UUID selectedOptionId) {
         return items.stream()
                 .filter(item -> item.getProductId().equals(productId)
                         && Objects.equals(item.getSelectedOptionId(), selectedOptionId))
                 .findFirst();
     }
 
-    public void removeItem(String itemId) {
+    public void removeItem(UUID itemId) {
         items.removeIf(item -> item.getId().equals(itemId));
     }
 
-    public void updateItemQuantity(String itemId, int quantity) {
+    public void updateItemQuantity(UUID itemId, int quantity) {
         items.stream()
                 .filter(item -> item.getId().equals(itemId))
                 .findFirst()

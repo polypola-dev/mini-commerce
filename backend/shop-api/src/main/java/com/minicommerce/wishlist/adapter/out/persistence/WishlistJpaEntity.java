@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "wishlist_items")
@@ -12,13 +13,13 @@ public class WishlistJpaEntity {
 
     @Id
     @Column(name = "id")
-    private String id;
+    private UUID id;
 
     @Column(name = "customer_id", nullable = false)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = "product_id", nullable = false)
-    private String productId;
+    private UUID productId;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -26,22 +27,22 @@ public class WishlistJpaEntity {
     protected WishlistJpaEntity() {
     }
 
-    public WishlistJpaEntity(String id, String customerId, String productId, Instant createdAt) {
+    public WishlistJpaEntity(UUID id, UUID customerId, UUID productId, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
         this.productId = productId;
         this.createdAt = createdAt;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public String getCustomerId() {
+    public UUID getCustomerId() {
         return customerId;
     }
 
-    public String getProductId() {
+    public UUID getProductId() {
         return productId;
     }
 

@@ -25,6 +25,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import({OrderPersistenceAdapter.class, OrderPersistenceMapper.class})
 class OrderPersistenceAdapterTest {
 
+    // 영속 컬럼이 uuid로 전환됐으므로(GH #20) 매퍼가 UUID.fromString으로 변환한다 → 유효 UUID를 쓴다.
+    // 도메인 Order.id/customerId는 String 그대로라 getId()는 넘긴 문자열을 그대로 돌려준다.
+    private static final String ORDER_1 = "00000000-0000-7000-8000-0000000000e1";
+    private static final String ORDER_2 = "00000000-0000-7000-8000-0000000000e2";
+    private static final String ORDER_3 = "00000000-0000-7000-8000-0000000000e3";
+    private static final String CUST_1 = "00000000-0000-7000-8000-0000000000c1";
+    private static final String CUST_2 = "00000000-0000-7000-8000-0000000000c2";
+    private static final String PROD_1 = "00000000-0000-7000-8000-0000000000a1";
+    private static final String PROD_2 = "00000000-0000-7000-8000-0000000000a2";
+
     @Autowired
     private OrderRepository orderRepository;
 
@@ -35,8 +45,8 @@ class OrderPersistenceAdapterTest {
         return new Order(
                 id, customerId,
                 List.of(
-                        new OrderLineDraft("prod-1", "사과", BigDecimal.valueOf(2000), 2L, null),
-                        new OrderLineDraft("prod-2", "바나나", BigDecimal.valueOf(1500), 1L, "한 송이")
+                        new OrderLineDraft(PROD_1, "사과", BigDecimal.valueOf(2000), 2L, null),
+                        new OrderLineDraft(PROD_2, "바나나", BigDecimal.valueOf(1500), 1L, "한 송이")
                 ),
                 "받는사람", "010-0000-0000", "서울시 강남구", "101동 101호", "12345"
         );
@@ -45,15 +55,15 @@ class OrderPersistenceAdapterTest {
     @Test
     @DisplayName("save → findById: 주문과 주문라인이 그대로 저장/조회된다")
     void save_and_findById_roundTrip() {
-        orderRepository.save(newOrder("order-1", "cust-1"));
+        orderRepository.save(newOrder(ORDER_1, CUST_1));
         em.flush();
         em.clear();
 
-        Optional<Order> found = orderRepository.findById("order-1");
+        Optional<Order> found = orderRepository.findById(ORDER_1);
 
         assertThat(found).isPresent();
         Order order = found.get();
-        assertThat(order.getCustomerId()).isEqualTo("cust-1");
+        assertThat(order.getCustomerId()).isEqualTo(CUST_1);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);
         // 2000*2 + 1500*1 = 5500
         assertThat(order.getTotalAmount()).isEqualByComparingTo(BigDecimal.valueOf(5500));
@@ -62,7 +72,7 @@ class OrderPersistenceAdapterTest {
         assertThat(order.getShippingZipCode()).isEqualTo("12345");
         assertThat(order.getLines()).hasSize(2);
         assertThat(order.getLines()).extracting(l -> l.getProductId())
-                .containsExactlyInAnyOrder("prod-1", "prod-2");
+                .containsExactlyInAnyOrder(PROD_1, PROD_2);
         assertThat(order.getLines()).extracting(l -> l.getSelectedOptionValue())
                 .containsExactlyInAnyOrder(null, "한 송이");
     }
@@ -70,32 +80,32 @@ class OrderPersistenceAdapterTest {
     @Test
     @DisplayName("findAllByCustomerId: 해당 고객의 주문만 조회된다")
     void findAllByCustomerId() {
-        orderRepository.save(newOrder("order-1", "cust-1"));
-        orderRepository.save(newOrder("order-2", "cust-1"));
-        orderRepository.save(newOrder("order-3", "cust-2"));
+        orderRepository.save(newOrder(ORDER_1, CUST_1));
+        orderRepository.save(newOrder(ORDER_2, CUST_1));
+        orderRepository.save(newOrder(ORDER_3, CUST_2));
         em.flush();
         em.clear();
 
-        List<Order> result = orderRepository.findAllByCustomerId("cust-1");
+        List<Order> result = orderRepository.findAllByCustomerId(CUST_1);
 
         assertThat(result).extracting(Order::getId)
-                .containsExactlyInAnyOrder("order-1", "order-2");
+                .containsExactlyInAnyOrder(ORDER_1, ORDER_2);
     }
 
     @Test
     @DisplayName("상태 변경 후 재저장: 상태가 갱신되고 주문라인이 유실되지 않는다 (merge/orphan 회귀 방지)")
     void updateStatus_thenSave_preservesLines() {
-        orderRepository.save(newOrder("order-1", "cust-1"));
+        orderRepository.save(newOrder(ORDER_1, CUST_1));
         em.flush();
         em.clear();
 
-        Order loaded = orderRepository.findById("order-1").orElseThrow();
+        Order loaded = orderRepository.findById(ORDER_1).orElseThrow();
         loaded.updateStatus(OrderStatus.SHIPPED);
         orderRepository.save(loaded);
         em.flush();
         em.clear();
 
-        Order reloaded = orderRepository.findById("order-1").orElseThrow();
+        Order reloaded = orderRepository.findById(ORDER_1).orElseThrow();
         assertThat(reloaded.getStatus()).isEqualTo(OrderStatus.SHIPPED);
         assertThat(reloaded.getLines()).hasSize(2);
         assertThat(reloaded.getTotalAmount()).isEqualByComparingTo(BigDecimal.valueOf(5500));

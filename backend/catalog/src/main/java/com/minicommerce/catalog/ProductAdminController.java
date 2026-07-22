@@ -1,6 +1,7 @@
 package com.minicommerce.catalog;
 
 import com.minicommerce.global.PageResult;
+import com.minicommerce.shared.UuidV7;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/admin/products")
@@ -53,11 +55,11 @@ public class ProductAdminController {
         Page<Product> productPage = productRepository.findWithFilters(active, qParam, pageable);
         List<Product> products = productPage.getContent();
         Map<String, Long> stocks = inventoryClient.availableStocks(
-                products.stream().map(Product::getId).toList());
+                products.stream().map(p -> p.getId().toString()).toList());
         List<ProductResponse> content = products.stream()
                 .map(p -> ProductResponse.from(
                         p,
-                        stocks.getOrDefault(p.getId(), 0L),
+                        stocks.getOrDefault(p.getId().toString(), 0L),
                         productOptionRepository.findByProductId(p.getId())))
                 .toList();
         return new PageResult<>(content, productPage.getTotalElements(),
@@ -67,40 +69,48 @@ public class ProductAdminController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     ProductResponse create(@Valid @RequestBody CreateProductRequest request) {
-        String id = UUID.randomUUID().toString();
+        if (productRepository.existsBySku(request.sku())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 SKU입니다: " + request.sku());
+        }
+        UUID id = UuidV7.randomUUID();
         Product product = new Product(id, request.name(), request.description(),
-                request.price(), request.stock(), request.imageUrl());
+                request.price(), request.stock(), request.imageUrl(), request.sku());
         productRepository.save(product);
         // 재고 초기화는 상품 생성 시점에만 명시적으로 수행한다(조회는 순수 read-only, GH #6).
         // 여기서 seed하지 않으면 최초 조회 시 order-api가 재고 미존재를 default=0으로 간주해
         // 품절로 표시한다 — Redis에 값을 쓰지는 않으니 고착되지는 않지만, 실제 재고와 다르게
         // 보이는 창구가 생기므로 생성 시점에 반드시 seed한다.
-        inventoryClient.setStock(id, request.stock());
+        inventoryClient.setStock(id.toString(), request.stock());
         List<ProductOption> savedOptions = saveOptions(id, request.options());
         return ProductResponse.from(product, request.stock(), savedOptions);
     }
 
     @PutMapping("/{id}")
     ProductResponse update(@PathVariable String id, @Valid @RequestBody UpdateProductRequest request) {
-        Product product = productRepository.findById(id)
+        UUID productId = UUID.fromString(id);
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
+        // SKU를 다른 상품이 이미 쓰고 있으면 거부(자기 자신 제외).
+        if (productRepository.existsBySkuAndIdNot(request.sku(), productId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 SKU입니다: " + request.sku());
+        }
         product.update(request.name(), request.description(), request.price(),
-                request.stock(), request.imageUrl());
+                request.stock(), request.imageUrl(), request.sku());
         productRepository.save(product);
         inventoryClient.setStock(id, request.stock());
-        productOptionRepository.deleteByProductId(id);
-        List<ProductOption> savedOptions = saveOptions(id, request.options());
+        productOptionRepository.deleteByProductId(productId);
+        List<ProductOption> savedOptions = saveOptions(productId, request.options());
         return ProductResponse.from(
                 product,
-                inventoryClient.availableStock(product.getId(), request.stock()),
+                inventoryClient.availableStock(product.getId().toString(), request.stock()),
                 savedOptions);
     }
 
-    private List<ProductOption> saveOptions(String productId, List<ProductOptionRequest> requests) {
+    private List<ProductOption> saveOptions(UUID productId, List<ProductOptionRequest> requests) {
         if (requests == null || requests.isEmpty()) return List.of();
         List<ProductOption> options = requests.stream()
                 .map(o -> new ProductOption(
-                        UUID.randomUUID().toString(),
+                        UuidV7.randomUUID(),
                         productId,
                         o.optionGroupName(),
                         o.optionValue(),
@@ -113,7 +123,7 @@ public class ProductAdminController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void deactivate(@PathVariable String id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         product.deactivate();
         productRepository.save(product);
@@ -121,13 +131,13 @@ public class ProductAdminController {
 
     @PatchMapping("/{id}/activate")
     ProductResponse activate(@PathVariable String id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         product.activate();
         productRepository.save(product);
         return ProductResponse.from(
                 product,
-                inventoryClient.availableStock(product.getId(), product.getStock()),
-                productOptionRepository.findByProductId(id));
+                inventoryClient.availableStock(product.getId().toString(), product.getStock()),
+                productOptionRepository.findByProductId(product.getId()));
     }
 }

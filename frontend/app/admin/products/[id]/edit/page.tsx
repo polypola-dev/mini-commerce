@@ -16,6 +16,7 @@ export default function EditProductPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
+  const [sku, setSku] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
@@ -28,6 +29,7 @@ export default function EditProductPage() {
   useEffect(() => {
     getProductById(id).then((found) => {
       setName(found.name);
+      setSku(found.sku ?? "");
       setDescription(found.description);
       setPrice(String(found.price));
       setStock(String(found.availableStock));
@@ -82,6 +84,7 @@ export default function EditProductPage() {
         price: Number(price),
         stock: Number(stock),
         imageUrl: imageUrl.trim(),
+        sku: sku.trim(),
         options: validOptions,
       };
       await adminUpdateProduct(id, data);
@@ -130,6 +133,20 @@ export default function EditProductPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="예: 프리미엄 캐시미어 니트"
+                    required
+                  />
+                </div>
+
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>
+                    SKU (상품코드) <span className={styles.formRequired}>*</span>
+                  </label>
+                  <input
+                    className={styles.formInput}
+                    value={sku}
+                    onChange={(e) => setSku(e.target.value)}
+                    placeholder="예: KB-LP-001"
+                    maxLength={64}
                     required
                   />
                 </div>

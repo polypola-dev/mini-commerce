@@ -1,15 +1,16 @@
 package com.minicommerce.wishlist.adapter.out.persistence;
 
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-interface WishlistJpaRepository extends JpaRepository<WishlistJpaEntity, String> {
+interface WishlistJpaRepository extends JpaRepository<WishlistJpaEntity, UUID> {
 
-    List<WishlistJpaEntity> findByCustomerIdOrderByCreatedAtDesc(String customerId);
+    List<WishlistJpaEntity> findByCustomerIdOrderByCreatedAtDesc(UUID customerId);
 
-    boolean existsByCustomerIdAndProductId(String customerId, String productId);
+    boolean existsByCustomerIdAndProductId(UUID customerId, UUID productId);
 
     @Transactional
-    void deleteByCustomerIdAndProductId(String customerId, String productId);
+    void deleteByCustomerIdAndProductId(UUID customerId, UUID productId);
 }

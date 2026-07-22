@@ -4,6 +4,7 @@ import com.minicommerce.global.PageResult;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -37,11 +38,11 @@ public class ProductController {
 
         List<Product> products = productPage.getContent();
         Map<String, Long> stocks = inventoryClient.availableStocks(
-                products.stream().map(Product::getId).toList());
+                products.stream().map(p -> p.getId().toString()).toList());
         List<ProductResponse> content = products.stream()
                 .map(product -> ProductResponse.from(
                         product,
-                        stocks.getOrDefault(product.getId(), 0L),
+                        stocks.getOrDefault(product.getId().toString(), 0L),
                         productOptionRepository.findByProductId(product.getId())))
                 .toList();
 
@@ -51,11 +52,11 @@ public class ProductController {
 
     @GetMapping("/{id}")
     ProductResponse getProduct(@PathVariable String id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + id));
         return ProductResponse.from(
                 product,
-                inventoryClient.availableStock(product.getId(), product.getStock()),
+                inventoryClient.availableStock(product.getId().toString(), product.getStock()),
                 productOptionRepository.findByProductId(product.getId()));
     }
 }

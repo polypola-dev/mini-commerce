@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,12 +36,12 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
     @Override
     public Optional<Order> findById(String id) {
-        return jpaRepository.findByIdWithLines(id).map(mapper::toDomain);
+        return jpaRepository.findByIdWithLines(UUID.fromString(id)).map(mapper::toDomain);
     }
 
     @Override
     public List<Order> findAllByCustomerId(String customerId) {
-        return jpaRepository.findAllByCustomerIdWithLines(customerId).stream().map(mapper::toDomain).toList();
+        return jpaRepository.findAllByCustomerIdWithLines(UUID.fromString(customerId)).stream().map(mapper::toDomain).toList();
     }
 
     @Override
@@ -57,8 +58,8 @@ public class OrderPersistenceAdapter implements OrderRepository {
         OrderStatus statusEnum = (status != null && !status.isBlank()) ? OrderStatus.valueOf(status) : null;
         String qParam = (q != null && !q.isBlank()) ? q : null;
 
-        Page<String> idsPage = jpaRepository.findOrderIdsPaged(statusEnum, qParam, pageable);
-        List<String> ids = idsPage.getContent();
+        Page<UUID> idsPage = jpaRepository.findOrderIdsPaged(statusEnum, qParam, pageable);
+        List<UUID> ids = idsPage.getContent();
 
         if (ids.isEmpty()) {
             return new PageResult<>(List.of(), idsPage.getTotalElements(), idsPage.getTotalPages(), page, size);
@@ -66,7 +67,8 @@ public class OrderPersistenceAdapter implements OrderRepository {
 
         List<Order> orders = jpaRepository.findByIdsWithLines(ids).stream().map(mapper::toDomain).toList();
         Map<String, Order> byId = orders.stream().collect(Collectors.toMap(Order::getId, o -> o));
-        List<Order> sorted = ids.stream().map(byId::get).filter(Objects::nonNull).toList();
+        // 도메인 Order.getId()는 String이므로 uuid 검색 결과를 toString으로 맞춰 정렬 순서를 보존한다.
+        List<Order> sorted = ids.stream().map(id -> byId.get(id.toString())).filter(Objects::nonNull).toList();
 
         return new PageResult<>(sorted, idsPage.getTotalElements(), idsPage.getTotalPages(), page, size);
     }

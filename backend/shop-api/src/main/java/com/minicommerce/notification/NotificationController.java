@@ -2,6 +2,7 @@ package com.minicommerce.notification;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +23,7 @@ public class NotificationController {
         if (customerId == null) {
             return List.of();
         }
-        return repository.findByCustomerIdOrderByCreatedAtDesc(customerId)
+        return repository.findByCustomerIdOrderByCreatedAtDesc(UUID.fromString(customerId))
                 .stream()
                 .map(NotificationResponse::from)
                 .toList();

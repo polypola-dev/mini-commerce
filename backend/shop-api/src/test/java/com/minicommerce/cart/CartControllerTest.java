@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,6 +27,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class CartControllerTest {
+
+    // id들이 uuid로 전환됐으므로(GH #20) 응답 직렬화 시 UUID.toString()이 나온다 → 유효 UUID를 쓴다.
+    private static final String CUSTOMER_ID = "00000000-0000-7000-8000-0000000000c1";
+    private static final UUID CUSTOMER_UUID = UUID.fromString(CUSTOMER_ID);
+    private static final String PROD_1 = "00000000-0000-7000-8000-0000000000a1";
+    private static final UUID PROD_1_UUID = UUID.fromString(PROD_1);
+    private static final UUID ITEM_1_UUID = UUID.fromString("00000000-0000-7000-8000-0000000000d1");
+    private static final String ITEM_1_ID = ITEM_1_UUID.toString();
 
     private MockMvc mockMvc;
 
@@ -43,14 +52,13 @@ class CartControllerTest {
     @Test
     @DisplayName("성공: GET /api/cart 호출 시 200 OK와 CartResponse를 반환한다")
     void getCart_returns200WithCartResponse() throws Exception {
-        String customerId = "cust-1";
-        Cart cart = new Cart(customerId);
-        when(cartService.getCart(customerId)).thenReturn(cart);
+        Cart cart = new Cart(CUSTOMER_UUID);
+        when(cartService.getCart(CUSTOMER_ID)).thenReturn(cart);
 
         mockMvc.perform(get("/api/cart")
-                        .requestAttr("authenticatedUserId", customerId))
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerId").value(customerId))
+                .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID))
                 .andExpect(jsonPath("$.items").isArray())
                 .andExpect(jsonPath("$.totalAmount").value(0));
     }
@@ -58,19 +66,18 @@ class CartControllerTest {
     @Test
     @DisplayName("성공: POST /api/cart/items 호출 시 201 Created와 CartItemResponse를 반환한다")
     void addItem_returns201WithCartItemResponse() throws Exception {
-        String customerId = "cust-1";
-        AddCartItemRequest request = new AddCartItemRequest("prod-1", "상품1", BigDecimal.valueOf(10000), 2, null);
-        Cart cart = new Cart(customerId);
-        CartItem item = new CartItem("item-1", cart, "prod-1", "상품1", BigDecimal.valueOf(10000), 2);
-        when(cartService.addItem(eq(customerId), any(AddCartItemRequest.class))).thenReturn(item);
+        AddCartItemRequest request = new AddCartItemRequest(PROD_1, "상품1", BigDecimal.valueOf(10000), 2, null);
+        Cart cart = new Cart(CUSTOMER_UUID);
+        CartItem item = new CartItem(ITEM_1_UUID, cart, PROD_1_UUID, "상품1", BigDecimal.valueOf(10000), 2);
+        when(cartService.addItem(eq(CUSTOMER_ID), any(AddCartItemRequest.class))).thenReturn(item);
 
         mockMvc.perform(post("/api/cart/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
-                        .requestAttr("authenticatedUserId", customerId))
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.itemId").value("item-1"))
-                .andExpect(jsonPath("$.productId").value("prod-1"))
+                .andExpect(jsonPath("$.itemId").value(ITEM_1_ID))
+                .andExpect(jsonPath("$.productId").value(PROD_1))
                 .andExpect(jsonPath("$.quantity").value(2))
                 .andExpect(jsonPath("$.subtotal").value(20000));
     }
@@ -78,35 +85,34 @@ class CartControllerTest {
     @Test
     @DisplayName("성공: PUT /api/cart/items/{itemId} 호출 시 200 OK와 CartResponse를 반환한다")
     void updateItem_returns200WithCartResponse() throws Exception {
-        String customerId = "cust-1";
-        Cart cart = new Cart(customerId);
-        when(cartService.updateItem(eq(customerId), eq("item-1"), any(UpdateCartItemRequest.class))).thenReturn(cart);
+        Cart cart = new Cart(CUSTOMER_UUID);
+        when(cartService.updateItem(eq(CUSTOMER_ID), eq(ITEM_1_ID), any(UpdateCartItemRequest.class))).thenReturn(cart);
 
-        mockMvc.perform(put("/api/cart/items/item-1")
+        mockMvc.perform(put("/api/cart/items/" + ITEM_1_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new UpdateCartItemRequest(3)))
-                        .requestAttr("authenticatedUserId", customerId))
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.customerId").value(customerId));
+                .andExpect(jsonPath("$.customerId").value(CUSTOMER_ID));
     }
 
     @Test
     @DisplayName("성공: DELETE /api/cart/items/{itemId} 호출 시 204 No Content를 반환한다")
     void deleteItem_returns204() throws Exception {
-        doNothing().when(cartService).removeItem("cust-1", "item-1");
+        doNothing().when(cartService).removeItem(CUSTOMER_ID, ITEM_1_ID);
 
-        mockMvc.perform(delete("/api/cart/items/item-1")
-                        .requestAttr("authenticatedUserId", "cust-1"))
+        mockMvc.perform(delete("/api/cart/items/" + ITEM_1_ID)
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("성공: DELETE /api/cart 호출 시 204 No Content를 반환한다")
     void clearCart_returns204() throws Exception {
-        doNothing().when(cartService).clearCart("cust-1");
+        doNothing().when(cartService).clearCart(CUSTOMER_ID);
 
         mockMvc.perform(delete("/api/cart")
-                        .requestAttr("authenticatedUserId", "cust-1"))
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isNoContent());
     }
 
@@ -120,7 +126,7 @@ class CartControllerTest {
         mockMvc.perform(post("/api/cart/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
-                        .requestAttr("authenticatedUserId", "cust-1"))
+                        .requestAttr("authenticatedUserId", CUSTOMER_ID))
                 .andExpect(status().isBadRequest());
     }
 }

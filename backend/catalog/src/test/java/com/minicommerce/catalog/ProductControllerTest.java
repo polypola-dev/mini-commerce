@@ -3,6 +3,7 @@ package com.minicommerce.catalog;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
 
+    private static final UUID P1 = UUID.fromString("00000000-0000-7000-8000-000000000001");
+    private static final UUID P2 = UUID.fromString("00000000-0000-7000-8000-000000000002");
+
     @Mock
     private ProductRepository productRepository;
 
@@ -53,12 +57,12 @@ class ProductControllerTest {
     @DisplayName("GET /api/products (q 없음): findWithFilters(active=true, q=null) 호출 후 페이지 응답 반환")
     void listProducts_withoutQuery_callsFindWithFilters() throws Exception {
         // given
-        Product product = new Product("p1", "사과", "새콤달콤한 과일", BigDecimal.valueOf(2000), 10, "img.jpg");
+        Product product = new Product(P1, "사과", "새콤달콤한 과일", BigDecimal.valueOf(2000), 10, "img.jpg", "SKU-P1");
         Pageable pageable = PageRequest.of(0, 20, Sort.by("name").ascending());
         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
         when(productRepository.findWithFilters(eq(true), isNull(), any(Pageable.class))).thenReturn(page);
-        when(inventoryClient.availableStocks(List.of("p1"))).thenReturn(Map.of("p1", 8L));
-        when(productOptionRepository.findByProductId("p1")).thenReturn(List.of());
+        when(inventoryClient.availableStocks(List.of(P1.toString()))).thenReturn(Map.of(P1.toString(), 8L));
+        when(productOptionRepository.findByProductId(P1)).thenReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/products")
@@ -66,7 +70,7 @@ class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].id").value("p1"))
+                .andExpect(jsonPath("$.content[0].id").value(P1.toString()))
                 .andExpect(jsonPath("$.content[0].name").value("사과"))
                 .andExpect(jsonPath("$.content[0].description").value("새콤달콤한 과일"))
                 .andExpect(jsonPath("$.content[0].price").value(2000))
@@ -84,12 +88,12 @@ class ProductControllerTest {
     void listProducts_withQuery_callsFindWithFilters() throws Exception {
         // given
         String query = "검색어";
-        Product product = new Product("p2", "검색어 상품", "검색어가 포함된 설명", BigDecimal.valueOf(5000), 3, "img2.jpg");
+        Product product = new Product(P2, "검색어 상품", "검색어가 포함된 설명", BigDecimal.valueOf(5000), 3, "img2.jpg", "SKU-P2");
         Pageable pageable = PageRequest.of(0, 20, Sort.by("name").ascending());
         Page<Product> page = new PageImpl<>(List.of(product), pageable, 1);
         when(productRepository.findWithFilters(eq(true), eq(query), any(Pageable.class))).thenReturn(page);
-        when(inventoryClient.availableStocks(List.of("p2"))).thenReturn(Map.of("p2", 3L));
-        when(productOptionRepository.findByProductId("p2")).thenReturn(List.of());
+        when(inventoryClient.availableStocks(List.of(P2.toString()))).thenReturn(Map.of(P2.toString(), 3L));
+        when(productOptionRepository.findByProductId(P2)).thenReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/products")
@@ -97,7 +101,7 @@ class ProductControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].id").value("p2"))
+                .andExpect(jsonPath("$.content[0].id").value(P2.toString()))
                 .andExpect(jsonPath("$.content[0].name").value("검색어 상품"))
                 .andExpect(jsonPath("$.content[0].description").value("검색어가 포함된 설명"))
                 .andExpect(jsonPath("$.content[0].price").value(5000))

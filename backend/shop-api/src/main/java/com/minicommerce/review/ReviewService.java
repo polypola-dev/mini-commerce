@@ -1,6 +1,7 @@
 package com.minicommerce.review;
 
 import com.minicommerce.catalog.ProductRepository;
+import com.minicommerce.shared.UuidV7;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
@@ -22,20 +23,21 @@ class ReviewService {
 
     @Transactional(readOnly = true)
     List<Review> getReviewsForProduct(String productId) {
-        return reviewRepository.findByProductIdOrderByCreatedAtDesc(productId);
+        return reviewRepository.findByProductIdOrderByCreatedAtDesc(UUID.fromString(productId));
     }
 
     Review createReview(String productId, String authorId, int rating, String content) {
-        if (!productRepository.existsById(productId)) {
+        UUID productUuid = UUID.fromString(productId);
+        if (!productRepository.existsById(productUuid)) {
             throw new EntityNotFoundException("Product not found: " + productId);
         }
-        return reviewRepository.save(new Review(UUID.randomUUID().toString(), productId, authorId, rating, content));
+        return reviewRepository.save(new Review(UuidV7.randomUUID(), productUuid, UUID.fromString(authorId), rating, content));
     }
 
     void deleteReview(String reviewId, String authorId) {
-        Review review = reviewRepository.findById(reviewId)
+        Review review = reviewRepository.findById(UUID.fromString(reviewId))
                 .orElseThrow(() -> new EntityNotFoundException("Review not found: " + reviewId));
-        if (!review.getAuthorId().equals(authorId)) {
+        if (!review.getAuthorId().equals(UUID.fromString(authorId))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot delete another user's review");
         }
         reviewRepository.delete(review);

@@ -41,6 +41,7 @@ export type Product = {
   price: number;
   availableStock: number;
   imageUrl: string;
+  sku: string;
   active: boolean;
   options: ProductOption[];
 };
@@ -340,6 +341,7 @@ export type AdminProductRequest = {
   price: number;
   stock: number;
   imageUrl: string;
+  sku: string;
   options: ProductOptionInput[];
 };
 

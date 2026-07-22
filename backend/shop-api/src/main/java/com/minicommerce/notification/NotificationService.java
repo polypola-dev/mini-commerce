@@ -3,6 +3,7 @@ package com.minicommerce.notification;
 import com.minicommerce.order.OrderCanceledEvent;
 import com.minicommerce.order.OrderPaidEvent;
 import com.minicommerce.order.OrderPlacedEvent;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,13 +29,15 @@ class NotificationService {
     }
 
     void on(OrderPlacedEvent event) {
-        if (repository.existsByOrderIdAndType(event.orderId(), NotificationType.ORDER_PLACED)) {
+        // orderId/customerId는 이벤트 계약상 String(order-events 무변경). DB/엔티티는 uuid이므로 여기서 변환.
+        UUID orderUuid = UUID.fromString(event.orderId());
+        if (repository.existsByOrderIdAndType(orderUuid, NotificationType.ORDER_PLACED)) {
             log.debug("ORDER_PLACED notification already exists for orderId={}, skip", event.orderId());
             return;
         }
         Notification notification = new Notification(
-                event.orderId(),
-                event.customerId(),
+                orderUuid,
+                UUID.fromString(event.customerId()),
                 NotificationType.ORDER_PLACED,
                 "주문이 접수되었습니다. 주문번호: " + event.orderId()
         );
@@ -42,13 +45,14 @@ class NotificationService {
     }
 
     void on(OrderPaidEvent event) {
-        if (repository.existsByOrderIdAndType(event.orderId(), NotificationType.ORDER_PAID)) {
+        UUID orderUuid = UUID.fromString(event.orderId());
+        if (repository.existsByOrderIdAndType(orderUuid, NotificationType.ORDER_PAID)) {
             log.debug("ORDER_PAID notification already exists for orderId={}, skip", event.orderId());
             return;
         }
         Notification notification = new Notification(
-                event.orderId(),
-                event.customerId(),
+                orderUuid,
+                UUID.fromString(event.customerId()),
                 NotificationType.ORDER_PAID,
                 "결제가 완료되었습니다. 주문번호: " + event.orderId()
         );
@@ -56,13 +60,14 @@ class NotificationService {
     }
 
     void on(OrderCanceledEvent event) {
-        if (repository.existsByOrderIdAndType(event.orderId(), NotificationType.ORDER_CANCELED)) {
+        UUID orderUuid = UUID.fromString(event.orderId());
+        if (repository.existsByOrderIdAndType(orderUuid, NotificationType.ORDER_CANCELED)) {
             log.debug("ORDER_CANCELED notification already exists for orderId={}, skip", event.orderId());
             return;
         }
         Notification notification = new Notification(
-                event.orderId(),
-                event.customerId(),
+                orderUuid,
+                UUID.fromString(event.customerId()),
                 NotificationType.ORDER_CANCELED,
                 "주문이 취소되었습니다. 주문번호: " + event.orderId()
         );

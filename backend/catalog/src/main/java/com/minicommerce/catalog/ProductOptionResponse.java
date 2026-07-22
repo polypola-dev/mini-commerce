@@ -10,7 +10,7 @@ public record ProductOptionResponse(
 ) {
     static ProductOptionResponse from(ProductOption option) {
         return new ProductOptionResponse(
-                option.getId(),
+                option.getId().toString(),
                 option.getOptionGroupName(),
                 option.getOptionValue(),
                 option.getAdditionalPrice()

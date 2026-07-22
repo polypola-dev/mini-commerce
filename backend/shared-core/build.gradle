@@ -1,3 +1,7 @@
-// 순수 POJO 라이브러리: spring-web/jpa 의존 금지 (order-domain이 이 원칙을 따름)
+// 순수 POJO 라이브러리: spring-web/jpa 의존 금지 (order-domain이 이 원칙을 따름).
+// uuid-creator는 순수 자바(스프링/JPA 의존 0)·zero-dependency·MIT라 이 "순수성" 원칙을 깨지 않는다.
+// UuidV7가 이 라이브러리 타입을 노출하지 않으므로(반환은 java.util.UUID) implementation으로 충분하다 —
+// 소비 모듈은 UuidV7만 참조하고, uuid-creator는 runtime 전이 의존으로만 따라간다.
 dependencies {
+    implementation 'com.github.f4b6a3:uuid-creator:6.1.1'
 }

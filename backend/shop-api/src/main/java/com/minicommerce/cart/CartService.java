@@ -2,6 +2,7 @@ package com.minicommerce.cart;
 
 import com.minicommerce.catalog.ProductOption;
 import com.minicommerce.catalog.ProductOptionRepository;
+import com.minicommerce.shared.UuidV7;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,8 +26,9 @@ public class CartService {
     }
 
     public Cart getCart(String customerId) {
-        Cart cart = cartRepository.findById(customerId)
-                .orElseGet(() -> cartRepository.save(new Cart(customerId)));
+        UUID customerUuid = UUID.fromString(customerId);
+        Cart cart = cartRepository.findById(customerUuid)
+                .orElseGet(() -> cartRepository.save(new Cart(customerUuid)));
         removeExpiredItems(cart);
         return cart;
     }
@@ -46,17 +48,19 @@ public class CartService {
         boolean hasOption = rawOptionId != null && !rawOptionId.isBlank();
 
         BigDecimal unitPrice = request.unitPrice();
-        String resolvedOptionId = null;
+        UUID resolvedOptionId = null;
         String selectedOptionValue = null;
         if (hasOption) {
-            ProductOption option = productOptionRepository.findById(rawOptionId)
+            UUID optionUuid = UUID.fromString(rawOptionId);
+            ProductOption option = productOptionRepository.findById(optionUuid)
                     .orElseThrow(() -> new EntityNotFoundException("Product option not found: " + rawOptionId));
             unitPrice = unitPrice.add(option.getAdditionalPrice());
             selectedOptionValue = option.getOptionValue();
-            resolvedOptionId = rawOptionId;
+            resolvedOptionId = optionUuid;
         }
 
-        CartItem existing = cart.findItem(request.productId(), resolvedOptionId).orElse(null);
+        UUID productUuid = UUID.fromString(request.productId());
+        CartItem existing = cart.findItem(productUuid, resolvedOptionId).orElse(null);
         if (existing != null) {
             existing.increaseQuantity(request.quantity());
             cartRepository.save(cart);
@@ -68,9 +72,9 @@ public class CartService {
         }
 
         CartItem item = new CartItem(
-                UUID.randomUUID().toString(),
+                UuidV7.randomUUID(),
                 cart,
-                request.productId(),
+                productUuid,
                 request.productName(),
                 unitPrice,
                 request.quantity(),
@@ -83,21 +87,21 @@ public class CartService {
     }
 
     public Cart updateItem(String customerId, String itemId, UpdateCartItemRequest request) {
-        Cart cart = cartRepository.findById(customerId)
+        Cart cart = cartRepository.findById(UUID.fromString(customerId))
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found: " + customerId));
-        cart.updateItemQuantity(itemId, request.quantity());
+        cart.updateItemQuantity(UUID.fromString(itemId), request.quantity());
         return cartRepository.save(cart);
     }
 
     public void removeItem(String customerId, String itemId) {
-        Cart cart = cartRepository.findById(customerId)
+        Cart cart = cartRepository.findById(UUID.fromString(customerId))
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found: " + customerId));
-        cart.removeItem(itemId);
+        cart.removeItem(UUID.fromString(itemId));
         cartRepository.save(cart);
     }
 
     public void clearCart(String customerId) {
-        Cart cart = cartRepository.findById(customerId)
+        Cart cart = cartRepository.findById(UUID.fromString(customerId))
                 .orElseThrow(() -> new EntityNotFoundException("Cart not found: " + customerId));
         cart.getItems().clear();
         cartRepository.save(cart);

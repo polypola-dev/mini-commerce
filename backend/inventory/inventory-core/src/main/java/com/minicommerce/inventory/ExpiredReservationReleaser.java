@@ -48,9 +48,10 @@ public class ExpiredReservationReleaser {
         );
 
         for (InventoryReservation reservation : expired) {
-            if (inventoryService.releaseByOrderId(reservation.getOrderId())) {
+            // 서비스/이벤트 계약은 String(REST·Kafka 경계 무변경) — 엔티티의 uuid를 toString으로 맞춘다.
+            if (inventoryService.releaseByOrderId(reservation.getOrderId().toString())) {
                 eventPublisher.publishEvent(new InventoryReservationExpiredEvent(
-                        reservation.getId(), reservation.getOrderId(), Instant.now()));
+                        reservation.getId().toString(), reservation.getOrderId().toString(), Instant.now()));
             }
         }
     }

@@ -10,14 +10,15 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "inventory_reservations")
 public class InventoryReservation {
     @Id
-    private String id;
+    private UUID id;
 
-    private String orderId;
+    private UUID orderId;
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
@@ -33,7 +34,7 @@ public class InventoryReservation {
     protected InventoryReservation() {
     }
 
-    public InventoryReservation(String id, String orderId, Instant expiresAt, List<ReservationLine> lines) {
+    public InventoryReservation(UUID id, UUID orderId, Instant expiresAt, List<ReservationLine> lines) {
         this.id = id;
         this.orderId = orderId;
         this.expiresAt = expiresAt;
@@ -41,11 +42,11 @@ public class InventoryReservation {
         this.status = ReservationStatus.RESERVED;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public String getOrderId() {
+    public UUID getOrderId() {
         return orderId;
     }
 

@@ -5,16 +5,20 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 class InventoryReservationTest {
 
+    private static final UUID ORDER_1 = UUID.fromString("00000000-0000-7000-8000-0000000000e1");
+    private static final UUID PROD_1 = UUID.fromString("00000000-0000-7000-8000-0000000000a1");
+
     private InventoryReservation reservation() {
         return new InventoryReservation(
-                "order-1", "order-1", Instant.now().plusSeconds(600),
-                List.of(new ReservationLine("prod-1", 2L)));
+                ORDER_1, ORDER_1, Instant.now().plusSeconds(600),
+                List.of(new ReservationLine(PROD_1, 2L)));
     }
 
     @Test

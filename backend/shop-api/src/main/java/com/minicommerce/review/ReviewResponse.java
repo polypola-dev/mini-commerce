@@ -12,9 +12,9 @@ public record ReviewResponse(
 ) {
     static ReviewResponse from(Review review) {
         return new ReviewResponse(
-                review.getId(),
-                review.getProductId(),
-                review.getAuthorId(),
+                review.getId().toString(),
+                review.getProductId().toString(),
+                review.getAuthorId().toString(),
                 review.getRating(),
                 review.getContent(),
                 review.getCreatedAt()

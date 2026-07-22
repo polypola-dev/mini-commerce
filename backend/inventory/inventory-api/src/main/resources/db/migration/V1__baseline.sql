@@ -5,16 +5,16 @@
 -- unique(order_id)는 예약 ID=orderId 멱등 설계(S3)의 DB 측 가드다 — 1주문 1예약.
 
 CREATE TABLE public.inventory_reservations (
-    id character varying(255) NOT NULL,
+    id uuid NOT NULL,
     expires_at timestamp(6) with time zone,
-    order_id character varying(255),
+    order_id uuid,
     status character varying(255),
     CONSTRAINT inventory_reservations_status_check CHECK (((status)::text = ANY ((ARRAY['RESERVED'::character varying, 'CONFIRMED'::character varying, 'RELEASED'::character varying, 'EXPIRED'::character varying, 'RESTOCKED'::character varying])::text[])))
 );
 
 CREATE TABLE public.inventory_reservation_lines (
-    inventory_reservation_id character varying(255) NOT NULL,
-    product_id character varying(255),
+    inventory_reservation_id uuid NOT NULL,
+    product_id uuid,
     quantity bigint
 );
 

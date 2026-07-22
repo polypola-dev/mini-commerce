@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -45,7 +44,7 @@ class InventoryConcurrencyTest {
         // stubOnly: 호출 기록을 남기지 않아 100 스레드 동시 호출에서도 안전하다(검증은 Redis 값으로).
         InventoryReservationRepository repository = mock(
                 InventoryReservationRepository.class, withSettings().stubOnly());
-        when(repository.findByOrderId(anyString())).thenReturn(Optional.empty());
+        when(repository.findByOrderId(any(UUID.class))).thenReturn(Optional.empty());
         when(repository.save(any(InventoryReservation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -63,7 +62,7 @@ class InventoryConcurrencyTest {
     @Test
     @DisplayName("재고 10개에 100개 동시 예약(주문별 orderId) → 정확히 10개만 성공, 재고 0 잔여")
     void concurrentReserve_exactlyStockSucceeds() throws InterruptedException {
-        String productId = "concurrent-prod-" + UUID.randomUUID();
+        String productId = UUID.randomUUID().toString();
         inventoryService.setStock(productId, 10L);
 
         int requests = 100;
@@ -106,10 +105,10 @@ class InventoryConcurrencyTest {
     // ----------------------------------------------------------------
 
     private static InventoryService serviceWithStatefulLedger() {
-        Map<String, InventoryReservation> store = new ConcurrentHashMap<>();
+        Map<UUID, InventoryReservation> store = new ConcurrentHashMap<>();
         InventoryReservationRepository repository = mock(InventoryReservationRepository.class);
-        when(repository.findByOrderId(anyString()))
-                .thenAnswer(invocation -> Optional.ofNullable(store.get(invocation.<String>getArgument(0))));
+        when(repository.findByOrderId(any(UUID.class)))
+                .thenAnswer(invocation -> Optional.ofNullable(store.get(invocation.<UUID>getArgument(0))));
         when(repository.save(any(InventoryReservation.class))).thenAnswer(invocation -> {
             InventoryReservation reservation = invocation.getArgument(0);
             store.put(reservation.getOrderId(), reservation);
@@ -124,7 +123,7 @@ class InventoryConcurrencyTest {
     @DisplayName("force-confirm 오버셀 방지: 리퍼 release 후 다른 주문이 재고를 채가면 원 주문은 OVERSOLD로 귀결, 재고 음수 안 됨")
     void forceConfirm_stockClaimedByAnother_marksOversoldWithoutNegativeStock() {
         InventoryService service = serviceWithStatefulLedger();
-        String productId = "oversold-prod-" + UUID.randomUUID();
+        String productId = UUID.randomUUID().toString();
         service.setStock(productId, 1L);
 
         String orderA = UUID.randomUUID().toString();
@@ -157,7 +156,7 @@ class InventoryConcurrencyTest {
     @DisplayName("force-confirm 정상: 아무도 안 채간 재고를 정확히 1회만 재차감해 CONFIRMED, 재시도해도 중복 차감 없음")
     void forceConfirm_stockStillAvailable_confirmsExactlyOnce() {
         InventoryService service = serviceWithStatefulLedger();
-        String productId = "forceconfirm-prod-" + UUID.randomUUID();
+        String productId = UUID.randomUUID().toString();
         service.setStock(productId, 1L);
 
         String orderA = UUID.randomUUID().toString();

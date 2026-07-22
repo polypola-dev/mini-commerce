@@ -39,6 +39,12 @@ class ApiExceptionHandlerTest {
             // 검증 실패 시 MethodArgumentNotValidException 자동 발생
         }
 
+        @GetMapping("/test/illegal-argument")
+        void illegalArgument() {
+            // UUID.fromString()이 잘못된 형식에 던지는 것과 동일한 예외
+            throw new IllegalArgumentException("Invalid UUID string: not-a-uuid");
+        }
+
         static class ValidRequest {
             @NotNull(message = "name이 필수입니다")
             public String name;
@@ -83,5 +89,18 @@ class ApiExceptionHandlerTest {
                         .content("{\"name\": null}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Invalid request"));
+    }
+
+    // ----------------------------------------------------------------
+    // IllegalArgumentException → 400 Bad Request (GH #20 후속 — UUID.fromString 파싱 실패)
+    // ----------------------------------------------------------------
+
+    @Test
+    @DisplayName("IllegalArgumentException → 400 Bad Request, title 'Invalid request'")
+    void illegalArgumentException_returns400WithProblemDetail() throws Exception {
+        mockMvc.perform(get("/test/illegal-argument"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid request"))
+                .andExpect(jsonPath("$.detail").value("Invalid UUID string: not-a-uuid"));
     }
 }

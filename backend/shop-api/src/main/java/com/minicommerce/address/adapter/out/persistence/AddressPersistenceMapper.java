@@ -1,6 +1,7 @@
 package com.minicommerce.address.adapter.out.persistence;
 
 import com.minicommerce.address.domain.Address;
+import java.util.UUID;
 
 final class AddressPersistenceMapper {
 
@@ -9,8 +10,8 @@ final class AddressPersistenceMapper {
 
     static Address toDomain(AddressJpaEntity entity) {
         return new Address(
-                entity.getId(),
-                entity.getCustomerId(),
+                entity.getId().toString(),
+                entity.getCustomerId().toString(),
                 entity.getLabel(),
                 entity.getRecipientName(),
                 entity.getPhone(),
@@ -24,8 +25,8 @@ final class AddressPersistenceMapper {
 
     static AddressJpaEntity toEntity(Address address) {
         return new AddressJpaEntity(
-                address.getId(),
-                address.getCustomerId(),
+                UUID.fromString(address.getId()),
+                UUID.fromString(address.getCustomerId()),
                 address.getLabel(),
                 address.getRecipientName(),
                 address.getPhone(),

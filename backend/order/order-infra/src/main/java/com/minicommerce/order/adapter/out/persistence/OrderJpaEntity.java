@@ -12,15 +12,16 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /** 주문의 JPA 영속성 모델. 도메인 {@code Order}와 분리되어 기술 매핑만 담당한다. */
 @Entity
 @Table(name = "orders")
 class OrderJpaEntity {
     @Id
-    private String id;
+    private UUID id;
 
-    private String customerId;
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
@@ -41,7 +42,7 @@ class OrderJpaEntity {
     protected OrderJpaEntity() {
     }
 
-    OrderJpaEntity(String id, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
+    OrderJpaEntity(UUID id, UUID customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
                    String paymentKey, String shippingRecipient, String shippingPhone, String shippingAddress,
                    String shippingDetailAddress, String shippingZipCode) {
         this.id = id;
@@ -62,8 +63,8 @@ class OrderJpaEntity {
         this.lines.add(line);
     }
 
-    String getId() { return id; }
-    String getCustomerId() { return customerId; }
+    UUID getId() { return id; }
+    UUID getCustomerId() { return customerId; }
     OrderStatus getStatus() { return status; }
     BigDecimal getTotalAmount() { return totalAmount; }
     Instant getCreatedAt() { return createdAt; }

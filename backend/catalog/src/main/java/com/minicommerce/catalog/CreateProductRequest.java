@@ -13,5 +13,6 @@ public record CreateProductRequest(
         @NotNull @Positive BigDecimal price,
         @Min(0) long stock,
         @NotBlank String imageUrl,
+        @NotBlank String sku,
         List<ProductOptionRequest> options
 ) {}

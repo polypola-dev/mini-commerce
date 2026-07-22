@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -185,7 +186,7 @@ public class InventoryService {
     }
 
     public Optional<InventoryReservation> getByOrderId(String orderId) {
-        return reservationRepository.findByOrderId(orderId);
+        return reservationRepository.findByOrderId(UUID.fromString(orderId));
     }
 
     /**
@@ -199,17 +200,19 @@ public class InventoryService {
      * @throws ReservationConflictException 같은 orderId가 이미 RESERVED 외 상태(재예약 불가)
      */
     public InventoryHold reserveForOrder(String orderId, List<InventoryItem> items) {
-        InventoryReservation reservation = reservationRepository.findByOrderId(orderId).orElse(null);
+        UUID orderUuid = UUID.fromString(orderId);
+        InventoryReservation reservation = reservationRepository.findByOrderId(orderUuid).orElse(null);
         if (reservation == null) {
             List<ReservationLine> lines = items.stream()
-                    .map(item -> new ReservationLine(item.productId(), item.quantity()))
+                    .map(item -> new ReservationLine(UUID.fromString(item.productId()), item.quantity()))
                     .toList();
             try {
+                // 예약 ID = orderId(1주문 1예약 멱등 키). 파싱한 uuid 하나를 id/orderId 두 필드에 모두 넣는다.
                 reservation = reservationRepository.save(new InventoryReservation(
-                        orderId, orderId, Instant.now().plus(RESERVATION_TTL), lines));
+                        orderUuid, orderUuid, Instant.now().plus(RESERVATION_TTL), lines));
             } catch (DataIntegrityViolationException e) {
                 // 동시 중복 호출 — unique(order_id)/PK에서 진 쪽은 먼저 커밋된 원장을 승계한다(멱등).
-                reservation = reservationRepository.findByOrderId(orderId).orElseThrow(() -> e);
+                reservation = reservationRepository.findByOrderId(orderUuid).orElseThrow(() -> e);
             }
         }
         if (reservation.getStatus() != ReservationStatus.RESERVED) {
@@ -218,11 +221,11 @@ public class InventoryService {
 
         // 품목/수량은 요청이 아니라 원장을 권위로 삼는다 — 재시도 시 요청 내용이 달라져도 원장이 이긴다.
         List<InventoryItem> ledgerItems = reservation.getLines().stream()
-                .map(line -> new InventoryItem(line.getProductId(), line.getQuantity()))
+                .map(line -> new InventoryItem(line.getProductId().toString(), line.getQuantity()))
                 .toList();
 
         List<String> keys = stockKeys(ledgerItems);
-        keys.add(reservationKey(reservation.getId()));
+        keys.add(reservationKey(reservation.getId().toString()));
         List<String> scriptArgs = new java.util.ArrayList<>(ledgerItems.stream()
                 .map(item -> String.valueOf(item.quantity()))
                 .toList());
@@ -235,7 +238,7 @@ public class InventoryService {
             throw new OutOfStockException(ledgerItems.getFirst().productId());
         }
         // 1(신규 차감) 또는 2(해시 이미 존재 — 재시도) 모두 성공.
-        return new InventoryHold(reservation.getId(), reservation.getExpiresAt(), ledgerItems);
+        return new InventoryHold(reservation.getId().toString(), reservation.getExpiresAt(), ledgerItems);
     }
 
     /**
@@ -245,15 +248,15 @@ public class InventoryService {
      * @return 이번 호출로 원장이 RELEASED로 전이됐으면 true — 리퍼는 이때만 만료 이벤트를 발행한다
      */
     public boolean releaseByOrderId(String orderId) {
-        InventoryReservation reservation = reservationRepository.findByOrderId(orderId).orElse(null);
+        InventoryReservation reservation = reservationRepository.findByOrderId(UUID.fromString(orderId)).orElse(null);
         if (reservation == null || reservation.getStatus() != ReservationStatus.RESERVED) {
             return false;
         }
 
         List<String> keys = new java.util.ArrayList<>();
-        keys.add(reservationKey(reservation.getId()));
+        keys.add(reservationKey(reservation.getId().toString()));
         keys.addAll(reservation.getLines().stream()
-                .map(line -> stockKey(line.getProductId()))
+                .map(line -> stockKey(line.getProductId().toString()))
                 .toList());
         String[] args = reservation.getLines().stream()
                 .map(line -> String.valueOf(line.getQuantity()))
@@ -280,7 +283,7 @@ public class InventoryService {
      */
     @Transactional
     public void confirmByOrderId(String orderId) {
-        InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
+        InventoryReservation reservation = reservationRepository.findByOrderId(UUID.fromString(orderId))
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
         ReservationStatus before = reservation.getStatus();
         switch (before) {
@@ -299,15 +302,15 @@ public class InventoryService {
             case RESERVED -> {
                 reservation.confirm();
                 reservationRepository.save(reservation);
-                redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId())));
+                redisTemplate.execute(confirmScript, List.of(reservationKey(reservation.getId().toString())));
             }
             case RELEASED, EXPIRED -> {
                 // payment-wins: 리퍼가 이긴 경합. Lua를 먼저 실행해 재고가 실제로 남아있는지 확인한 뒤에만
                 // 원장을 확정한다(Lua 실패 시 원장이 CONFIRMED로 앞서가는 결함 방지).
                 List<String> keys = new java.util.ArrayList<>();
-                keys.add(reservationKey(reservation.getId()));
+                keys.add(reservationKey(reservation.getId().toString()));
                 keys.addAll(reservation.getLines().stream()
-                        .map(line -> stockKey(line.getProductId()))
+                        .map(line -> stockKey(line.getProductId().toString()))
                         .toList());
                 String[] args = reservation.getLines().stream()
                         .map(line -> String.valueOf(line.getQuantity()))
@@ -329,17 +332,17 @@ public class InventoryService {
                     // 상품별 오버셀 수량을 관측 — 어떤 상품(특히 한정판)에서 얼마나 자주 발생하는지 태그로 구분.
                     for (ReservationLine line : reservation.getLines()) {
                         oversoldCounter.add(line.getQuantity(),
-                                Attributes.of(PRODUCT_ID_KEY, line.getProductId()));
+                                Attributes.of(PRODUCT_ID_KEY, line.getProductId().toString()));
                     }
                     eventPublisher.publishEvent(new InventoryReservationOversoldEvent(
-                            reservation.getId(), orderId, Instant.now()));
+                            reservation.getId().toString(), orderId, Instant.now()));
                 }
             }
         }
     }
 
     public void restockByOrderId(String orderId) {
-        InventoryReservation reservation = reservationRepository.findByOrderId(orderId)
+        InventoryReservation reservation = reservationRepository.findByOrderId(UUID.fromString(orderId))
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found for order: " + orderId));
         // DB 원장이 진실의 원천 — 이미 RESTOCKED면 Redis INCRBY를 건너뛰어 이중 복원을 막는다.
         if (!reservation.restock()) {
@@ -347,9 +350,9 @@ public class InventoryService {
         }
         reservationRepository.save(reservation);
         List<String> keys = new java.util.ArrayList<>();
-        keys.add(reservationKey(reservation.getId()));
+        keys.add(reservationKey(reservation.getId().toString()));
         keys.addAll(reservation.getLines().stream()
-                .map(line -> stockKey(line.getProductId()))
+                .map(line -> stockKey(line.getProductId().toString()))
                 .toList());
         String[] args = reservation.getLines().stream()
                 .map(line -> String.valueOf(line.getQuantity()))
@@ -362,7 +365,7 @@ public class InventoryService {
     }
 
     private void markReleased(String orderId) {
-        reservationRepository.findByOrderId(orderId).ifPresent(reservation -> {
+        reservationRepository.findByOrderId(UUID.fromString(orderId)).ifPresent(reservation -> {
             reservation.release();
             reservationRepository.save(reservation);
         });

@@ -39,4 +39,16 @@ public class ApiExceptionHandler {
         problem.setDetail(exception.getBindingResult().getAllErrors().getFirst().getDefaultMessage());
         return problem;
     }
+
+    // UUID PK 전환(GH #20) 후속 — @PathVariable String id를 UUID.fromString()으로 파싱하는
+    // 지점(catalog/cart/review/notification/address/wishlist/order/inventory 전 컨텍스트
+    // 공통 패턴)에서 잘못된 형식이 들어오면 IllegalArgumentException이 발생한다. 컨텍스트마다
+    // 개별 처리하지 않고 여기 한 곳에서 400으로 매핑한다(전 서비스가 shared-web을 의존하므로
+    // 단일 지점 수정으로 전체 커버).
+    @ExceptionHandler(IllegalArgumentException.class)
+    ProblemDetail handleIllegalArgument(IllegalArgumentException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setTitle("Invalid request");
+        return problem;
+    }
 }

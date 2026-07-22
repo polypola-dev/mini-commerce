@@ -19,6 +19,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
+    // 이벤트 계약은 String이지만 NotificationService가 UUID.fromString으로 파싱하므로 유효 UUID를 쓴다(GH #20).
+    private static final String ORDER_1 = "00000000-0000-7000-8000-0000000000e1";
+    private static final String CUST_1 = "00000000-0000-7000-8000-0000000000c1";
+
     @Mock
     private NotificationRepository repository;
 
@@ -38,7 +42,7 @@ class NotificationServiceTest {
     @DisplayName("OrderPlacedEvent 수신 시 SENT 상태로 알림이 2회 저장되고 sender가 1회 호출된다")
     void on_OrderPlacedEvent_savesTwiceAndSendsOnce() {
         // given
-        OrderPlacedEvent event = new OrderPlacedEvent("order-1", "cust-1", BigDecimal.valueOf(10000));
+        OrderPlacedEvent event = new OrderPlacedEvent(ORDER_1, CUST_1, BigDecimal.valueOf(10000));
 
         // when
         notificationService.on(event);
@@ -57,7 +61,7 @@ class NotificationServiceTest {
     @DisplayName("OrderPaidEvent 수신 시 SENT 상태로 알림이 2회 저장되고 sender가 1회 호출된다")
     void on_OrderPaidEvent_savesTwiceAndSendsOnce() {
         // given
-        OrderPaidEvent event = new OrderPaidEvent("order-1", "cust-1", BigDecimal.valueOf(10000));
+        OrderPaidEvent event = new OrderPaidEvent(ORDER_1, CUST_1, BigDecimal.valueOf(10000));
 
         // when
         notificationService.on(event);
@@ -76,7 +80,7 @@ class NotificationServiceTest {
     @DisplayName("sender.send()에서 예외 발생 시 FAILED 상태로 저장된다")
     void on_OrderPlacedEvent_whenSenderThrows_savesAsFailed() {
         // given
-        OrderPlacedEvent event = new OrderPlacedEvent("order-1", "cust-1", BigDecimal.valueOf(10000));
+        OrderPlacedEvent event = new OrderPlacedEvent(ORDER_1, CUST_1, BigDecimal.valueOf(10000));
         doThrow(new RuntimeException("send error")).when(sender).send(any(Notification.class));
 
         // when

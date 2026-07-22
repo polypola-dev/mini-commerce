@@ -10,7 +10,7 @@ public record CartResponse(
 ) {
     public static CartResponse from(Cart cart) {
         return new CartResponse(
-                cart.getId(),
+                cart.getId().toString(),
                 cart.getItems().stream().map(CartItemResponse::from).toList(),
                 cart.getTotalAmount()
         );

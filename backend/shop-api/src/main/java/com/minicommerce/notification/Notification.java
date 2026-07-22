@@ -9,17 +9,18 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import com.minicommerce.shared.UuidV7;
 
 @Entity
 @Table(name = "notifications")
 class Notification {
 
     @Id
-    private String id;
+    private UUID id;
 
-    private String orderId;
+    private UUID orderId;
 
-    private String customerId;
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
     private NotificationType type;
@@ -37,7 +38,7 @@ class Notification {
     protected Notification() {
     }
 
-    Notification(String orderId, String customerId, NotificationType type, String message) {
+    Notification(UUID orderId, UUID customerId, NotificationType type, String message) {
         this.orderId = orderId;
         this.customerId = customerId;
         this.type = type;
@@ -48,7 +49,7 @@ class Notification {
     @PrePersist
     void prePersist() {
         if (this.id == null) {
-            this.id = UUID.randomUUID().toString();
+            this.id = UuidV7.randomUUID();
         }
         if (this.createdAt == null) {
             this.createdAt = Instant.now();
@@ -69,15 +70,15 @@ class Notification {
         this.status = NotificationStatus.FAILED;
     }
 
-    String getId() {
+    UUID getId() {
         return id;
     }
 
-    String getOrderId() {
+    UUID getOrderId() {
         return orderId;
     }
 
-    String getCustomerId() {
+    UUID getCustomerId() {
         return customerId;
     }
 

@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "addresses")
@@ -12,10 +13,10 @@ public class AddressJpaEntity {
 
     @Id
     @Column(name = "id")
-    private String id;
+    private UUID id;
 
     @Column(name = "customer_id", nullable = false)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = "label")
     private String label;
@@ -44,7 +45,7 @@ public class AddressJpaEntity {
     protected AddressJpaEntity() {
     }
 
-    public AddressJpaEntity(String id, String customerId, String label, String recipientName, String phone,
+    public AddressJpaEntity(UUID id, UUID customerId, String label, String recipientName, String phone,
                             String address1, String address2, String zipCode, boolean defaultAddress, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
@@ -58,11 +59,11 @@ public class AddressJpaEntity {
         this.createdAt = createdAt;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public String getCustomerId() {
+    public UUID getCustomerId() {
         return customerId;
     }
 

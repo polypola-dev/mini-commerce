@@ -4,9 +4,9 @@ import com.minicommerce.address.application.port.in.ManageAddressUseCase;
 import com.minicommerce.address.application.port.out.AddressRepositoryPort;
 import com.minicommerce.address.domain.Address;
 import com.minicommerce.address.domain.AddressNotFoundException;
+import com.minicommerce.shared.UuidV7;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +30,7 @@ public class AddressService implements ManageAddressUseCase {
     public Address add(String customerId, NewAddress command) {
         boolean first = addressRepository.countByCustomerId(customerId) == 0;
         Address address = new Address(
-                UUID.randomUUID().toString(),
+                UuidV7.randomUUID().toString(),
                 customerId,
                 command.label(),
                 command.recipientName(),

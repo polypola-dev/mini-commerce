@@ -49,7 +49,7 @@ public class ReservationService
     public Optional<ReservationView> get(String orderId) {
         return inventoryService.getByOrderId(orderId)
                 .map(reservation -> new ReservationView(
-                        reservation.getId(), reservation.getOrderId(),
+                        reservation.getId().toString(), reservation.getOrderId().toString(),
                         reservation.getStatus().name(), reservation.getExpiresAt()));
     }
 

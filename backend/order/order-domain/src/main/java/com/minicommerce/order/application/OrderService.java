@@ -21,9 +21,9 @@ import com.minicommerce.order.domain.exception.OrderCancelNotAllowedException;
 import com.minicommerce.order.domain.exception.OrderNotFoundException;
 import com.minicommerce.order.domain.exception.PaymentAmountMismatchException;
 import com.minicommerce.order.domain.exception.ReservationNotActiveException;
+import com.minicommerce.shared.UuidV7;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 // order-domain은 최소 의존(spring-context/tx)이라 slf4j가 클래스패스에 없다 — spring-jcl 경유
 // commons-logging이 이 모듈에서 쓸 수 있는 로깅 파사드다(런타임엔 SLF4J로 브리지됨).
 import org.apache.commons.logging.Log;
@@ -84,7 +84,7 @@ public class OrderService implements PlaceOrderUseCase, ConfirmPaymentUseCase, C
         // orderId를 선생성해 예약 멱등 키로 사용한다(예약 ID = orderId, GH #3 S3). 원격 reserve가
         // 타임아웃 후 재시도돼도 inventory 쪽에서 이중 차감 없이 수렴한다. 이 호출은 DB 트랜잭션
         // 밖에서 실행된다(GH #21) — Hikari 커넥션을 물지 않은 채 원격 서비스를 기다린다.
-        String orderId = UUID.randomUUID().toString();
+        String orderId = UuidV7.randomUUID().toString();
         List<StockItem> stockItems = command.items().stream()
                 .map(i -> new StockItem(i.productId(), i.quantity()))
                 .toList();

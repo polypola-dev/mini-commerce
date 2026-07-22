@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /** 주문 라인의 JPA 영속성 모델. */
 @Entity
@@ -21,7 +22,7 @@ class OrderLineJpaEntity {
     @JoinColumn(name = "order_id")
     private OrderJpaEntity order;
 
-    private String productId;
+    private UUID productId;
     private String productName;
     private BigDecimal unitPrice;
     private long quantity;
@@ -30,7 +31,7 @@ class OrderLineJpaEntity {
     protected OrderLineJpaEntity() {
     }
 
-    OrderLineJpaEntity(Long id, String productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
+    OrderLineJpaEntity(Long id, UUID productId, String productName, BigDecimal unitPrice, long quantity, String selectedOptionValue) {
         this.id = id;
         this.productId = productId;
         this.productName = productName;
@@ -44,7 +45,7 @@ class OrderLineJpaEntity {
     }
 
     Long getId() { return id; }
-    String getProductId() { return productId; }
+    UUID getProductId() { return productId; }
     String getProductName() { return productName; }
     BigDecimal getUnitPrice() { return unitPrice; }
     long getQuantity() { return quantity; }
