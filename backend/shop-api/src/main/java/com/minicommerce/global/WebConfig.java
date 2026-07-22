@@ -52,7 +52,11 @@ public class WebConfig implements WebMvcConfigurer {
                 "/api/reviews/*",
                 "/api/cart",
                 "/api/cart/*",
-                "/api/notifications"
+                "/api/notifications",
+                "/api/addresses",
+                "/api/addresses/*",
+                "/api/wishlist",
+                "/api/wishlist/*"
         );
         registrationBean.setOrder(1);
         return registrationBean;
