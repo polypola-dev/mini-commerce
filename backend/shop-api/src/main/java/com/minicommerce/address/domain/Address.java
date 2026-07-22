@@ -18,11 +18,12 @@ public class Address {
     private String phone;
     private String address1;
     private String address2;
+    private String zipCode;
     private boolean defaultAddress;
     private final Instant createdAt;
 
     public Address(String id, String customerId, String label, String recipientName, String phone,
-                   String address1, String address2, boolean defaultAddress, Instant createdAt) {
+                   String address1, String address2, String zipCode, boolean defaultAddress, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
         this.label = label;
@@ -30,8 +31,20 @@ public class Address {
         this.phone = phone;
         this.address1 = address1;
         this.address2 = address2;
+        this.zipCode = zipCode;
         this.defaultAddress = defaultAddress;
         this.createdAt = createdAt;
+    }
+
+    /** 배송지 내용 수정. 소유자·기본배송지 여부·생성시각은 유지한다. */
+    public void update(String label, String recipientName, String phone,
+                       String address1, String address2, String zipCode) {
+        this.label = label;
+        this.recipientName = recipientName;
+        this.phone = phone;
+        this.address1 = address1;
+        this.address2 = address2;
+        this.zipCode = zipCode;
     }
 
     public void markDefault() {
@@ -68,6 +81,10 @@ public class Address {
 
     public String getAddress2() {
         return address2;
+    }
+
+    public String getZipCode() {
+        return zipCode;
     }
 
     public boolean isDefaultAddress() {

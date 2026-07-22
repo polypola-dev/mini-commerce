@@ -32,6 +32,9 @@ public class AddressJpaEntity {
     @Column(name = "address2")
     private String address2;
 
+    @Column(name = "zip_code")
+    private String zipCode;
+
     @Column(name = "is_default", nullable = false)
     private boolean defaultAddress;
 
@@ -42,7 +45,7 @@ public class AddressJpaEntity {
     }
 
     public AddressJpaEntity(String id, String customerId, String label, String recipientName, String phone,
-                            String address1, String address2, boolean defaultAddress, Instant createdAt) {
+                            String address1, String address2, String zipCode, boolean defaultAddress, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
         this.label = label;
@@ -50,6 +53,7 @@ public class AddressJpaEntity {
         this.phone = phone;
         this.address1 = address1;
         this.address2 = address2;
+        this.zipCode = zipCode;
         this.defaultAddress = defaultAddress;
         this.createdAt = createdAt;
     }
@@ -80,6 +84,10 @@ public class AddressJpaEntity {
 
     public String getAddress2() {
         return address2;
+    }
+
+    public String getZipCode() {
+        return zipCode;
     }
 
     public boolean isDefaultAddress() {

@@ -5,10 +5,22 @@ import { useRouter } from "next/navigation";
 import { loadTossPayments, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 import { createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
 import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
-import { useAddresses } from "@/lib/addresses";
-import AddressLabelPicker from "../address-label-picker";
+import { useAddresses, type Address } from "@/lib/addresses";
+import AddressForm, { type AddressFormValue } from "../address-form";
 
 const MANUAL_ADDR = "__manual__";
+
+const pickerCardBtn: React.CSSProperties = {
+  width: "auto",
+  border: "1px solid var(--color-hairline)",
+  background: "#fff",
+  color: "var(--color-ink)",
+  borderRadius: "8px",
+  padding: "6px 13px",
+  fontSize: "12px",
+  fontWeight: 600,
+  cursor: "pointer",
+};
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
@@ -24,7 +36,7 @@ export default function CheckoutPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addr, setAddr] = useState({ label: "", name: "", phone: "", a1: "", a2: "" });
-  const { addresses } = useAddresses();
+  const { addresses, add, update, remove } = useAddresses();
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState<number | null>(null);
@@ -56,11 +68,9 @@ export default function CheckoutPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  // 배송지 선택 팝업(바텀시트) 상태와 직접입력 초안.
+  // 배송지 팝업(풀스크린) 상태. list=목록/선택, add=신규 입력, edit=기존 수정.
   const [showPicker, setShowPicker] = useState(false);
-  const [pickerManual, setPickerManual] = useState(false);
-  const [draft, setDraft] = useState({ label: "집", name: "", phone: "", a1: "", a2: "" });
-  const [draftError, setDraftError] = useState<string | null>(null);
+  const [picker, setPicker] = useState<{ mode: "list" } | { mode: "add" } | { mode: "edit"; addr: Address }>({ mode: "list" });
 
   // 저장된 배송지가 로드되면 기본배송지(없으면 첫 항목)를 자동 선택해 입력값을 채운다.
   // 사용자가 아직 아무것도 고르지 않았을 때만 초기화하고, 이후 선택은 건드리지 않는다.
@@ -73,8 +83,7 @@ export default function CheckoutPage() {
 
   function openPicker() {
     if (orderId) return;
-    setPickerManual(false);
-    setDraftError(null);
+    setPicker({ mode: "list" });
     setShowPicker(true);
   }
 
@@ -86,29 +95,33 @@ export default function CheckoutPage() {
     setShowPicker(false);
   }
 
-  function startManual() {
-    setDraft({ label: "집", name: "", phone: "", a1: "", a2: "" });
-    setDraftError(null);
-    setPickerManual(true);
-  }
-
-  function validateDraft(d: typeof draft): string | null {
-    if (d.name.trim().length < 2) return "받는 분 이름을 2자 이상 입력해주세요.";
-    const digits = d.phone.replace(/[^0-9]/g, "");
-    if (digits.length < 9 || digits.length > 11) return "연락처를 정확히 입력해주세요. (숫자 9~11자리)";
-    if (d.a1.trim().length < 5) return "주소를 정확히 입력해주세요.";
-    return null;
-  }
-
-  function confirmManual() {
-    const err = validateDraft(draft);
-    if (err) {
-      setDraftError(err);
-      return;
+  // 폼 저장: 주소록에 add/update한 뒤, 그 배송지를 이번 주문의 배송지로 선택한다.
+  function submitAddressForm(v: AddressFormValue) {
+    const payload = {
+      label: v.label || null,
+      name: v.name,
+      phone: v.phone,
+      address1: v.address1,
+      address2: v.address2,
+      zipCode: v.zipCode || null,
+    };
+    if (picker.mode === "edit") {
+      update(picker.addr.id, payload);
+      setSelectedAddrId(picker.addr.id);
+    } else {
+      add(payload);
+      setSelectedAddrId(MANUAL_ADDR);
     }
-    setAddr({ label: draft.label.trim(), name: draft.name.trim(), phone: draft.phone.trim(), a1: draft.a1.trim(), a2: draft.a2.trim() });
-    setSelectedAddrId(MANUAL_ADDR);
+    setAddr({ label: v.label, name: v.name, phone: v.phone, a1: v.address1, a2: v.address2 });
     setShowPicker(false);
+  }
+
+  function deleteSaved(id: string) {
+    remove(id);
+    if (selectedAddrId === id) {
+      setSelectedAddrId(null);
+      setAddr({ label: "", name: "", phone: "", a1: "", a2: "" });
+    }
   }
 
   const hasAddr = addr.name.trim().length > 0 && addr.a1.trim().length > 0;
@@ -287,22 +300,24 @@ export default function CheckoutPage() {
           <div style={{ padding: "14px 20px 12px", display: "flex", alignItems: "center", gap: "12px", borderBottom: "1px solid var(--color-hairline-soft)", flex: "none" }}>
             <button
               type="button"
-              onClick={() => (pickerManual && addresses.length > 0 ? setPickerManual(false) : setShowPicker(false))}
+              onClick={() => (picker.mode !== "list" && addresses.length > 0 ? setPicker({ mode: "list" }) : setShowPicker(false))}
               aria-label="뒤로"
               style={{ border: "none", background: "transparent", cursor: "pointer", padding: 0, display: "flex" }}
             >
               <svg width="22" height="22" fill="none" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m14 5-7 7 7 7" /></svg>
             </button>
-            <span style={{ fontSize: "18px", fontWeight: 700 }}>{pickerManual ? "배송지 추가하기" : "배송지 변경"}</span>
+            <span style={{ fontSize: "18px", fontWeight: 700 }}>
+              {picker.mode === "add" ? "배송지 추가하기" : picker.mode === "edit" ? "배송지 수정" : "배송지 변경"}
+            </span>
           </div>
 
           {/* 컨텐츠 */}
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 24px" }}>
-            {!pickerManual ? (
+            {picker.mode === "list" ? (
               <>
                 <button
                   type="button"
-                  onClick={startManual}
+                  onClick={() => setPicker({ mode: "add" })}
                   style={{ width: "100%", border: "1.5px solid var(--color-hairline)", background: "#fff", borderRadius: "var(--radius-md)", padding: "15px", fontSize: "14px", fontWeight: 700, color: "var(--color-ink)", cursor: "pointer", marginBottom: "16px" }}
                 >
                   ＋ 배송지 추가하기
@@ -312,52 +327,41 @@ export default function CheckoutPage() {
                   {addresses.map((a) => {
                     const selected = selectedAddrId === a.id;
                     return (
-                      <button
+                      <div
                         key={a.id}
-                        type="button"
-                        onClick={() => chooseSaved(a.id)}
-                        style={{ textAlign: "left", width: "100%", border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-hairline)"}`, background: selected ? "var(--color-surface-strong)" : "#fff", borderRadius: "var(--radius-md)", padding: "14px 16px", cursor: "pointer" }}
+                        style={{ border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-hairline)"}`, background: selected ? "var(--color-surface-strong)" : "#fff", borderRadius: "var(--radius-md)", padding: "14px 16px" }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
-                          {a.label && (
-                            <span style={{ background: "var(--color-surface-strong)", color: "var(--color-primary)", fontSize: "11px", fontWeight: 800, borderRadius: "6px", padding: "2px 7px" }}>{a.label}</span>
-                          )}
-                          <span style={{ fontSize: "14px", fontWeight: 700 }}>{a.name}</span>
-                          {a.isDefault && (
-                            <span style={{ background: "var(--color-primary)", color: "#fff", fontSize: "10.5px", fontWeight: 800, borderRadius: "999px", padding: "1.5px 8px" }}>기본</span>
-                          )}
+                        <button type="button" onClick={() => chooseSaved(a.id)} style={{ textAlign: "left", width: "100%", border: "none", background: "transparent", cursor: "pointer", padding: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
+                            {a.label && (
+                              <span style={{ background: "var(--color-surface-strong)", color: "var(--color-primary)", fontSize: "11px", fontWeight: 800, borderRadius: "6px", padding: "2px 7px" }}>{a.label}</span>
+                            )}
+                            <span style={{ fontSize: "14px", fontWeight: 700 }}>{a.name}</span>
+                            {a.isDefault && (
+                              <span style={{ background: "var(--color-primary)", color: "#fff", fontSize: "10.5px", fontWeight: 800, borderRadius: "999px", padding: "1.5px 8px" }}>기본</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "13px", color: "var(--color-body)" }}>{a.zipCode ? `[${a.zipCode}] ` : ""}{a.address1} {a.address2}</div>
+                          <div style={{ fontSize: "12.5px", color: "var(--color-muted)", marginTop: "1px" }}>{a.phone}</div>
+                        </button>
+                        <div style={{ display: "flex", gap: "6px", marginTop: "11px" }}>
+                          <button type="button" style={pickerCardBtn} onClick={() => setPicker({ mode: "edit", addr: a })}>수정</button>
+                          <button type="button" style={pickerCardBtn} onClick={() => deleteSaved(a.id)}>삭제</button>
                         </div>
-                        <div style={{ fontSize: "13px", color: "var(--color-body)" }}>{a.address1} {a.address2}</div>
-                        <div style={{ fontSize: "12.5px", color: "var(--color-muted)", marginTop: "1px" }}>{a.phone}</div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
               </>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div>
-                  <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "9px", color: "var(--color-body)" }}>배송지명</div>
-                  <AddressLabelPicker value={draft.label} onChange={(v) => setDraft((d) => ({ ...d, label: v }))} />
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <input className="mcCheckoutInput" placeholder="받는 분" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
-                  <input className="mcCheckoutInput" placeholder="연락처" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
-                  <input className="mcCheckoutInput" placeholder="주소" value={draft.a1} onChange={(e) => setDraft((d) => ({ ...d, a1: e.target.value }))} />
-                  <input className="mcCheckoutInput" placeholder="상세 주소" value={draft.a2} onChange={(e) => setDraft((d) => ({ ...d, a2: e.target.value }))} />
-                </div>
-                {draftError && <p style={{ color: "var(--color-error)", fontSize: "12.5px" }}>{draftError}</p>}
-              </div>
+              <AddressForm
+                initial={picker.mode === "edit" ? { label: picker.addr.label ?? "", name: picker.addr.name, phone: picker.addr.phone, address1: picker.addr.address1, address2: picker.addr.address2, zipCode: picker.addr.zipCode ?? "" } : undefined}
+                submitLabel={picker.mode === "edit" ? "수정하고 선택" : "저장하고 선택"}
+                onSubmit={submitAddressForm}
+                onCancel={() => (addresses.length > 0 ? setPicker({ mode: "list" }) : setShowPicker(false))}
+              />
             )}
           </div>
-
-          {/* 직접입력 모드 하단 액션 */}
-          {pickerManual && (
-            <div style={{ padding: "12px 16px 16px", borderTop: "1px solid var(--color-hairline-soft)", display: "flex", gap: "8px", flex: "none" }}>
-              <button type="button" className="mcBtn mcBtnSecondary" style={{ flex: 1, width: "auto" }} onClick={() => (addresses.length > 0 ? setPickerManual(false) : setShowPicker(false))}>취소</button>
-              <button type="button" className="mcBtn mcBtnPrimary" style={{ flex: 1, width: "auto" }} onClick={confirmManual}>이 배송지로 주문</button>
-            </div>
-          )}
         </div>
       )}
     </div>

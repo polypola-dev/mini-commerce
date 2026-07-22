@@ -42,9 +42,19 @@ public class AddressController {
     @ResponseStatus(HttpStatus.CREATED)
     AddressResponse add(@Valid @RequestBody SaveAddressRequest request, HttpServletRequest httpRequest) {
         String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
-        NewAddress command = new NewAddress(
-                request.label(), request.name(), request.phone(), request.address1(), request.address2());
-        return AddressResponse.from(manageAddressUseCase.add(customerId, command));
+        return AddressResponse.from(manageAddressUseCase.add(customerId, toCommand(request)));
+    }
+
+    @PutMapping("/{addressId}")
+    AddressResponse update(@PathVariable String addressId, @Valid @RequestBody SaveAddressRequest request,
+                           HttpServletRequest httpRequest) {
+        String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
+        return AddressResponse.from(manageAddressUseCase.update(customerId, addressId, toCommand(request)));
+    }
+
+    private NewAddress toCommand(SaveAddressRequest request) {
+        return new NewAddress(request.label(), request.name(), request.phone(),
+                request.address1(), request.address2(), request.zipCode());
     }
 
     @DeleteMapping("/{addressId}")

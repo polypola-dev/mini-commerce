@@ -13,6 +13,7 @@ public record AddressResponse(
         String phone,
         String address1,
         String address2,
+        String zipCode,
         boolean isDefault
 ) {
     public static AddressResponse from(Address address) {
@@ -23,6 +24,7 @@ public record AddressResponse(
                 address.getPhone(),
                 address.getAddress1(),
                 address.getAddress2(),
+                address.getZipCode(),
                 address.isDefaultAddress()
         );
     }

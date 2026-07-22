@@ -37,10 +37,26 @@ public class AddressService implements ManageAddressUseCase {
                 command.phone(),
                 command.address1(),
                 command.address2(),
+                command.zipCode(),
                 first,
                 Instant.now()
         );
         return addressRepository.save(address);
+    }
+
+    @Override
+    public Address update(String customerId, String addressId, NewAddress command) {
+        Address target = addressRepository.findByIdAndCustomerId(addressId, customerId)
+                .orElseThrow(() -> new AddressNotFoundException(addressId));
+        target.update(
+                command.label(),
+                command.recipientName(),
+                command.phone(),
+                command.address1(),
+                command.address2(),
+                command.zipCode()
+        );
+        return addressRepository.save(target);
     }
 
     @Override

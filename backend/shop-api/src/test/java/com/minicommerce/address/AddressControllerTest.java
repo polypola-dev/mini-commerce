@@ -49,7 +49,7 @@ class AddressControllerTest {
 
     private Address sampleAddress(String id, boolean isDefault) {
         return new Address(id, "cust-1", "집", "홍길동", "010-1234-5678",
-                "서울시 강남구", "101동 202호", isDefault, Instant.now());
+                "서울시 강남구", "101동 202호", "06236", isDefault, Instant.now());
     }
 
     @Test
@@ -89,6 +89,52 @@ class AddressControllerTest {
     void add_blankName_returns400() throws Exception {
         String body = """
                 {"name":"","phone":"010-1234-5678","address1":"서울시 강남구","address2":""}
+                """;
+
+        mockMvc.perform(post("/api/addresses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("성공: PUT /api/addresses/{id} 호출 시 200 OK와 수정된 배송지를 반환한다")
+    void update_returns200() throws Exception {
+        when(manageAddressUseCase.update(eq("cust-1"), eq("addr-1"), any(NewAddress.class)))
+                .thenReturn(sampleAddress("addr-1", true));
+
+        String body = """
+                {"label":"회사","name":"김철수","phone":"010-9999-8888","address1":"판교로 1","address2":"5층","zipCode":"13494"}
+                """;
+
+        mockMvc.perform(put("/api/addresses/addr-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("addr-1"));
+    }
+
+    @Test
+    @DisplayName("실패: 잘못된 전화번호 형식이면 400 Bad Request를 반환한다")
+    void add_invalidPhone_returns400() throws Exception {
+        String body = """
+                {"name":"홍길동","phone":"12345","address1":"서울시 강남구","address2":""}
+                """;
+
+        mockMvc.perform(post("/api/addresses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .requestAttr("authenticatedUserId", "cust-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("실패: 수령인에 숫자가 섞이면 400 Bad Request를 반환한다")
+    void add_invalidName_returns400() throws Exception {
+        String body = """
+                {"name":"홍길동123","phone":"010-1234-5678","address1":"서울시 강남구","address2":""}
                 """;
 
         mockMvc.perform(post("/api/addresses")

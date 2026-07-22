@@ -16,6 +16,7 @@ final class AddressPersistenceMapper {
                 entity.getPhone(),
                 entity.getAddress1(),
                 entity.getAddress2(),
+                entity.getZipCode(),
                 entity.isDefaultAddress(),
                 entity.getCreatedAt()
         );
@@ -30,6 +31,7 @@ final class AddressPersistenceMapper {
                 address.getPhone(),
                 address.getAddress1(),
                 address.getAddress2(),
+                address.getZipCode(),
                 address.isDefaultAddress(),
                 address.getCreatedAt()
         );

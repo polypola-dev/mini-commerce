@@ -15,6 +15,7 @@ export type Address = {
   phone: string;
   address1: string;
   address2: string;
+  zipCode: string | null;
   isDefault: boolean;
 };
 
@@ -65,6 +66,16 @@ export function useAddresses() {
     });
   }, []);
 
+  const update = useCallback((id: string, input: Omit<Address, "id" | "isDefault">) => {
+    void fetch(`/api/proxy/addresses/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }).then((res) => {
+      if (res.ok) return refetch();
+    });
+  }, []);
+
   const remove = useCallback((id: string) => {
     void fetch(`/api/proxy/addresses/${id}`, { method: "DELETE" }).then((res) => {
       if (res.ok) return refetch();
@@ -77,5 +88,5 @@ export function useAddresses() {
     });
   }, []);
 
-  return { addresses, add, remove, setDefault };
+  return { addresses, add, update, remove, setDefault };
 }
