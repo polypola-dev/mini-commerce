@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { addToCart, type Product, type ProductOption } from "@/lib/api";
 import { useWishlist } from "@/lib/wishlist";
@@ -8,7 +7,6 @@ import { useWishlist } from "@/lib/wishlist";
 type Mode = "cart" | "buy" | null;
 
 export default function ActionBar({ product }: { product: Product }) {
-  const router = useRouter();
   const { isSaved, toggle } = useWishlist();
   const [sheetMode, setSheetMode] = useState<Mode>(null);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -36,7 +34,7 @@ export default function ActionBar({ product }: { product: Product }) {
       });
       setSheetMode(null);
       setSelectedOptionId(null);
-      if (mode === "buy") router.push("/checkout");
+      if (mode === "buy") window.location.assign("/checkout");
       else showToast("장바구니에 담았어요");
     } catch (e) {
       showToast(e instanceof Error ? e.message : "담기에 실패했어요");
@@ -143,7 +141,10 @@ export default function ActionBar({ product }: { product: Product }) {
       {toast && (
         <div className="mcToast">
           <span>{toast}</span>
-          <span onClick={() => router.push("/cart")} style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}>
+          <span
+            onClick={() => window.location.assign("/cart")}
+            style={{ color: "#fff", fontWeight: 700, textDecoration: "underline", cursor: "pointer" }}
+          >
             보기
           </span>
         </div>

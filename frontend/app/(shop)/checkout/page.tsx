@@ -42,21 +42,31 @@ export default function CheckoutPage() {
   const [payAmount, setPayAmount] = useState<number | null>(null);
   const [widgetReady, setWidgetReady] = useState(false);
   const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
+  // sessionStorage 선택값은 "한 번만 소비"하는 값이라, effect가 두 번 실행돼도
+  // (React 18 Strict Mode의 dev 중복 호출 등) 두 번째 실행이 이미 지워진 값을 못 읽는 일이
+  // 없도록 ref에 파싱 결과를 캐싱해둔다. 안 그러면 두 번째 실행이 "선택 없음"으로 오인해
+  // 장바구니 전체를 주문 상품으로 넣어버린다.
+  const selectedIdsRef = useRef<Set<string> | null>();
 
   useEffect(() => {
+    if (selectedIdsRef.current === undefined) {
+      const raw = sessionStorage.getItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
+      sessionStorage.removeItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
+      selectedIdsRef.current = null;
+      if (raw) {
+        try {
+          const ids = new Set<string>(JSON.parse(raw));
+          if (ids.size > 0) selectedIdsRef.current = ids;
+        } catch {
+          // ignore malformed selection, fall back to full cart
+        }
+      }
+    }
+    const ids = selectedIdsRef.current;
+
     getCart()
       .then((c) => {
-        let selectedItems = c.items;
-        const raw = sessionStorage.getItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
-        if (raw) {
-          sessionStorage.removeItem(CHECKOUT_SELECTED_ITEM_IDS_KEY);
-          try {
-            const ids = new Set<string>(JSON.parse(raw));
-            if (ids.size > 0) selectedItems = c.items.filter((i) => ids.has(i.itemId));
-          } catch {
-            // ignore malformed selection, fall back to full cart
-          }
-        }
+        const selectedItems = ids ? c.items.filter((i) => ids.has(i.itemId)) : c.items;
         if (selectedItems.length === 0) {
           router.replace("/cart");
           return;
