@@ -47,8 +47,8 @@
 |---|---|---|---|
 | C1 | P0 | ✅ **완료(2026-07-16, commit dfdbe8b)** — 토스페이먼츠 결제위젯 v2 실 PG 연동. `CompletePaymentUseCase` mock 제거 → `ConfirmPaymentUseCase`(소유권→상태→금액 3단 검증 → `PaymentGatewayPort.confirm`), `orders.payment_key` 저장(V2 Flyway). kind 클러스터에서 실제 브라우저 결제로 E2E 검증 완료(2026-07-17) | 정식 서비스 표방과 최대 갭 — 해소 |
 | C2 | P0 | ✅ **완료(2026-07-17, commit 73897d6, GH #4 close 가능)** — 결제 후 주문취소. PG 환불 선행 동기 방식(가드→Toss cancel→확정재고 재입고→CANCELED→이벤트), `ALREADY_CANCELED_PAYMENT`→성공 매핑으로 재시도 수렴(사가 배제). 재입고는 DB 원장 진실의 원천 + 신규 Lua(RESTOCKED 멱등), Flyway V3. E2E 중 발견한 `notifications` CHECK 제약 누락 버그도 수정(commit a99167b) | C1과 한 몸. 보상 트랜잭션 설계 — 해소 |
-| C3 | P0 | 배송지 백엔드 저장 — 현재 localStorage(`lib/addresses.ts`)라 기기 간 미동기화·유실 | 주문 도메인엔 배송지가 있는데 주소록만 로컬 |
-| C4 | P1 | 위시리스트 백엔드 저장 — 현재 localStorage(`lib/wishlist.ts`) | C3과 같은 패턴, 같이 처리 |
+| C3 | P0 | ✅ **완료(2026-07-22)** — 배송지 주소록 백엔드 저장. shop-api에 `address` 헥사고날 신규 모듈(domain POJO / port in·out / JpaEntity+Mapper+Adapter), `GET·POST /api/addresses`·`DELETE /{id}`·`PUT /{id}/default`. 기본배송지 불변식(첫 등록 자동 기본, 기본 삭제 시 최신 항목 승격)은 서비스가 보장. Flyway `V4__address_wishlist.sql`(minicommerce DB, baseline 스타일). `lib/addresses.ts`를 변경 후 refetch 방식 API 호출로 교체(훅 인터페이스 유지 → 소비처 무수정). 실기동 Flyway 적용 + `ddl-auto:validate` 통과 실증 | 주문 도메인엔 배송지가 있는데 주소록만 로컬이던 문제 — 해소 |
+| C4 | P1 | ✅ **완료(2026-07-22)** — 위시리스트 백엔드 저장. shop-api에 `wishlist` 헥사고날 신규 모듈, `GET·POST /api/wishlist`·`DELETE /{productId}`, 멱등 add + `(customer_id, product_id)` 유니크 제약. BFF proxy GET은 비로그인 시 `[]` 반환(홈/목록에서도 훅 로드). `lib/wishlist.ts`를 낙관적 업데이트+롤백 API 호출로 교체(훅 인터페이스 유지). C3과 한 몸(같은 V4·같은 배치 결정) | C3과 같은 패턴, 같이 처리 — 완료 |
 | C5 | P1 | 상품 카테고리 도메인 모델 도입 — 현재 `/category`는 검색 키워드 필터로 흉내 | catalog에 분류 체계 없음 |
 | C6 | P2 | 쿠폰/포인트/혜택 도메인 — 화면 기획 포함 | B7(dedup) 선행 필수 |
 | C7 | P1 | 알림 실채널 발송 — notification 도메인을 이메일(Resend 등)/웹푸시로 연결 | 현재 인앱 목록성 |
