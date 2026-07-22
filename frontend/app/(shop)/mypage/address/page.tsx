@@ -9,10 +9,30 @@ export default function AddressManagePage() {
   const { addresses, add, remove, setDefault } = useAddresses();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", address1: "", address2: "" });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // 최소 입력값 검증 — 빈값뿐 아니라 형식/길이까지 확인한다.
+  function validate(f: typeof form): string | null {
+    if (f.name.trim().length < 2) return "받는 분 이름을 2자 이상 입력해주세요.";
+    const digits = f.phone.replace(/[^0-9]/g, "");
+    if (digits.length < 9 || digits.length > 11) return "연락처를 정확히 입력해주세요. (숫자 9~11자리)";
+    if (f.address1.trim().length < 5) return "주소를 정확히 입력해주세요.";
+    return null;
+  }
 
   function handleAdd() {
-    if (!form.name || !form.phone || !form.address1) return;
-    add(form);
+    const error = validate(form);
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    setFormError(null);
+    add({
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      address1: form.address1.trim(),
+      address2: form.address2.trim(),
+    });
     setForm({ name: "", phone: "", address1: "", address2: "" });
     setShowForm(false);
   }
@@ -143,8 +163,11 @@ export default function AddressManagePage() {
             <input className="mcCheckoutInput" placeholder="주소" value={form.address1} onChange={(e) => setForm((f) => ({ ...f, address1: e.target.value }))} />
             <input className="mcCheckoutInput" placeholder="상세 주소" value={form.address2} onChange={(e) => setForm((f) => ({ ...f, address2: e.target.value }))} />
           </div>
+          {formError && (
+            <p style={{ color: "var(--color-error)", fontSize: "12.5px", marginTop: "10px" }}>{formError}</p>
+          )}
           <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-            <button type="button" className="mcBtn mcBtnSecondary" style={{ flex: 1, width: "auto" }} onClick={() => setShowForm(false)}>
+            <button type="button" className="mcBtn mcBtnSecondary" style={{ flex: 1, width: "auto" }} onClick={() => { setShowForm(false); setFormError(null); }}>
               취소
             </button>
             <button type="button" className="mcBtn mcBtnPrimary" style={{ flex: 1, width: "auto" }} onClick={handleAdd}>

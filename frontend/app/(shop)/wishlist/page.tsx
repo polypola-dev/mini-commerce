@@ -1,46 +1,8 @@
-"use client";
+import { getProducts } from "@/lib/api";
+import WishlistView from "./wishlist-view";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { getProducts, type Product } from "@/lib/api";
-import { useWishlist } from "@/lib/wishlist";
-import ProductCard from "../product-card";
-
-export default function WishlistPage() {
-  const { ids } = useWishlist();
-  const [products, setProducts] = useState<Product[] | null>(null);
-
-  useEffect(() => {
-    getProducts()
-      .then((res) => setProducts(res.content))
-      .catch(() => setProducts([]));
-  }, []);
-
-  const wished = (products ?? []).filter((p) => ids.includes(p.id));
-
-  return (
-    <div>
-      <div className="mcListHeader">
-        <h1>찜한 상품</h1>
-        <span className="mcListHeaderCount">{ids.length}개</span>
-      </div>
-
-      {products && ids.length === 0 && (
-        <div className="mcEmptyState">
-          <div className="mcEmptyIcon">🤍</div>
-          <div className="mcEmptyTitle">아직 찜한 상품이 없어요</div>
-          <div className="mcEmptyDesc">상품의 하트를 눌러 저장해보세요.</div>
-          <Link href="/" className="mcEmptyCta">상품 보러 가기</Link>
-        </div>
-      )}
-
-      {products && wished.length > 0 && (
-        <div className="mcGrid">
-          {wished.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+// 서버 컴포넌트에서 상품을 로드한다(홈과 동일 패턴). 찜 여부 필터는 클라이언트(WishlistView)에서.
+export default async function WishlistPage() {
+  const res = await getProducts({ page: 0, size: 100 });
+  return <WishlistView products={res.content} />;
 }

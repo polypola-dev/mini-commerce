@@ -55,6 +55,12 @@ export default function CheckoutPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
+  // 배송지 선택 팝업(바텀시트) 상태와 직접입력 초안.
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerManual, setPickerManual] = useState(false);
+  const [draft, setDraft] = useState({ name: "", phone: "", a1: "", a2: "" });
+  const [draftError, setDraftError] = useState<string | null>(null);
+
   // 저장된 배송지가 로드되면 기본배송지(없으면 첫 항목)를 자동 선택해 입력값을 채운다.
   // 사용자가 아직 아무것도 고르지 않았을 때만 초기화하고, 이후 선택은 건드리지 않는다.
   useEffect(() => {
@@ -64,20 +70,47 @@ export default function CheckoutPage() {
     setAddr({ name: def.name, phone: def.phone, a1: def.address1, a2: def.address2 });
   }, [addresses, selectedAddrId]);
 
-  function selectSavedAddress(id: string) {
+  function openPicker() {
+    if (orderId) return;
+    setPickerManual(false);
+    setDraftError(null);
+    setShowPicker(true);
+  }
+
+  function chooseSaved(id: string) {
     const a = addresses.find((x) => x.id === id);
     if (!a) return;
     setSelectedAddrId(a.id);
     setAddr({ name: a.name, phone: a.phone, a1: a.address1, a2: a.address2 });
+    setShowPicker(false);
   }
 
-  function selectManualAddress() {
+  function startManual() {
+    setDraft({ name: "", phone: "", a1: "", a2: "" });
+    setDraftError(null);
+    setPickerManual(true);
+  }
+
+  function validateDraft(d: typeof draft): string | null {
+    if (d.name.trim().length < 2) return "받는 분 이름을 2자 이상 입력해주세요.";
+    const digits = d.phone.replace(/[^0-9]/g, "");
+    if (digits.length < 9 || digits.length > 11) return "연락처를 정확히 입력해주세요. (숫자 9~11자리)";
+    if (d.a1.trim().length < 5) return "주소를 정확히 입력해주세요.";
+    return null;
+  }
+
+  function confirmManual() {
+    const err = validateDraft(draft);
+    if (err) {
+      setDraftError(err);
+      return;
+    }
+    setAddr({ name: draft.name.trim(), phone: draft.phone.trim(), a1: draft.a1.trim(), a2: draft.a2.trim() });
     setSelectedAddrId(MANUAL_ADDR);
-    setAddr({ name: "", phone: "", a1: "", a2: "" });
+    setShowPicker(false);
   }
 
-  // 저장된 배송지가 없거나, 사용자가 "직접 입력"을 고른 경우에만 입력 필드를 노출한다.
-  const showManualFields = addresses.length === 0 || selectedAddrId === MANUAL_ADDR;
+  const hasAddr = addr.name.trim().length > 0 && addr.a1.trim().length > 0;
 
   const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
   const shipping = subtotal === 0 || subtotal >= 50000 ? 0 : 3000;
@@ -167,69 +200,34 @@ export default function CheckoutPage() {
       </div>
 
       <div style={{ padding: "20px" }}>
-        <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>배송지</div>
-
-        {addresses.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: showManualFields ? "12px" : 0 }}>
-            {addresses.map((a) => {
-              const selected = selectedAddrId === a.id;
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  disabled={!!orderId}
-                  onClick={() => selectSavedAddress(a.id)}
-                  style={{
-                    textAlign: "left",
-                    width: "100%",
-                    border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-hairline)"}`,
-                    background: selected ? "var(--color-surface-strong)" : "#fff",
-                    borderRadius: "var(--radius-md)",
-                    padding: "13px 15px",
-                    cursor: orderId ? "default" : "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
-                    <span style={{ fontSize: "13.5px", fontWeight: 700 }}>{a.name}</span>
-                    {a.isDefault && (
-                      <span style={{ background: "var(--color-primary)", color: "#fff", fontSize: "10.5px", fontWeight: 800, borderRadius: "999px", padding: "1.5px 8px" }}>
-                        기본
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: "12.5px", color: "var(--color-body)" }}>{a.address1} {a.address2}</div>
-                  <div style={{ fontSize: "12px", color: "var(--color-muted)", marginTop: "1px" }}>{a.phone}</div>
-                </button>
-              );
-            })}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+          <div style={{ fontSize: "16px", fontWeight: 700 }}>배송지</div>
+          {!orderId && hasAddr && (
             <button
               type="button"
-              disabled={!!orderId}
-              onClick={selectManualAddress}
-              style={{
-                width: "100%",
-                border: `1.5px dashed ${selectedAddrId === MANUAL_ADDR ? "var(--color-primary)" : "var(--color-border-strong)"}`,
-                background: "#fff",
-                borderRadius: "var(--radius-sm)",
-                padding: "11px",
-                fontSize: "13px",
-                fontWeight: 700,
-                color: "var(--color-muted)",
-                cursor: orderId ? "default" : "pointer",
-              }}
+              onClick={openPicker}
+              style={{ border: "1px solid var(--color-hairline)", background: "#fff", color: "var(--color-ink)", borderRadius: "8px", padding: "6px 12px", fontSize: "12.5px", fontWeight: 600, cursor: "pointer", width: "auto" }}
             >
-              ＋ 새 배송지 직접 입력
+              변경
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
-        {showManualFields && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <input className="mcCheckoutInput" placeholder="받는 분" value={addr.name} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, name: e.target.value }))} />
-            <input className="mcCheckoutInput" placeholder="연락처" value={addr.phone} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, phone: e.target.value }))} />
-            <input className="mcCheckoutInput" placeholder="주소" value={addr.a1} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a1: e.target.value }))} />
-            <input className="mcCheckoutInput" placeholder="상세 주소" value={addr.a2} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a2: e.target.value }))} />
+        {hasAddr ? (
+          <div style={{ border: "1px solid var(--color-hairline)", borderRadius: "var(--radius-md)", padding: "14px 16px" }}>
+            <div style={{ fontSize: "14px", fontWeight: 700, marginBottom: "3px" }}>{addr.name}</div>
+            <div style={{ fontSize: "13px", color: "var(--color-body)" }}>{addr.a1} {addr.a2}</div>
+            <div style={{ fontSize: "12.5px", color: "var(--color-muted)", marginTop: "1px" }}>{addr.phone}</div>
           </div>
+        ) : (
+          <button
+            type="button"
+            disabled={!!orderId}
+            onClick={openPicker}
+            style={{ width: "100%", border: "1.5px dashed var(--color-border-strong)", background: "#fff", borderRadius: "var(--radius-sm)", padding: "14px", fontSize: "13.5px", fontWeight: 700, color: "var(--color-muted)", cursor: orderId ? "default" : "pointer" }}
+          >
+            ＋ 배송지 선택
+          </button>
         )}
       </div>
 
@@ -271,11 +269,74 @@ export default function CheckoutPage() {
             {widgetReady && payAmount != null ? `${payAmount.toLocaleString("ko-KR")}원 결제하기` : "결제 준비 중…"}
           </button>
         ) : (
-          <button type="button" className="mcBtn mcBtnPrimary" disabled={pending} onClick={startCheckout}>
-            {pending ? "주문 처리 중…" : `${subtotal.toLocaleString("ko-KR")}원 결제하기`}
+          <button type="button" className="mcBtn mcBtnPrimary" disabled={pending || !hasAddr} onClick={startCheckout}>
+            {pending ? "주문 처리 중…" : !hasAddr ? "배송지를 선택해주세요" : `${subtotal.toLocaleString("ko-KR")}원 결제하기`}
           </button>
         )}
       </div>
+
+      {showPicker && (
+        <div
+          onClick={() => setShowPicker(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", width: "100%", maxWidth: "480px", borderTopLeftRadius: "16px", borderTopRightRadius: "16px", maxHeight: "80vh", overflowY: "auto", padding: "18px 20px 24px" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700 }}>{pickerManual ? "새 배송지 입력" : "배송지 선택"}</span>
+              <button type="button" onClick={() => setShowPicker(false)} aria-label="닫기" style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: "22px", lineHeight: 1, color: "var(--color-muted)", width: "auto", padding: 0 }}>×</button>
+            </div>
+
+            {!pickerManual ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {addresses.map((a) => {
+                  const selected = selectedAddrId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => chooseSaved(a.id)}
+                      style={{ textAlign: "left", width: "100%", border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-hairline)"}`, background: selected ? "var(--color-surface-strong)" : "#fff", borderRadius: "var(--radius-md)", padding: "13px 15px", cursor: "pointer" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
+                        <span style={{ fontSize: "13.5px", fontWeight: 700 }}>{a.name}</span>
+                        {a.isDefault && (
+                          <span style={{ background: "var(--color-primary)", color: "#fff", fontSize: "10.5px", fontWeight: 800, borderRadius: "999px", padding: "1.5px 8px" }}>기본</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: "12.5px", color: "var(--color-body)" }}>{a.address1} {a.address2}</div>
+                      <div style={{ fontSize: "12px", color: "var(--color-muted)", marginTop: "1px" }}>{a.phone}</div>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={startManual}
+                  style={{ width: "100%", border: "1.5px dashed var(--color-border-strong)", background: "#fff", borderRadius: "var(--radius-sm)", padding: "12px", fontSize: "13px", fontWeight: 700, color: "var(--color-muted)", cursor: "pointer", marginTop: "4px" }}
+                >
+                  ＋ 새 배송지 직접 입력
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <input className="mcCheckoutInput" placeholder="받는 분" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
+                <input className="mcCheckoutInput" placeholder="연락처" value={draft.phone} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
+                <input className="mcCheckoutInput" placeholder="주소" value={draft.a1} onChange={(e) => setDraft((d) => ({ ...d, a1: e.target.value }))} />
+                <input className="mcCheckoutInput" placeholder="상세 주소" value={draft.a2} onChange={(e) => setDraft((d) => ({ ...d, a2: e.target.value }))} />
+                {draftError && <p style={{ color: "var(--color-error)", fontSize: "12.5px" }}>{draftError}</p>}
+                <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+                  {addresses.length > 0 && (
+                    <button type="button" className="mcBtn mcBtnSecondary" style={{ flex: 1, width: "auto" }} onClick={() => setPickerManual(false)}>뒤로</button>
+                  )}
+                  <button type="button" className="mcBtn mcBtnPrimary" style={{ flex: 1, width: "auto" }} onClick={confirmManual}>이 배송지로 주문</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
