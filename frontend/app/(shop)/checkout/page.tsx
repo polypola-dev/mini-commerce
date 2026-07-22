@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { loadTossPayments, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 import { createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
 import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
+import { useAddresses } from "@/lib/addresses";
+
+const MANUAL_ADDR = "__manual__";
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
 
@@ -20,6 +23,8 @@ export default function CheckoutPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addr, setAddr] = useState({ name: "", phone: "", a1: "", a2: "" });
+  const { addresses } = useAddresses();
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [payAmount, setPayAmount] = useState<number | null>(null);
   const [widgetReady, setWidgetReady] = useState(false);
@@ -49,6 +54,30 @@ export default function CheckoutPage() {
       .catch(() => router.replace("/cart"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  // 저장된 배송지가 로드되면 기본배송지(없으면 첫 항목)를 자동 선택해 입력값을 채운다.
+  // 사용자가 아직 아무것도 고르지 않았을 때만 초기화하고, 이후 선택은 건드리지 않는다.
+  useEffect(() => {
+    if (selectedAddrId || addresses.length === 0) return;
+    const def = addresses.find((a) => a.isDefault) ?? addresses[0];
+    setSelectedAddrId(def.id);
+    setAddr({ name: def.name, phone: def.phone, a1: def.address1, a2: def.address2 });
+  }, [addresses, selectedAddrId]);
+
+  function selectSavedAddress(id: string) {
+    const a = addresses.find((x) => x.id === id);
+    if (!a) return;
+    setSelectedAddrId(a.id);
+    setAddr({ name: a.name, phone: a.phone, a1: a.address1, a2: a.address2 });
+  }
+
+  function selectManualAddress() {
+    setSelectedAddrId(MANUAL_ADDR);
+    setAddr({ name: "", phone: "", a1: "", a2: "" });
+  }
+
+  // 저장된 배송지가 없거나, 사용자가 "직접 입력"을 고른 경우에만 입력 필드를 노출한다.
+  const showManualFields = addresses.length === 0 || selectedAddrId === MANUAL_ADDR;
 
   const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
   const shipping = subtotal === 0 || subtotal >= 50000 ? 0 : 3000;
@@ -139,12 +168,69 @@ export default function CheckoutPage() {
 
       <div style={{ padding: "20px" }}>
         <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>배송지</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <input className="mcCheckoutInput" placeholder="받는 분" value={addr.name} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, name: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="연락처" value={addr.phone} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, phone: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="주소" value={addr.a1} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a1: e.target.value }))} />
-          <input className="mcCheckoutInput" placeholder="상세 주소" value={addr.a2} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a2: e.target.value }))} />
-        </div>
+
+        {addresses.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: showManualFields ? "12px" : 0 }}>
+            {addresses.map((a) => {
+              const selected = selectedAddrId === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  disabled={!!orderId}
+                  onClick={() => selectSavedAddress(a.id)}
+                  style={{
+                    textAlign: "left",
+                    width: "100%",
+                    border: `1.5px solid ${selected ? "var(--color-primary)" : "var(--color-hairline)"}`,
+                    background: selected ? "var(--color-surface-strong)" : "#fff",
+                    borderRadius: "var(--radius-md)",
+                    padding: "13px 15px",
+                    cursor: orderId ? "default" : "pointer",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "3px" }}>
+                    <span style={{ fontSize: "13.5px", fontWeight: 700 }}>{a.name}</span>
+                    {a.isDefault && (
+                      <span style={{ background: "var(--color-primary)", color: "#fff", fontSize: "10.5px", fontWeight: 800, borderRadius: "999px", padding: "1.5px 8px" }}>
+                        기본
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: "12.5px", color: "var(--color-body)" }}>{a.address1} {a.address2}</div>
+                  <div style={{ fontSize: "12px", color: "var(--color-muted)", marginTop: "1px" }}>{a.phone}</div>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              disabled={!!orderId}
+              onClick={selectManualAddress}
+              style={{
+                width: "100%",
+                border: `1.5px dashed ${selectedAddrId === MANUAL_ADDR ? "var(--color-primary)" : "var(--color-border-strong)"}`,
+                background: "#fff",
+                borderRadius: "var(--radius-sm)",
+                padding: "11px",
+                fontSize: "13px",
+                fontWeight: 700,
+                color: "var(--color-muted)",
+                cursor: orderId ? "default" : "pointer",
+              }}
+            >
+              ＋ 새 배송지 직접 입력
+            </button>
+          </div>
+        )}
+
+        {showManualFields && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <input className="mcCheckoutInput" placeholder="받는 분" value={addr.name} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, name: e.target.value }))} />
+            <input className="mcCheckoutInput" placeholder="연락처" value={addr.phone} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, phone: e.target.value }))} />
+            <input className="mcCheckoutInput" placeholder="주소" value={addr.a1} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a1: e.target.value }))} />
+            <input className="mcCheckoutInput" placeholder="상세 주소" value={addr.a2} disabled={!!orderId} onChange={(e) => setAddr((a) => ({ ...a, a2: e.target.value }))} />
+          </div>
+        )}
       </div>
 
       <div className="mcDivider8" />
