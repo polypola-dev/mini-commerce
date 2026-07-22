@@ -37,7 +37,7 @@ class AddressServiceTest {
     }
 
     private Address address(String id, boolean isDefault) {
-        return new Address(id, "cust-1", "수령인", "010", "주소1", "주소2", isDefault, Instant.now());
+        return new Address(id, "cust-1", "집", "수령인", "010", "주소1", "주소2", isDefault, Instant.now());
     }
 
     @Test
@@ -46,7 +46,7 @@ class AddressServiceTest {
         when(repository.countByCustomerId("cust-1")).thenReturn(0L);
         when(repository.save(any(Address.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        NewAddress cmd = new NewAddress("수령인", "010", "주소1", "주소2");
+        NewAddress cmd = new NewAddress("집", "수령인", "010", "주소1", "주소2");
         Address saved = service.add("cust-1", cmd);
 
         assertThat(saved.isDefaultAddress()).isTrue();
@@ -58,7 +58,7 @@ class AddressServiceTest {
         when(repository.countByCustomerId("cust-1")).thenReturn(1L);
         when(repository.save(any(Address.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Address saved = service.add("cust-1", new NewAddress("수령인", "010", "주소1", "주소2"));
+        Address saved = service.add("cust-1", new NewAddress("집", "수령인", "010", "주소1", "주소2"));
 
         assertThat(saved.isDefaultAddress()).isFalse();
     }

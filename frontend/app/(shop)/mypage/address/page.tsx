@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAddresses } from "@/lib/addresses";
+import AddressLabelPicker from "../../address-label-picker";
+
+const EMPTY_FORM = { label: "집", name: "", phone: "", address1: "", address2: "" };
 
 export default function AddressManagePage() {
   const router = useRouter();
   const { addresses, add, remove, setDefault } = useAddresses();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", address1: "", address2: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
 
   // 최소 입력값 검증 — 빈값뿐 아니라 형식/길이까지 확인한다.
@@ -28,12 +31,13 @@ export default function AddressManagePage() {
     }
     setFormError(null);
     add({
+      label: form.label.trim() || null,
       name: form.name.trim(),
       phone: form.phone.trim(),
       address1: form.address1.trim(),
       address2: form.address2.trim(),
     });
-    setForm({ name: "", phone: "", address1: "", address2: "" });
+    setForm(EMPTY_FORM);
     setShowForm(false);
   }
 
@@ -69,6 +73,11 @@ export default function AddressManagePage() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                {a.label && (
+                  <span style={{ background: "var(--color-surface-strong)", color: "var(--color-primary)", fontSize: "11px", fontWeight: 800, borderRadius: "6px", padding: "2px 7px" }}>
+                    {a.label}
+                  </span>
+                )}
                 <span style={{ fontSize: "14px", fontWeight: 700 }}>{a.name}</span>
                 {a.isDefault && (
                   <span
@@ -157,6 +166,10 @@ export default function AddressManagePage() {
       {showForm && (
         <div style={{ padding: "20px" }}>
           <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "14px" }}>배송지 추가</div>
+          <div style={{ marginBottom: "16px" }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "9px", color: "var(--color-body)" }}>배송지명</div>
+            <AddressLabelPicker value={form.label} onChange={(v) => setForm((f) => ({ ...f, label: v }))} />
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             <input className="mcCheckoutInput" placeholder="받는 분" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             <input className="mcCheckoutInput" placeholder="연락처" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />

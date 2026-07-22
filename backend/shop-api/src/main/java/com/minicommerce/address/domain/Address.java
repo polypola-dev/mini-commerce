@@ -13,6 +13,7 @@ public class Address {
 
     private final String id;
     private final String customerId;
+    private String label;
     private String recipientName;
     private String phone;
     private String address1;
@@ -20,10 +21,11 @@ public class Address {
     private boolean defaultAddress;
     private final Instant createdAt;
 
-    public Address(String id, String customerId, String recipientName, String phone,
+    public Address(String id, String customerId, String label, String recipientName, String phone,
                    String address1, String address2, boolean defaultAddress, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
+        this.label = label;
         this.recipientName = recipientName;
         this.phone = phone;
         this.address1 = address1;
@@ -46,6 +48,10 @@ public class Address {
 
     public String getCustomerId() {
         return customerId;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public String getRecipientName() {

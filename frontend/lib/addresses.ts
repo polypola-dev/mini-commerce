@@ -10,6 +10,7 @@ const CHANGE_EVENT = "mc-addresses-change";
 
 export type Address = {
   id: string;
+  label: string | null;
   name: string;
   phone: string;
   address1: string;

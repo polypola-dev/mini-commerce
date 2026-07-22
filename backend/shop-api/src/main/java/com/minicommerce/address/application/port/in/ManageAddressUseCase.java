@@ -18,7 +18,7 @@ public interface ManageAddressUseCase {
     /** 지정한 배송지를 기본으로 설정하고 나머지의 기본 표시를 해제한다. */
     void setDefault(String customerId, String addressId);
 
-    /** 배송지 신규 등록 입력값. */
-    record NewAddress(String recipientName, String phone, String address1, String address2) {
+    /** 배송지 신규 등록 입력값. {@code label}은 배송지명(집/회사 등, 최대 10자), 미지정 가능. */
+    record NewAddress(String label, String recipientName, String phone, String address1, String address2) {
     }
 }

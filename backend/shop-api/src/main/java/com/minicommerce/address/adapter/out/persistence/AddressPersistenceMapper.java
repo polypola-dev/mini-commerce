@@ -11,6 +11,7 @@ final class AddressPersistenceMapper {
         return new Address(
                 entity.getId(),
                 entity.getCustomerId(),
+                entity.getLabel(),
                 entity.getRecipientName(),
                 entity.getPhone(),
                 entity.getAddress1(),
@@ -24,6 +25,7 @@ final class AddressPersistenceMapper {
         return new AddressJpaEntity(
                 address.getId(),
                 address.getCustomerId(),
+                address.getLabel(),
                 address.getRecipientName(),
                 address.getPhone(),
                 address.getAddress1(),

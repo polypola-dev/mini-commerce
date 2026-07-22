@@ -17,6 +17,9 @@ public class AddressJpaEntity {
     @Column(name = "customer_id", nullable = false)
     private String customerId;
 
+    @Column(name = "label")
+    private String label;
+
     @Column(name = "recipient_name")
     private String recipientName;
 
@@ -38,10 +41,11 @@ public class AddressJpaEntity {
     protected AddressJpaEntity() {
     }
 
-    public AddressJpaEntity(String id, String customerId, String recipientName, String phone,
+    public AddressJpaEntity(String id, String customerId, String label, String recipientName, String phone,
                             String address1, String address2, boolean defaultAddress, Instant createdAt) {
         this.id = id;
         this.customerId = customerId;
+        this.label = label;
         this.recipientName = recipientName;
         this.phone = phone;
         this.address1 = address1;
@@ -56,6 +60,10 @@ public class AddressJpaEntity {
 
     public String getCustomerId() {
         return customerId;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public String getRecipientName() {

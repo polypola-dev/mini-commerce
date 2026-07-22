@@ -43,7 +43,7 @@ public class AddressController {
     AddressResponse add(@Valid @RequestBody SaveAddressRequest request, HttpServletRequest httpRequest) {
         String customerId = (String) httpRequest.getAttribute("authenticatedUserId");
         NewAddress command = new NewAddress(
-                request.name(), request.phone(), request.address1(), request.address2());
+                request.label(), request.name(), request.phone(), request.address1(), request.address2());
         return AddressResponse.from(manageAddressUseCase.add(customerId, command));
     }
 

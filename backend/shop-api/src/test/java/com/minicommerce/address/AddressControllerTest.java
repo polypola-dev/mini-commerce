@@ -48,7 +48,7 @@ class AddressControllerTest {
     }
 
     private Address sampleAddress(String id, boolean isDefault) {
-        return new Address(id, "cust-1", "홍길동", "010-1234-5678",
+        return new Address(id, "cust-1", "집", "홍길동", "010-1234-5678",
                 "서울시 강남구", "101동 202호", isDefault, Instant.now());
     }
 

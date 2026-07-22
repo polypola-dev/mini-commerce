@@ -8,6 +8,7 @@ import com.minicommerce.address.domain.Address;
  */
 public record AddressResponse(
         String id,
+        String label,
         String name,
         String phone,
         String address1,
@@ -17,6 +18,7 @@ public record AddressResponse(
     public static AddressResponse from(Address address) {
         return new AddressResponse(
                 address.getId(),
+                address.getLabel(),
                 address.getRecipientName(),
                 address.getPhone(),
                 address.getAddress1(),

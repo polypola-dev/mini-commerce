@@ -32,6 +32,7 @@ public class AddressService implements ManageAddressUseCase {
         Address address = new Address(
                 UUID.randomUUID().toString(),
                 customerId,
+                command.label(),
                 command.recipientName(),
                 command.phone(),
                 command.address1(),
