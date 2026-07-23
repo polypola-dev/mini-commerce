@@ -76,6 +76,11 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: CATALOG_BASE_URL
+            - name: INVENTORY_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: INVENTORY_BASE_URL
             - name: CORS_ALLOWED_ORIGINS
               valueFrom:
                 configMapKeyRef:
