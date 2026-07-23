@@ -1,20 +1,15 @@
 # CD 1단계 — kind 배포 검증 (G11, ADR-016)
 # k8s 매니페스트·Dockerfile·compose 빌드 계약이 바뀔 때 실제 클러스터 배포를 검증한다.
 # 백엔드 코드 자체는 ci.yml(gradlew build)이 게이트 — 여기서 다시 돌리지 않는다.
-# 트리거를 좁힌 이유: private 리포 러너(2코어/7GB)에서 이미지 풀빌드가 느려 매 푸시
-# 실행은 무료 분수 낭비(E5로 gradle 4회→1회 단축됐지만 러너엔 캐시가 없어 여전히 풀빌드).
+# 수동 실행(workflow_dispatch) 전용: private 리포 러너(2코어/7GB)에서 이미지 풀빌드가
+# 느려(E5로 gradle 4회→1회 단축됐지만 러너엔 캐시가 없어 여전히 풀빌드) 매 푸시 실행은
+# 무료 분수 낭비라 자동 트리거를 뗐다. k8s 매니페스트·Dockerfile·compose 빌드 계약을
+# 바꾼 뒤에는 Actions 탭에서 이 워크플로를 수동으로 돌려 배포를 검증한다.
 # GHCR pull 전환(E4)은 같은 push의 build-push와 경쟁 조건이라 보류 — ADR-017 참고.
 # 2단계(Argo CD GitOps)는 OKE 구축 + E4(GHCR 이미지) 선행 — ADR-016 참고.
 name: Deploy (kind)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - k8s/**
-      - backend/Dockerfile
-      - docker-compose.yml
-      - .github/workflows/deploy-kind.yml
   workflow_dispatch:
 
 concurrency:
