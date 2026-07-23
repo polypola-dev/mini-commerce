@@ -96,12 +96,34 @@ OKE 없이 선실증했다(매니페스트는 클러스터 무관 재사용):
 - 🐛 잡은 버그: ksops 이미지 distroless라 `/bin/sh -c` init 방식 CrashLoop →
   정본 `ksops install --with-kustomize` 직접 호출로 수정. install/values.yaml 반영.
 
-## 검증 2부 — OKE 실전 (클러스터 확보 후)
+## 검증 2부 — kind 실제 GitOps 관리 (2026-07-23, C, 완료)
+
+kind에 **kind 전용 App-of-Apps**(`k8s/argocd/rehearsal-kind/`, overlays/local-gitops)를
+띄워 ArgoCD가 로컬 스택을 실제로 adopt·관리하게 하고 폐루프를 실증:
+
+- ✅ **App-of-Apps**: 루트 1개 apply → child 3개(kafka/apps) 자동 생성.
+- ✅ **wave 게이트 + 라이브 Kafka health**: wave 1 Kafka CR이 커스텀 health check로
+  Synced/Healthy → wave 2 앱이 그 뒤 sync(게이트 실동작).
+- ✅ **ksops-in-sync(크라운주얼)**: overlays/local-gitops의 KSOPS generator가 실제 sync
+  중 enc를 복호화해 `app-secrets` Secret 생성, ArgoCD 관리(tracking-id 부착)·Synced.
+- ✅ **GitOps 루프**: 매니페스트 수정 → git push → **~45s 만에 ArgoCD 자동 반영**
+  (webhook 걸면 즉시). kubectl 불필요.
+- ✅ **selfHeal**: 삭제한 ConfigMap 재생성, `kubectl scale` 2대 강제 → **12s 만에 1대 복원**.
+- 🐛 **잡은 함정(kind 전용)**: postgres/redis StatefulSet이 영구 OutOfSync
+  (apiserver가 immutable한 `volumeClaimTemplates`에 volumeMode/status 기본값 채움 →
+  ArgoCD가 diff 못 지움) → **하나의 영구 OutOfSync 리소스가 앱 전체 selfHeal을
+  같은-리비전 5분 백오프로 스로틀**시킴. `ignoreDifferences`(VCT)로 해결.
+  **prod엔 미발생**(ArgoCD 직접 관리 StatefulSet 없음 — postgres/redis=외부 SaaS,
+  Kafka=Strimzi 소유). 또한 **manifest에 없는 필드는 관리 대상 아님**(replicas가
+  base에 명시돼 있어야 selfHeal이 복원 — 실증으로 확인).
+
+## 검증 3부 — OKE 실전 (클러스터 확보 후)
 
 1. prod 오버레이를 대상 context로 `kubectl kustomize` dry-run(KSOPS generator 포함).
-2. OKE 부트스트랩(README 순서) → 전 wave Healthy(**wave 1→2 Kafka 게이트 실전 확인**)
-   → `/api` 200 + `/internal` 404 + G9 차단 회귀(ADR-014, OKE CNI에서 재실행 필수).
-3. drift 테스트: 수동 `kubectl edit` 후 selfHeal 복원 확인.
+2. OKE 부트스트랩(README 순서) → 전 wave Healthy → `/api` 200 + `/internal` 404
+   + G9 차단 회귀(ADR-014, OKE CNI에서 재실행 필수).
+3. **from-scratch 부트스트랩이라 2부의 adopt 아티팩트(VCT OutOfSync)는 미발생 예상** —
+   ArgoCD가 처음부터 생성하므로 SSA 소유권 충돌 없음.
 
 ## 결과 및 트레이드오프
 
