@@ -1,0 +1,35 @@
+# mini-commerce 앱 5종 + Ingress + NetworkPolicy + Secret (wave 2) — ADR-022
+# overlays/prod를 kustomize 빌드해 배포한다. wave 1(Kafka Ready) 이후 실행된다.
+#
+# Secret 처리(ADR-013 잔여 결정 → ADR-022에서 ksops 채택):
+#   overlays/prod가 KSOPS generator로 k8s/secrets/prod-app-secrets.enc.yaml을
+#   복호화해 Secret을 생성한다. 이를 위해 Argo repo-server에 ksops CMP 사이드카와
+#   age 개인키가 있어야 한다(install/values.yaml + argocd-age Secret 부트스트랩).
+#   ⚠️ TODO(OKE 확보 후):
+#     - k8s/secrets/prod-app-secrets.enc.yaml (운영 비밀, sops 암호화 커밋)
+#     - overlays/prod에 GHCR 이미지 태그, ingress host/TLS, KSOPS generator 추가
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mini-commerce-apps
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mini-commerce
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false           # namespace.yaml이 base에 포함됨

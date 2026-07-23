@@ -1,0 +1,31 @@
+# Kafka 클러스터 CR (wave 1) — ADR-011 승계, ADR-022
+# Strimzi CRD(wave 0)가 established된 뒤 적용된다. 앱(wave 2)은 이 Kafka가 Ready여야
+# 부팅 시 bootstrap DNS 해석에 성공하므로(G3 발견) 순서가 계약이다.
+#   전제: argocd install values에 Kafka(kafka.strimzi.io) health check를 등록해야
+#   wave 1 → wave 2 게이트가 "Ready"를 실제로 기다린다(ADR-022 install/values.yaml).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-cluster
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/kafka
+    directory:
+      include: "kafka-cluster.yaml"     # operator-values.yaml(Helm values)은 제외
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mini-commerce
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

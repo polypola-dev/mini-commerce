@@ -1,0 +1,26 @@
+# App-of-Apps 루트 Application (G11 2단계, ADR-022)
+# 이 하나만 수동 apply하면 k8s/argocd/apps/ 아래의 모든 child Application을 Argo가
+# 스스로 생성·동기화한다. 이후 child 추가/수정은 Git 커밋만으로 반영된다(GitOps).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap
+  namespace: argocd
+  # Application 삭제 시 자식 리소스까지 정리(App-of-Apps 캐스케이드 삭제).
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/argocd/apps      # 이 디렉토리의 Application YAML들을 렌더
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true              # Git에서 삭제된 child는 클러스터에서도 제거
+      selfHeal: true           # 수동 drift를 Git 상태로 되돌림
+    syncOptions:
+      - CreateNamespace=false  # argocd ns는 설치 단계에서 이미 존재

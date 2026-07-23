@@ -1,0 +1,36 @@
+# AppProject — mini-commerce 운영 스택의 RBAC·소스 경계 (G11 2단계, ADR-022)
+# App-of-Apps 루트(bootstrap)와 모든 child Application이 이 프로젝트에 속한다.
+# 부트스트랩 시 root.yaml보다 먼저 apply한다(root가 project: mini-commerce를 참조).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: mini-commerce
+  namespace: argocd
+spec:
+  description: mini-commerce 운영 스택 (ADR-022)
+
+  # 이 프로젝트의 Application이 끌어올 수 있는 소스 저장소 화이트리스트.
+  sourceRepos:
+    - https://github.com/polypola-dev/mini-commerce.git   # 매니페스트 원천(Git)
+    - https://strimzi.io/charts/                          # Strimzi operator Helm
+    - https://kubernetes.github.io/ingress-nginx          # ingress-nginx Helm
+
+  # 배포 가능한 (클러스터, 네임스페이스) 목적지.
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: mini-commerce      # 앱 5종 + Kafka CR
+    - server: https://kubernetes.default.svc
+      namespace: strimzi            # Strimzi operator
+    - server: https://kubernetes.default.svc
+      namespace: ingress-nginx      # ingress 컨트롤러
+    - server: https://kubernetes.default.svc
+      namespace: argocd             # child Application 리소스가 사는 곳
+
+  # operator/컨트롤러가 CRD·ClusterRole을 설치하므로 클러스터 스코프 자원 허용이 필요.
+  # 솔로 운영·단일 클러스터라 '*'로 열되, 목적지 네임스페이스로 폭발 반경은 제한된다.
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

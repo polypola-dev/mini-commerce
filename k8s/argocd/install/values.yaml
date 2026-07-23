@@ -1,0 +1,74 @@
+# Argo CD 설치 values (argo-cd Helm 차트, argoproj/argo-helm) — G11 2단계, ADR-022
+#
+# 설치:
+#   helm repo add argo https://argoproj.github.io/argo-helm
+#   helm install argocd argo/argo-cd -n argocd --create-namespace \
+#     --version <pin> -f k8s/argocd/install/values.yaml
+#
+# 두 가지 커스터마이즈가 핵심이다:
+#   (1) Kafka(strimzi) health check — sync-wave 1→2 게이트가 "Ready"를 실제로 기다리게
+#   (2) ksops CMP 사이드카 — overlays/prod의 SOPS 암호화 Secret을 repo-server가 복호화
+#       (ADR-013 SOPS/age 워크플로를 Argo에서 그대로 소비 — ESO/OCI Vault 대신 채택, ADR-022)
+
+configs:
+  cm:
+    # ── (1) Strimzi Kafka 커스텀 health check ──────────────────────────────
+    # Argo 기본엔 kafka.strimzi.io/Kafka health 판정이 없어 CR을 적용 즉시 Healthy로
+    # 오판, 앱(wave 2)이 브로커 준비 전 부팅해 bootstrap DNS 크래시(G3) 위험.
+    # Kafka CR의 Ready condition을 읽어 Progressing/Healthy를 구분한다.
+    resource.customizations.health.kafka.strimzi.io_Kafka: |
+      hs = {}
+      if obj.status ~= nil and obj.status.conditions ~= nil then
+        for _, c in ipairs(obj.status.conditions) do
+          if c.type == "Ready" and c.status == "True" then
+            hs.status = "Healthy"; hs.message = "Kafka is ready"; return hs
+          end
+          if c.type == "NotReady" and c.status == "True" then
+            hs.status = "Degraded"; hs.message = c.message or "Kafka not ready"; return hs
+          end
+        end
+      end
+      hs.status = "Progressing"; hs.message = "Waiting for Kafka to become ready"
+      return hs
+
+repoServer:
+  # ── (2) ksops Config Management Plugin 사이드카 ─────────────────────────
+  # kustomize build 결과에 KSOPS generator(overlays/prod)가 참조한 enc 파일을
+  # 복호화해 삽입한다. age 개인키는 Secret으로 주입(부트스트랩 시 1회 생성):
+  #   kubectl create secret generic sops-age -n argocd \
+  #     --from-file=keys.txt=$HOME/.config/sops/age/keys.txt
+  #   ⚠️ 이 age 키는 로컬(kind)용과 분리된 '운영 전용' 키를 권장(ADR-013 운영 방향).
+  env:
+    - name: SOPS_AGE_KEY_FILE
+      value: /home/argocd/.config/sops/age/keys.txt
+  volumes:
+    - name: sops-age
+      secret:
+        secretName: sops-age
+    - name: cmp-tmp
+      emptyDir: {}
+  extraContainers:
+    - name: ksops
+      # TODO(설치 시): 태그 pin. viaduct-ai/kustomize-sops 배포 이미지 사용.
+      image: viaductoss/ksops:v4.3.3   # kustomize+sops+ksops+age 번들
+      command: ["/var/run/argocd/argocd-cmp-server"]
+      env:
+        - name: SOPS_AGE_KEY_FILE
+          value: /home/argocd/.config/sops/age/keys.txt
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - name: var-files          # argocd-cmp-server 바이너리(차트 제공)
+          mountPath: /var/run/argocd
+        - name: plugins
+          mountPath: /home/argocd/cmp-server/plugins
+        - name: cmp-tmp
+          mountPath: /tmp
+        - name: sops-age           # age 개인키(읽기 전용)
+          mountPath: /home/argocd/.config/sops/age
+          readOnly: true
+
+# Argo CD 자체는 GitOps 대상이 아니라 Helm으로 설치·관리(부트스트랩 순환 회피).
+# 접속(UI/CLI)은 초기엔 port-forward, 상시 노출은 OKE ingress 확정 후 별도 결정.
+#   ⚠️ TODO(OKE 확보 후): server.ingress 또는 별도 노출 전략, 초기 admin 비번 회전.

@@ -1,0 +1,34 @@
+# Strimzi Kafka Operator (wave 0) — ADR-011 승계, ADR-022
+# Helm 차트(strimzi 리포) + 커밋된 values(Git)를 multi-source로 결합해
+# k8s/kafka/operator-values.yaml을 단일 원천으로 유지한다(로컬 helm install과 동일 계약).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: strimzi-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"   # CRD 설치 — Kafka CR(wave 1)보다 먼저
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  sources:
+    - repoURL: https://strimzi.io/charts/
+      chart: strimzi-kafka-operator
+      targetRevision: 1.1.0
+      helm:
+        valueFiles:
+          - $values/k8s/kafka/operator-values.yaml
+    - repoURL: https://github.com/polypola-dev/mini-commerce.git
+      targetRevision: main
+      ref: values                       # 위 $values 참조의 실체(Git 리포)
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: strimzi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true            # 대형 CRD의 last-applied 애노테이션 초과 회피
