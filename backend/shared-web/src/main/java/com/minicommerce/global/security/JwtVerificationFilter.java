@@ -74,9 +74,12 @@ public class JwtVerificationFilter extends OncePerRequestFilter {
             Jwk jwk = jwkProvider.get(unverified.getKeyId());
             ECPublicKey publicKey = (ECPublicKey) jwk.getPublicKey();
 
-            // 4. ES256으로 서명 및 만료 검증
+            // 4. ES256으로 서명 및 만료 검증. leeway 없이는 검증 서버 시계가 발급 서버(Supabase)보다
+            // 단 몇 초만 늦어도 갓 발급된 토큰의 iat가 "미래"로 보여 매번 거부된다 — 로그인 직후 바로
+            // API를 호출하는 흐름(E6 k6 부하테스트 준비 중 재현)에서 실측: 로컬 시계가 Supabase보다
+            // ~2초 늦은 것만으로 100% 재현됐다. RFC 7519 권고대로 소폭의 clock skew 허용치를 둔다.
             Algorithm algorithm = Algorithm.ECDSA256(publicKey, null);
-            JWTVerifier verifier = JWT.require(algorithm).build();
+            JWTVerifier verifier = JWT.require(algorithm).acceptLeeway(10).build();
             DecodedJWT verified = verifier.verify(token);
 
             // 5. 검증 성공 - userId를 Request Attribute에 보관

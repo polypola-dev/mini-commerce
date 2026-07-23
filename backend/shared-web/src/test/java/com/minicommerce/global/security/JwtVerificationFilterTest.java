@@ -36,6 +36,7 @@ class JwtVerificationFilterTest {
     private String validToken;
     private String expiredToken;
     private String invalidToken;
+    private String issuedSlightlyInFutureToken;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -64,10 +65,19 @@ class JwtVerificationFilterTest {
                 .withExpiresAt(new Date(System.currentTimeMillis() + 600_000))
                 .sign(algorithm);
 
+        // acceptLeeway(10)를 넘어서는 과거여야 leeway와 무관하게 확실히 만료로 판정된다.
         expiredToken = JWT.create()
                 .withSubject("user-123")
                 .withKeyId(KEY_ID)
-                .withExpiresAt(new Date(System.currentTimeMillis() - 1000))
+                .withExpiresAt(new Date(System.currentTimeMillis() - 20_000))
+                .sign(algorithm);
+
+        // 검증 서버 시계가 발급 서버보다 살짝 늦은 상황 재현 — leeway(10s) 이내라 통과해야 한다.
+        issuedSlightlyInFutureToken = JWT.create()
+                .withSubject("user-123")
+                .withKeyId(KEY_ID)
+                .withIssuedAt(new Date(System.currentTimeMillis() + 5_000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + 600_000))
                 .sign(algorithm);
 
         // 다른 키쌍으로 서명한 위조 토큰 (kid는 동일하지만 서명이 다름)
@@ -125,6 +135,16 @@ class JwtVerificationFilterTest {
         mockMvc.perform(get("/api/test-secure")
                         .header("X-Internal-BFF-Key", BFF_SECRET_KEY)
                         .header("Authorization", "Bearer " + validToken))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Success: user-123"));
+    }
+
+    @Test
+    @DisplayName("보안 성공: 검증 서버 시계가 발급 서버보다 leeway 이내로 늦어도 통과한다(clock skew 허용)")
+    void shouldPassWhenIssuedAtIsWithinLeeway() throws Exception {
+        mockMvc.perform(get("/api/test-secure")
+                        .header("X-Internal-BFF-Key", BFF_SECRET_KEY)
+                        .header("Authorization", "Bearer " + issuedSlightlyInFutureToken))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Success: user-123"));
     }
