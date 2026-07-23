@@ -23,13 +23,17 @@ interface JpaOrderRepository extends JpaRepository<OrderJpaEntity, UUID> {
     // 관리자 주문 검색(orderId/customerId 부분 문자열 매칭). id/customerId가 uuid로 바뀌었으므로
     // CAST(x AS String)으로 텍스트 표현(정규화된 소문자 uuid)으로 변환해 LIKE 비교한다.
     // COALESCE도 문자열 캐스팅 이후에 적용(uuid에 직접 '' 기본값을 줄 수 없음).
+    // 관리자 검색은 표시 전용 주문번호(order_number)로도 매칭한다(GH #19) — 화면에 보이는 번호로
+    // 바로 찾을 수 있게. 내부 UUID(id)·customerId 검색은 그대로 유지한다.
     @Query(value = "SELECT o.id FROM OrderJpaEntity o WHERE " +
                    "(:status IS NULL OR o.status = :status) AND " +
                    "(:q IS NULL OR LOWER(CAST(o.id AS String)) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
+                   "LOWER(COALESCE(o.orderNumber, '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
                    "LOWER(COALESCE(CAST(o.customerId AS String), '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))",
            countQuery = "SELECT COUNT(o) FROM OrderJpaEntity o WHERE " +
                         "(:status IS NULL OR o.status = :status) AND " +
                         "(:q IS NULL OR LOWER(CAST(o.id AS String)) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
+                        "LOWER(COALESCE(o.orderNumber, '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%') OR " +
                         "LOWER(COALESCE(CAST(o.customerId AS String), '')) LIKE CONCAT('%', LOWER(CAST(:q AS String)), '%'))")
     Page<UUID> findOrderIdsPaged(@Param("status") OrderStatus status,
                                  @Param("q") String q,

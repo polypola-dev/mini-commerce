@@ -1,6 +1,6 @@
 "use client";
 
-import { adminCancelOrder, adminGetOrders, adminUpdateOrderStatus, type OrderResponse } from "@/lib/api";
+import { adminCancelOrder, adminGetOrders, adminUpdateOrderStatus, orderDisplayNumber, type OrderResponse } from "@/lib/api";
 import { useEffect, useState } from "react";
 import styles from "../admin.module.css";
 
@@ -32,8 +32,9 @@ function fmtDate(iso: string) {
 }
 
 function downloadCSV(orders: OrderResponse[]) {
-  const header = ["주문번호", "고객ID", "상품", "금액", "주문일시", "상태"];
+  const header = ["주문번호", "내부ID", "고객ID", "상품", "금액", "주문일시", "상태"];
   const rows = orders.map((o) => [
+    orderDisplayNumber(o),
     o.orderId,
     o.customerId ?? "",
     o.lines?.map((l) => l.productName).join(" / ") ?? "",
@@ -362,7 +363,7 @@ export default function AdminOrdersPage() {
                         onChange={() => toggleOne(order.orderId)}
                       />
                     </td>
-                    <td className={styles.cellMono} title={order.orderId}>{order.orderId.slice(0, 8)}…</td>
+                    <td className={styles.cellMono} title={order.orderId}>{orderDisplayNumber(order)}</td>
                     <td className={styles.cellMono}>
                       {order.customerId ? (
                         <span>
@@ -476,6 +477,8 @@ export default function AdminOrdersPage() {
             <div className={styles.drawerBody}>
               <dl className={styles.dl}>
                 <dt className={styles.dlTerm}>주문번호</dt>
+                <dd className={`${styles.dlDesc} ${styles.cellMono}`}>{orderDisplayNumber(drawerOrder)}</dd>
+                <dt className={styles.dlTerm}>내부 ID</dt>
                 <dd className={`${styles.dlDesc} ${styles.cellMono}`}>{drawerOrder.orderId}</dd>
                 <dt className={styles.dlTerm}>주문일시</dt>
                 <dd className={styles.dlDesc}>{fmtDate(drawerOrder.createdAt)}</dd>

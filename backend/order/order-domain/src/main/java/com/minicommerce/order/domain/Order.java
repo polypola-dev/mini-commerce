@@ -11,6 +11,10 @@ import java.util.List;
  */
 public class Order {
     private final String id;
+    // 고객 노출용 표시 전용 번호(ORD-YYYYMMDD-NNNN, GH #19). PK(UUID)와 분리 — 조회/인증/권한
+    // 판단의 키로는 절대 쓰지 않는다(URL 노출 시 IDOR성 열거 방지). 채번은 DB 시퀀스가 필요해
+    // 생성 시점엔 null이고, 영속 단계(OrderPersistenceService)에서 assignOrderNumber로 채운다.
+    private String orderNumber;
     private final String customerId;
     private OrderStatus status;
     private final BigDecimal totalAmount;
@@ -49,10 +53,11 @@ public class Order {
         this.shippingZipCode = shippingZipCode;
     }
 
-    private Order(String id, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
+    private Order(String id, String orderNumber, String customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
                   String paymentKey, String shippingRecipient, String shippingPhone, String shippingAddress,
                   String shippingDetailAddress, String shippingZipCode, List<OrderLine> lines) {
         this.id = id;
+        this.orderNumber = orderNumber;
         this.customerId = customerId;
         this.status = status;
         this.totalAmount = totalAmount;
@@ -67,15 +72,26 @@ public class Order {
     }
 
     /** 영속성에서 도메인 객체를 복원할 때만 사용 (Mapper 전용). */
-    public static Order reconstitute(String id, String customerId, OrderStatus status, BigDecimal totalAmount,
+    public static Order reconstitute(String id, String orderNumber, String customerId, OrderStatus status, BigDecimal totalAmount,
                                      Instant createdAt, String paymentKey, String shippingRecipient, String shippingPhone,
                                      String shippingAddress, String shippingDetailAddress, String shippingZipCode,
                                      List<OrderLine> lines) {
-        return new Order(id, customerId, status, totalAmount, createdAt, paymentKey, shippingRecipient, shippingPhone,
+        return new Order(id, orderNumber, customerId, status, totalAmount, createdAt, paymentKey, shippingRecipient, shippingPhone,
                 shippingAddress, shippingDetailAddress, shippingZipCode, lines);
     }
 
     public String getId() { return id; }
+    public String getOrderNumber() { return orderNumber; }
+
+    /**
+     * 표시 전용 주문번호를 부여한다(영속 단계 전용, GH #19). 채번은 DB 시퀀스가 필요해 생성 시점엔
+     * 비어 있고, 저장 트랜잭션 안에서 한 번만 채운다. 이미 부여됐으면 무시해 재저장 시 번호가 바뀌지 않는다.
+     */
+    public void assignOrderNumber(String orderNumber) {
+        if (this.orderNumber == null) {
+            this.orderNumber = orderNumber;
+        }
+    }
     public String getCustomerId() { return customerId; }
     public OrderStatus getStatus() { return status; }
     public BigDecimal getTotalAmount() { return totalAmount; }

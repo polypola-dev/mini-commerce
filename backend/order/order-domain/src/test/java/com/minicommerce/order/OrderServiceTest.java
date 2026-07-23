@@ -221,7 +221,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("실패: 이미 결제된 주문에 결제 승인을 재요청하면 OrderAlreadyProcessedException, 게이트웨이 호출·저장 없음")
     void confirmPayment_AlreadyProcessed_throws() {
-        Order paidOrder = Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+        Order paidOrder = Order.reconstitute("order-1", "ORD-20260101-0001", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
                 Instant.now(), "old-key", null, null, null, null, null, List.<OrderLine>of());
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder));
 
@@ -297,7 +297,7 @@ class OrderServiceTest {
     @DisplayName("이미 결제된 주문은 만료 처리해도 상태가 바뀌지 않는다(가드)")
     void expire_paidOrder_doesNotChangeStatus() {
         // given
-        Order paidOrder = Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+        Order paidOrder = Order.reconstitute("order-1", "ORD-20260101-0001", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
                 Instant.now(), "pay-key-1", null, null, null, null, null, List.<OrderLine>of());
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(paidOrder));
 
@@ -321,7 +321,7 @@ class OrderServiceTest {
     }
 
     private Order paidOrder() {
-        return Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+        return Order.reconstitute("order-1", "ORD-20260101-0001", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
                 Instant.now(), "pay-key-1", null, null, null, null, null, List.<OrderLine>of());
     }
 

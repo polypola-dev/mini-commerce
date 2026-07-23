@@ -2,6 +2,7 @@ package com.minicommerce.order;
 
 import com.minicommerce.order.application.OrderPersistenceService;
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
+import com.minicommerce.order.application.port.out.OrderNumberPort;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import com.minicommerce.order.domain.Order;
 import com.minicommerce.order.domain.OrderLine;
@@ -32,16 +33,20 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OrderPersistenceServiceTest {
 
+    private static final String ORDER_NUMBER = "ORD-20260101-0001";
+
     @Mock
     private OrderRepository orderRepository;
     @Mock
     private OrderEventPublisher eventPublisher;
+    @Mock
+    private OrderNumberPort orderNumberPort;
 
     private OrderPersistenceService orderPersistenceService;
 
     @BeforeEach
     void setUp() {
-        orderPersistenceService = new OrderPersistenceService(orderRepository, eventPublisher);
+        orderPersistenceService = new OrderPersistenceService(orderRepository, eventPublisher, orderNumberPort);
     }
 
     private Order newOrder() {
@@ -51,7 +56,7 @@ class OrderPersistenceServiceTest {
     }
 
     private Order paidOrder() {
-        return Order.reconstitute("order-1", "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
+        return Order.reconstitute("order-1", ORDER_NUMBER, "cust-1", OrderStatus.PAID, BigDecimal.valueOf(10000),
                 Instant.now(), "pay-key-1", null, null, null, null, null, List.<OrderLine>of());
     }
 
@@ -59,14 +64,18 @@ class OrderPersistenceServiceTest {
     @DisplayName("persistPlacedOrder: 저장 후 OrderPlaced를 저장된 값으로 발행하고 저장 결과를 반환한다")
     void persistPlacedOrder_savesThenPublishes() {
         Order order = newOrder();
+        when(orderNumberPort.generate(any())).thenReturn(ORDER_NUMBER);
         when(orderRepository.save(order)).thenReturn(order);
 
         Order result = orderPersistenceService.persistPlacedOrder(order);
 
         assertThat(result).isSameAs(order);
-        InOrder inOrder = inOrder(orderRepository, eventPublisher);
+        // 채번된 표시 번호가 도메인에 부여되고 이벤트로도 전달돼야 한다(GH #19).
+        assertThat(result.getOrderNumber()).isEqualTo(ORDER_NUMBER);
+        InOrder inOrder = inOrder(orderNumberPort, orderRepository, eventPublisher);
+        inOrder.verify(orderNumberPort).generate(any());
         inOrder.verify(orderRepository).save(order);
-        inOrder.verify(eventPublisher).publishOrderPlaced(eq("order-1"), eq("cust-1"), any(BigDecimal.class));
+        inOrder.verify(eventPublisher).publishOrderPlaced(eq("order-1"), eq(ORDER_NUMBER), eq("cust-1"), any(BigDecimal.class));
     }
 
     @Test
@@ -80,7 +89,7 @@ class OrderPersistenceServiceTest {
         assertThat(result).isSameAs(order);
         InOrder inOrder = inOrder(orderRepository, eventPublisher);
         inOrder.verify(orderRepository).save(order);
-        inOrder.verify(eventPublisher).publishOrderPaid(eq("order-1"), eq("cust-1"), any(BigDecimal.class));
+        inOrder.verify(eventPublisher).publishOrderPaid(eq("order-1"), eq(ORDER_NUMBER), eq("cust-1"), any(BigDecimal.class));
     }
 
     @Test
@@ -94,6 +103,6 @@ class OrderPersistenceServiceTest {
         assertThat(result).isSameAs(order);
         InOrder inOrder = inOrder(orderRepository, eventPublisher);
         inOrder.verify(orderRepository).save(order);
-        inOrder.verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq("cust-1"), any(BigDecimal.class));
+        inOrder.verify(eventPublisher).publishOrderCanceled(eq("order-1"), eq(ORDER_NUMBER), eq("cust-1"), any(BigDecimal.class));
     }
 }

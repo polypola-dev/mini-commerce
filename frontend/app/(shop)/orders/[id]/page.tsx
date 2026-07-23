@@ -1,3 +1,4 @@
+import { orderDisplayNumber } from "@/lib/api";
 import { getOrderById, getProductImages } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -65,7 +66,7 @@ export default async function OrderDetailPage({
         <div className="mcOrderSummaryCard">
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "13px" }}>
             <span style={{ color: "var(--color-muted)" }}>주문번호</span>
-            <span style={{ fontWeight: 700 }}>{order.orderId.slice(0, 8)}…</span>
+            <span style={{ fontWeight: 700 }}>{orderDisplayNumber(order)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "13px" }}>
             <span style={{ color: "var(--color-muted)" }}>상품 수</span>
@@ -111,7 +112,7 @@ export default async function OrderDetailPage({
               {STATUS_LABEL[order.status] ?? order.status}
             </span>
             <span style={{ fontSize: "12px", color: "var(--color-muted)" }}>
-              주문번호 {order.orderId.slice(0, 8)}…
+              주문번호 {orderDisplayNumber(order)}
             </span>
           </div>
           <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>

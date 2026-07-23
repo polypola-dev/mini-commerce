@@ -1,6 +1,7 @@
 package com.minicommerce.order.application;
 
 import com.minicommerce.order.application.port.out.OrderEventPublisher;
+import com.minicommerce.order.application.port.out.OrderNumberPort;
 import com.minicommerce.order.application.port.out.OrderRepository;
 import com.minicommerce.order.domain.Order;
 import org.springframework.stereotype.Service;
@@ -24,27 +25,33 @@ public class OrderPersistenceService {
 
     private final OrderRepository orderRepository;
     private final OrderEventPublisher eventPublisher;
+    private final OrderNumberPort orderNumberPort;
 
-    public OrderPersistenceService(OrderRepository orderRepository, OrderEventPublisher eventPublisher) {
+    public OrderPersistenceService(OrderRepository orderRepository, OrderEventPublisher eventPublisher,
+                                   OrderNumberPort orderNumberPort) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderNumberPort = orderNumberPort;
     }
 
     public Order persistPlacedOrder(Order order) {
+        // 표시 전용 주문번호는 이 트랜잭션 안에서 채번한다(GH #19) — 채번(카운터 증가)과 주문 저장이
+        // 한 트랜잭션이라 저장 실패 시 번호도 함께 롤백돼 일련번호에 구멍이 나지 않는다.
+        order.assignOrderNumber(orderNumberPort.generate(order.getCreatedAt()));
         Order saved = orderRepository.save(order);
-        eventPublisher.publishOrderPlaced(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());
+        eventPublisher.publishOrderPlaced(saved.getId(), saved.getOrderNumber(), saved.getCustomerId(), saved.getTotalAmount());
         return saved;
     }
 
     public Order persistConfirmedPayment(Order order) {
         Order saved = orderRepository.save(order);
-        eventPublisher.publishOrderPaid(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());
+        eventPublisher.publishOrderPaid(saved.getId(), saved.getOrderNumber(), saved.getCustomerId(), saved.getTotalAmount());
         return saved;
     }
 
     public Order persistCanceledOrder(Order order) {
         Order saved = orderRepository.save(order);
-        eventPublisher.publishOrderCanceled(saved.getId(), saved.getCustomerId(), saved.getTotalAmount());
+        eventPublisher.publishOrderCanceled(saved.getId(), saved.getOrderNumber(), saved.getCustomerId(), saved.getTotalAmount());
         return saved;
     }
 }

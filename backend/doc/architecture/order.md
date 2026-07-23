@@ -19,20 +19,25 @@ ADR-004의 단일 DB 결정을 부분 supersede).
 ```
 order/order-domain/          (Gradle 모듈 — jakarta.persistence·spring-web 의존 0)
 ├── domain/                 순수 POJO. 기술 의존 0.
-│   ├── Order, OrderLine, OrderLineDraft, OrderStatus(EXPIRED 포함)
+│   ├── Order(표시 전용 orderNumber 포함 — GH #19), OrderLine, OrderLineDraft, OrderStatus(EXPIRED 포함)
 │   └── exception/          OrderNotFoundException, OrderErrorCode
 ├── application/             유즈케이스 구현 + 포트 (spring-context/spring-tx만 의존)
-│   ├── OrderService, PlaceOrderCommand
+│   ├── OrderService, OrderPersistenceService, PlaceOrderCommand
 │   ├── port/in/             PlaceOrderUseCase, CompletePaymentUseCase, GetOrdersUseCase, ExpireOrderUseCase
-│   └── port/out/            OrderRepository, InventoryPort, ProductQueryPort, OrderEventPublisher
+│   └── port/out/            OrderRepository, InventoryPort, ProductQueryPort, OrderEventPublisher,
+│                            OrderNumberPort(표시 전용 주문번호 채번 — GH #19)
 └── (이벤트 record는 order-events로 이동 — GH #5)
 
 order/order-events/          (Gradle 모듈 — 의존성 0. Kafka 이벤트 계약 전용)
 └── OrderPlacedEvent, OrderPaidEvent, OrderCanceledEvent  (order 컨텍스트가 소유,
-                              발행측 order-infra와 구독측 shop-api가 이 모듈만 공유)
+                              발행측 order-infra와 구독측 shop-api가 이 모듈만 공유. 표시 전용
+                              orderNumber 필드 포함 — 알림 메시지가 UUID 대신 이 번호를 쓴다, GH #19)
 
 order/order-infra/           (Gradle 모듈 — order-domain, inventory에 의존. catalog는 모듈 의존 없이 REST로만 호출)
-├── adapter/out/persistence/ OrderJpaEntity, OrderLineJpaEntity, OrderPersistenceMapper, OrderPersistenceAdapter
+├── adapter/out/persistence/ OrderJpaEntity(order_number 컬럼 포함), OrderLineJpaEntity, OrderPersistenceMapper,
+│                            OrderPersistenceAdapter, OrderNumberAdapter(OrderNumberPort 구현 — 일별 리셋
+│                            채번, order_number_sequences 카운터 행을 비관적 락으로 증가, GH #19),
+│                            OrderNumberSequenceJpaEntity, OrderNumberSequenceInitializer(REQUIRES_NEW)
 ├── adapter/out/catalog/     CatalogProductAdapter (ProductQueryPort 구현, RestClient로 catalog의
 │                            /internal/products/* 호출 — S2, 컴파일 의존 없음)
 ├── adapter/out/inventory/   InventoryAdapter (InventoryPort 구현, inventory의 InventoryService 공개 API 경유)
@@ -179,6 +184,26 @@ stateDiagram-v2
 - `notification`/`order-batch` 등에는 `OrderPlacedEvent`/`OrderPaidEvent`를 **Modulith `@Externalized` →
   Kafka**로 발행한다(`event_publication` = 아웃박스, 미발행분은 order-batch가 스윕). 컨슈머는 이벤트
   ID 기반 **멱등** 처리(Kafka at-least-once).
+
+## 표시 전용 주문번호 (GH #19)
+
+고객에게 보여주는 주문번호는 내부 PK(UUID)와 분리한 **표시 전용** 값이다(`Order.orderNumber`).
+
+- **형식**: `ORD-YYYYMMDD-NNNN` (예: `ORD-20260721-0042` = 7월 21일의 42번째 주문). 일련번호는
+  KST(Asia/Seoul) 하루 단위로 리셋된다 — 노출되는 정보를 "오늘자 주문량"으로 국한하고 누적 총량은
+  감춘다. 4자리 제로패딩(하루 1만건 초과 시 자릿수는 자연 확장).
+- **표시 전용 원칙**: 조회·인증·권한 판단 어디에서도 이 번호를 키로 쓰지 않는다. 실제 조회 API는
+  계속 `Order.id`(UUID)+인증을 쓰고, 프론트 링크도 UUID다(`/orders/{uuid}`). 표시 번호를 URL 파라미터
+  등으로 노출하면 IDOR성 열거 공격 표면이 새로 생기므로 명시적으로 배제한다. 노출 지점(주문내역/상세/
+  완료화면/알림/관리자)만 이 번호로 바꾸고, 관리자 화면은 지원용으로 내부 UUID도 함께 보여준다.
+- **채번**: `order_number_sequences(order_date PK, last_seq)` 카운터 행을 `SELECT ... FOR UPDATE`
+  (JPA `PESSIMISTIC_WRITE`)로 잠그고 증가시켜 **동시 주문에도 중복/스킵이 없다**. 그날 첫 채번의
+  행 생성 경합만 `REQUIRES_NEW`로 격리해 중복키를 삼킨다(본 저장 트랜잭션은 오염되지 않음).
+  채번은 `OrderPersistenceService.persistPlacedOrder`의 저장 트랜잭션 안에서 일어나, 저장이 롤백되면
+  번호도 함께 회수된다. Postgres 전용 `ON CONFLICT ... RETURNING` 대신 비관적 락을 써 H2(테스트)·
+  Postgres(운영) 모두에서 동일하게 동작한다. 동시성·일별 리셋·KST 경계는 `OrderNumberAdapterTest`가
+  검증한다. 스키마는 order-api `V2__order_display_number.sql`(order_number 컬럼+UNIQUE, 카운터 테이블).
+  과거(미채번) 주문은 `order_number`가 null이며 표시 지점에서 UUID 앞 8자리로 폴백한다(백필 없음).
 
 ## 알려진 갭
 

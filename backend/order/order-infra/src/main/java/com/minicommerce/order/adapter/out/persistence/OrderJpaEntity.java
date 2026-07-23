@@ -2,6 +2,7 @@ package com.minicommerce.order.adapter.out.persistence;
 
 import com.minicommerce.order.domain.OrderStatus;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,6 +21,11 @@ import java.util.UUID;
 class OrderJpaEntity {
     @Id
     private UUID id;
+
+    // 고객 노출용 표시 전용 번호(ORD-YYYYMMDD-NNNN, GH #19). PK(uuid)와 분리. unique 제약으로
+    // (날짜, 일련번호) 조합의 유일성을 DB가 최종 보증한다. 과거 dev 주문엔 null일 수 있다(백필 없음).
+    @Column(unique = true)
+    private String orderNumber;
 
     private UUID customerId;
 
@@ -42,10 +48,11 @@ class OrderJpaEntity {
     protected OrderJpaEntity() {
     }
 
-    OrderJpaEntity(UUID id, UUID customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
+    OrderJpaEntity(UUID id, String orderNumber, UUID customerId, OrderStatus status, BigDecimal totalAmount, Instant createdAt,
                    String paymentKey, String shippingRecipient, String shippingPhone, String shippingAddress,
                    String shippingDetailAddress, String shippingZipCode) {
         this.id = id;
+        this.orderNumber = orderNumber;
         this.customerId = customerId;
         this.status = status;
         this.totalAmount = totalAmount;
@@ -64,6 +71,7 @@ class OrderJpaEntity {
     }
 
     UUID getId() { return id; }
+    String getOrderNumber() { return orderNumber; }
     UUID getCustomerId() { return customerId; }
     OrderStatus getStatus() { return status; }
     BigDecimal getTotalAmount() { return totalAmount; }

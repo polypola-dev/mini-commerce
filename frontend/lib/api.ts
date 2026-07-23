@@ -91,6 +91,9 @@ export type OrderLineItem = {
 
 export type OrderResponse = {
   orderId: string;
+  // 고객 노출용 표시 전용 번호(ORD-YYYYMMDD-NNNN, GH #19). 조회/링크에는 orderId(UUID)를 쓰고
+  // 화면 표시에만 사용한다. 과거(미채번) 주문은 null일 수 있다.
+  orderNumber: string | null;
   customerId?: string;
   status: string;
   totalAmount: number;
@@ -103,6 +106,14 @@ export type OrderResponse = {
   shippingZipCode: string | null;
   paymentKey: string | null;
 };
+
+/**
+ * 화면 표시용 주문번호(GH #19). 표시 전용 orderNumber가 있으면 그대로, 없으면(과거 미채번 주문)
+ * 내부 UUID 앞 8자리로 폴백한다. 링크/조회에는 절대 이 값을 쓰지 말 것 — orderId(UUID)만 사용한다.
+ */
+export function orderDisplayNumber(order: Pick<OrderResponse, "orderId" | "orderNumber">): string {
+  return order.orderNumber ?? `${order.orderId.slice(0, 8)}…`;
+}
 
 export type ShippingInfo = {
   shippingRecipient: string;

@@ -1,4 +1,4 @@
-import type { OrderResponse } from "@/lib/api";
+import { orderDisplayNumber, type OrderResponse } from "@/lib/api";
 import { getMyOrders, getProductImages } from "@/lib/api-server";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
@@ -106,7 +106,7 @@ export default async function OrdersPage() {
                       {extraCount > 0 ? ` 외 ${extraCount}건` : ""}
                     </div>
                     <div style={{ fontSize: "12px", color: "var(--color-muted)" }}>
-                      주문번호 {order.orderId.slice(0, 8)}… · {order.totalAmount.toLocaleString("ko-KR")}원
+                      주문번호 {orderDisplayNumber(order)} · {order.totalAmount.toLocaleString("ko-KR")}원
                     </div>
                   </div>
                   <span style={{ color: "#bbb" }}>›</span>

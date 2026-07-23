@@ -39,7 +39,7 @@ class NotificationService {
                 orderUuid,
                 UUID.fromString(event.customerId()),
                 NotificationType.ORDER_PLACED,
-                "주문이 접수되었습니다. 주문번호: " + event.orderId()
+                "주문이 접수되었습니다. 주문번호: " + displayNumber(event.orderNumber(), event.orderId())
         );
         deliver(notification, "ORDER_PLACED", event.orderId());
     }
@@ -54,7 +54,7 @@ class NotificationService {
                 orderUuid,
                 UUID.fromString(event.customerId()),
                 NotificationType.ORDER_PAID,
-                "결제가 완료되었습니다. 주문번호: " + event.orderId()
+                "결제가 완료되었습니다. 주문번호: " + displayNumber(event.orderNumber(), event.orderId())
         );
         deliver(notification, "ORDER_PAID", event.orderId());
     }
@@ -69,9 +69,14 @@ class NotificationService {
                 orderUuid,
                 UUID.fromString(event.customerId()),
                 NotificationType.ORDER_CANCELED,
-                "주문이 취소되었습니다. 주문번호: " + event.orderId()
+                "주문이 취소되었습니다. 주문번호: " + displayNumber(event.orderNumber(), event.orderId())
         );
         deliver(notification, "ORDER_CANCELED", event.orderId());
+    }
+
+    /** 표시 전용 주문번호가 있으면 그것을, 없으면(과거 이벤트/미채번) 내부 orderId로 폴백한다. */
+    private static String displayNumber(String orderNumber, String orderId) {
+        return (orderNumber != null && !orderNumber.isBlank()) ? orderNumber : orderId;
     }
 
     private void deliver(Notification notification, String type, String orderId) {

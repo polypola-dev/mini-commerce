@@ -18,17 +18,17 @@ public class SpringOrderEventAdapter implements OrderEventPublisher {
     }
 
     @Override
-    public void publishOrderPlaced(String orderId, String customerId, BigDecimal amount) {
-        springPublisher.publishEvent(new OrderPlacedEvent(orderId, customerId, amount));
+    public void publishOrderPlaced(String orderId, String orderNumber, String customerId, BigDecimal amount) {
+        springPublisher.publishEvent(new OrderPlacedEvent(orderId, orderNumber, customerId, amount));
     }
 
     @Override
-    public void publishOrderPaid(String orderId, String customerId, BigDecimal amount) {
-        springPublisher.publishEvent(new OrderPaidEvent(orderId, customerId, amount));
+    public void publishOrderPaid(String orderId, String orderNumber, String customerId, BigDecimal amount) {
+        springPublisher.publishEvent(new OrderPaidEvent(orderId, orderNumber, customerId, amount));
     }
 
     @Override
-    public void publishOrderCanceled(String orderId, String customerId, BigDecimal amount) {
-        springPublisher.publishEvent(new OrderCanceledEvent(orderId, customerId, amount));
+    public void publishOrderCanceled(String orderId, String orderNumber, String customerId, BigDecimal amount) {
+        springPublisher.publishEvent(new OrderCanceledEvent(orderId, orderNumber, customerId, amount));
     }
 }
