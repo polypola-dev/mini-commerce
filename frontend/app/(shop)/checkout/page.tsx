@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadTossPayments, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 import { createOrder, getCart, type Cart, type CartItem } from "@/lib/api";
-import { CHECKOUT_SELECTED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
+import { CHECKOUT_SELECTED_ITEM_IDS_KEY, CHECKOUT_ORDERED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
 import { useAddresses, type Address } from "@/lib/addresses";
 import AddressForm, { type AddressFormValue } from "../address-form";
 
@@ -47,6 +47,17 @@ export default function CheckoutPage() {
   // 없도록 ref에 파싱 결과를 캐싱해둔다. 안 그러면 두 번째 실행이 "선택 없음"으로 오인해
   // 장바구니 전체를 주문 상품으로 넣어버린다.
   const selectedIdsRef = useRef<Set<string> | null>();
+
+  // Toss 결제창(외부 도메인)에서 뒤로가기로 돌아오면 브라우저가 bfcache에 저장해둔
+  // 결제 직전 스냅샷(이미 주문한 상품 목록, 위젯 상태 등)을 JS 재실행 없이 그대로 복원한다.
+  // getCart 재검증이 통째로 스킵되므로, persisted 복원을 감지하면 새로고침해 최신 상태를 다시 받는다.
+  useEffect(() => {
+    function handlePageShow(e: PageTransitionEvent) {
+      if (e.persisted) window.location.reload();
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   useEffect(() => {
     if (selectedIdsRef.current === undefined) {
@@ -183,6 +194,7 @@ export default function CheckoutPage() {
         shippingAddress: addr.a1,
         shippingDetailAddress: addr.a2,
       });
+      sessionStorage.setItem(CHECKOUT_ORDERED_ITEM_IDS_KEY, JSON.stringify(items.map((i) => i.itemId)));
       setPayAmount(order.totalAmount);
       setOrderId(order.orderId);
     } catch (e) {

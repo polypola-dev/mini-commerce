@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { confirmPayment } from "@/lib/api";
+import { confirmPayment, removeCartItem } from "@/lib/api";
+import { CHECKOUT_ORDERED_ITEM_IDS_KEY } from "@/lib/checkoutSelection";
 
 function PaymentSuccessInner() {
   const router = useRouter();
@@ -25,7 +26,19 @@ function PaymentSuccessInner() {
     }
 
     confirmPayment(orderId, paymentKey, Number(amount))
-      .then(() => router.replace(`/orders/${orderId}?completed=1`))
+      .then(async () => {
+        const raw = sessionStorage.getItem(CHECKOUT_ORDERED_ITEM_IDS_KEY);
+        sessionStorage.removeItem(CHECKOUT_ORDERED_ITEM_IDS_KEY);
+        if (raw) {
+          try {
+            const itemIds: string[] = JSON.parse(raw);
+            await Promise.all(itemIds.map((id) => removeCartItem(id).catch(() => {})));
+          } catch {
+            // ignore malformed ordered-item ids, order is already paid regardless
+          }
+        }
+        router.replace(`/orders/${orderId}?completed=1`);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "결제 승인에 실패했어요"));
   }, [search, router]);
 
