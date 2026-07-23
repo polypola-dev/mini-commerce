@@ -7,13 +7,16 @@
 #
 # 두 가지 커스터마이즈가 핵심이다:
 #   (1) Kafka(strimzi) health check — sync-wave 1→2 게이트가 "Ready"를 실제로 기다리게
-#   (2) ksops CMP 사이드카 — overlays/prod의 SOPS 암호화 Secret을 repo-server가 복호화
-#       (ADR-013 SOPS/age 워크플로를 Argo에서 그대로 소비 — ESO/OCI Vault 대신 채택, ADR-022)
+#   (2) ksops(kustomize exec generator) — overlays/prod의 SOPS 암호화 Secret을
+#       repo-server가 복호화(ADR-013 SOPS/age 워크플로를 Argo에서 그대로 소비).
+#       정본(viaduct-ai/kustomize-sops)이 권장하는 **init container 방식**을 채택:
+#       kustomize+ksops 바이너리를 공유 볼륨에 설치해 repo-server가 사용한다
+#       (CMP 사이드카보다 단순·견고 — kind 리허설에서 확정, ADR-022).
 
 configs:
   cm:
     # ── (1) Strimzi Kafka 커스텀 health check ──────────────────────────────
-    # Argo 기본엔 kafka.strimzi.io/Kafka health 판정이 없어 CR을 적용 즉시 Healthy로
+    # Argo 기본엔 kafka.strimzi.io/Kafka health 판정이 없어 CR 적용 즉시 Healthy로
     # 오판, 앱(wave 2)이 브로커 준비 전 부팅해 bootstrap DNS 크래시(G3) 위험.
     # Kafka CR의 Ready condition을 읽어 Progressing/Healthy를 구분한다.
     resource.customizations.health.kafka.strimzi.io_Kafka: |
@@ -31,43 +34,48 @@ configs:
       hs.status = "Progressing"; hs.message = "Waiting for Kafka to become ready"
       return hs
 
+    # ── (2) kustomize에 KSOPS exec generator 허용 ──────────────────────────
+    # KSOPS는 kustomize의 alpha exec plugin으로 동작하므로 두 플래그가 필수.
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+
 repoServer:
-  # ── (2) ksops Config Management Plugin 사이드카 ─────────────────────────
-  # kustomize build 결과에 KSOPS generator(overlays/prod)가 참조한 enc 파일을
-  # 복호화해 삽입한다. age 개인키는 Secret으로 주입(부트스트랩 시 1회 생성):
+  # ── (2) ksops init container ───────────────────────────────────────────
+  # ksops 이미지가 kustomize+ksops 바이너리를 공유 emptyDir(custom-tools)에 설치하고,
+  # repo-server 본체가 그걸 /usr/local/bin에 subPath 마운트해 사용한다.
+  # age 개인키는 sops-age Secret으로 repo-server 본체에 주입(부트스트랩 시 1회 생성):
   #   kubectl create secret generic sops-age -n argocd \
   #     --from-file=keys.txt=$HOME/.config/sops/age/keys.txt
   #   ⚠️ 이 age 키는 로컬(kind)용과 분리된 '운영 전용' 키를 권장(ADR-013 운영 방향).
-  env:
-    - name: SOPS_AGE_KEY_FILE
-      value: /home/argocd/.config/sops/age/keys.txt
+  initContainers:
+    - name: install-ksops
+      # TODO(설치 시): 태그 재확인. viaduct-ai/kustomize-sops 배포 이미지.
+      # 이미지는 distroless(shell 없음)라 정본 install 서브커맨드를 직접 호출한다 —
+      # /custom-tools에 ksops·kustomize 두 바이너리를 심는다.
+      image: viaductoss/ksops:v4.5.1
+      command: ["/usr/local/bin/ksops"]
+      args: ["install", "--with-kustomize", "/custom-tools"]
+      volumeMounts:
+        - name: custom-tools
+          mountPath: /custom-tools
   volumes:
+    - name: custom-tools
+      emptyDir: {}
     - name: sops-age
       secret:
         secretName: sops-age
-    - name: cmp-tmp
-      emptyDir: {}
-  extraContainers:
-    - name: ksops
-      # TODO(설치 시): 태그 pin. viaduct-ai/kustomize-sops 배포 이미지 사용.
-      image: viaductoss/ksops:v4.3.3   # kustomize+sops+ksops+age 번들
-      command: ["/var/run/argocd/argocd-cmp-server"]
-      env:
-        - name: SOPS_AGE_KEY_FILE
-          value: /home/argocd/.config/sops/age/keys.txt
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-      volumeMounts:
-        - name: var-files          # argocd-cmp-server 바이너리(차트 제공)
-          mountPath: /var/run/argocd
-        - name: plugins
-          mountPath: /home/argocd/cmp-server/plugins
-        - name: cmp-tmp
-          mountPath: /tmp
-        - name: sops-age           # age 개인키(읽기 전용)
-          mountPath: /home/argocd/.config/sops/age
-          readOnly: true
+  volumeMounts:
+    - name: custom-tools
+      mountPath: /usr/local/bin/kustomize
+      subPath: kustomize
+    - name: custom-tools
+      mountPath: /usr/local/bin/ksops
+      subPath: ksops
+    - name: sops-age                    # age 개인키(읽기 전용)
+      mountPath: /home/argocd/.config/sops/age
+      readOnly: true
+  env:
+    - name: SOPS_AGE_KEY_FILE
+      value: /home/argocd/.config/sops/age/keys.txt
 
 # Argo CD 자체는 GitOps 대상이 아니라 Helm으로 설치·관리(부트스트랩 순환 회피).
 # 접속(UI/CLI)은 초기엔 port-forward, 상시 노출은 OKE ingress 확정 후 별도 결정.

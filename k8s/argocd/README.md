@@ -8,7 +8,7 @@
 
 ```
 k8s/argocd/
-  install/values.yaml          Argo CD 자체 설치(Helm) — ksops CMP + Kafka health
+  install/values.yaml          Argo CD 자체 설치(Helm) — ksops(init container) + Kafka health
   projects/mini-commerce.yaml  AppProject (소스·목적지 RBAC 경계)
   bootstrap/root.yaml          App-of-Apps 루트 (수동 apply하는 유일한 Application)
   apps/                        root가 관리하는 child Application들
@@ -43,6 +43,24 @@ kubectl apply -f k8s/argocd/bootstrap/root.yaml
 kubectl -n argocd port-forward svc/argocd-server 8080:443
 # admin 초기 비번: kubectl -n argocd get secret argocd-initial-admin-secret ...
 ```
+
+## kind 리허설 검증 (2026-07-23)
+
+OKE 확보 전, 기존 kind 클러스터에 Argo CD(차트 10.1.4, app v3.4.5)를 설치해 신규
+기계장치를 실증했다 — 매니페스트는 클러스터 종류 무관 재사용되므로 여기서 잡은
+버그는 OKE에서도 그대로 해소된다.
+
+- ✅ **ksops 복호화 end-to-end**: repo-server 안에서 `kustomize build`가 실제
+  `app-secrets.enc.yaml`을 복호화해 올바른 평문 Secret 생성(값이 secrets.sh 산출과 일치).
+- ✅ **ksops 내장 kustomize 주입**: init container가 `v5.3.0+ksops.v4.5.1`를
+  `/usr/local/bin`에 설치, age 키 마운트·`SOPS_AGE_KEY_FILE` 확인.
+- ✅ **Kafka health check + `kustomize.buildOptions`** argocd-cm 로드 확인.
+- ✅ **Application 6종 server-side dry-run** 통과(실제 Argo CRD 스키마 검증).
+- 🐛 **잡은 버그**: ksops 이미지가 distroless(shell 없음)라 `/bin/sh -c` init 방식이
+  CrashLoop. 정본대로 `ksops install --with-kustomize`(바이너리 직접 호출)로 수정 → 해결.
+
+> 미검증(대상 클러스터+prod 산출물 필요): App-of-Apps 실제 sync·wave 게이트 순서,
+> 라이브 Kafka health 전이. OKE(또는 폴백 클러스터) 확보 후 검증 계획대로 실증한다.
 
 ## OKE 확보 후 채워야 할 TODO (현재 스캐폴드의 빈칸)
 
