@@ -46,7 +46,7 @@ export default function CheckoutPage() {
   // (React 18 Strict Mode의 dev 중복 호출 등) 두 번째 실행이 이미 지워진 값을 못 읽는 일이
   // 없도록 ref에 파싱 결과를 캐싱해둔다. 안 그러면 두 번째 실행이 "선택 없음"으로 오인해
   // 장바구니 전체를 주문 상품으로 넣어버린다.
-  const selectedIdsRef = useRef<Set<string> | null>();
+  const selectedIdsRef = useRef<Set<string> | null | undefined>(undefined);
 
   // Toss 결제창(외부 도메인)에서 뒤로가기로 돌아오면 브라우저가 bfcache에 저장해둔
   // 결제 직전 스냅샷(이미 주문한 상품 목록, 위젯 상태 등)을 JS 재실행 없이 그대로 복원한다.
