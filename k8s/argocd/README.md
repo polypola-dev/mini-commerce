@@ -78,6 +78,40 @@ kind 전용 App-of-Apps(overlays/local-gitops)로 ArgoCD가 로컬 스택을 실
 > 미검증(대상 클러스터+prod 산출물 필요): OKE from-scratch 부트스트랩, prod 오버레이
 > 실체(GHCR 이미지·values-prod·prod Secret). OKE 확보 후 검증 3부로 실증한다.
 
+## kind에서 두 배포 방식 토글 (수동 kubectl ↔ ArgoCD GitOps)
+
+kind 클러스터는 **코드 변경 없이 명령어만으로** 두 방식을 오갈 수 있다(매니페스트는 이미
+git에 있음). 단 **동시 사용은 안 된다** — ArgoCD가 selfHeal로 관리 중이면 수동 `kubectl`
+변경을 되돌린다. 그리고 이건 **CD(배포/동기화) 방식** 토글이지 CI(GitHub Actions 빌드·테스트)는
+두 모드와 무관하게 그대로다.
+
+**→ ArgoCD GitOps 모드로 켜기** (Argo CD 설치가 이미 있는 상태 기준 — 파일 2개 apply):
+```bash
+kubectl apply -f k8s/argocd/projects/mini-commerce.yaml
+kubectl apply -f k8s/argocd/rehearsal-kind/root.yaml
+# 이후 mini-commerce 스택은 git이 진실. 매니페스트 push→자동 반영, kubectl은 관찰용.
+```
+
+**→ 수동 kubectl 모드로 되돌리기 (detach)** — ⚠️ **나이브 삭제 금지**:
+Application에 `resources-finalizer.argocd.argoproj.io`가 붙어 있어 그냥 지우면 캐스케이드로
+**관리 중이던 워크로드(+adopt한 Kafka CR)까지 삭제**된다. 실제로 Kafka CR이 지워져 broker가
+소멸한 사고가 있었다(cluster.id 불일치·operator 재시작으로 복구). 반드시 **컨트롤러를 먼저
+멈춰** finalizer 재부착을 막고 삭제한다:
+```bash
+# 1. application-controller 정지 (finalizer 재부착 차단)
+kubectl scale statefulset/argocd-application-controller -n argocd --replicas=0
+# 2. 전 Application을 리소스 보존(orphan)하며 삭제
+kubectl -n argocd patch application --all --type=merge -p '{"metadata":{"finalizers":[]}}'
+kubectl -n argocd delete application --all --cascade=orphan
+# 3. 컨트롤러 원복(선택 — ArgoCD를 계속 쓸 거면)
+kubectl scale statefulset/argocd-application-controller -n argocd --replicas=1
+# 4. 이제 평소대로 수동 배포
+kubectl apply -k k8s/overlays/local
+```
+
+> OKE(운영)에선 이 토글/사고가 애초에 없다 — from-scratch로 ArgoCD가 처음부터 전부
+> 생성하므로 adopt/detach 이슈 자체가 안 생긴다.
+
 ## OKE 확보 후 채워야 할 TODO (현재 스캐폴드의 빈칸)
 
 1. `k8s/ingress-nginx/values-prod.yaml` — service.type=LoadBalancer(OCI 무료 LB), OCI 애노테이션
