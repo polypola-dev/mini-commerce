@@ -19,6 +19,16 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: mini-commerce
+  # StatefulSet의 volumeClaimTemplates는 apiserver가 volumeMode/status/apiVersion을
+  # 채우는데 immutable이라 ArgoCD가 diff를 못 지워 영구 OutOfSync가 된다. 이게 앱
+  # 전체 selfHeal을 스로틀(같은 리비전 재시도 5분 백오프)시키므로 무시 처리한다.
+  #   ⚠️ kind 전용: prod(OKE)엔 ArgoCD가 직접 관리하는 StatefulSet이 없다
+  #   (postgres/redis=Supabase/Upstash 외부, Kafka=Strimzi operator 소유) — 이 문제 미발생.
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
   syncPolicy:
     automated:
       prune: true
