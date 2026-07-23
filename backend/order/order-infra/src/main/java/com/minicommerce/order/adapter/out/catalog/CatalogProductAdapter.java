@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 /**
  * catalog를 REST로 조회한다(ADR-005 S2). order-service가 별도 프로세스로 분리돼도(S3) 그대로
@@ -66,6 +67,12 @@ public class CatalogProductAdapter implements ProductQueryPort {
             return catalogRestClient.get().uri(uri).retrieve().body(type);
         } catch (HttpClientErrorException.NotFound e) {
             throw new EntityNotFoundException("Not found via catalog: " + id);
+        } catch (RestClientException e) {
+            // 서킷이 아직 CLOSED인 상태에서의 원본 호출 실패(연결 거부/타임아웃 등)도 503으로
+            // 통일한다 — CallNotPermittedException(서킷 OPEN)만 잡는 fallback으로는 이 구간이
+            // 새어나가 500으로 떨어졌다(실측으로 발견). ignoreExceptions에 없으므로 서킷 실패
+            // 통계는 그대로 반영된다.
+            throw new CatalogUnavailableException("Catalog call failed for " + id, e);
         }
     }
 }
