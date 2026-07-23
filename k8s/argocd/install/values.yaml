@@ -36,7 +36,9 @@ configs:
 
     # ── (2) kustomize에 KSOPS exec generator 허용 ──────────────────────────
     # KSOPS는 kustomize의 alpha exec plugin으로 동작하므로 두 플래그가 필수.
-    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"
+    # LoadRestrictionsNone: enc 파일을 오버레이 밖(k8s/secrets/)에서 참조하도록 허용
+    # (ADR-013이 secret을 k8s/secrets/에 모으는 규약 — prod/local 오버레이 공통 필요).
+    kustomize.buildOptions: "--enable-alpha-plugins --enable-exec --load-restrictor LoadRestrictionsNone"
 
 repoServer:
   # ── (2) ksops init container ───────────────────────────────────────────

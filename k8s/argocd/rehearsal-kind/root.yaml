@@ -1,0 +1,27 @@
+# kind GitOps 리허설 루트 (App-of-Apps, ADR-022 검증 2부의 kind 선실증)
+# OKE 전에 kind에서 App-of-Apps sync·wave 게이트·selfHeal·ksops-in-sync를 실증하기 위한
+# **kind 전용** 세트. 운영 배포는 k8s/argocd/bootstrap/root.yaml(overlays/prod)이 담당.
+#
+# 부트스트랩(수동, out-of-band):
+#   kubectl apply -f k8s/argocd/projects/mini-commerce.yaml
+#   kubectl apply -f k8s/argocd/rehearsal-kind/root.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rehearsal-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/argocd/rehearsal-kind/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

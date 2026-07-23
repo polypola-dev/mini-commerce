@@ -1,0 +1,17 @@
+# kind GitOps 리허설 오버레이 (G11 2단계 C, ADR-022) — overlays/local + ksops Secret
+#
+# ArgoCD가 이 오버레이를 관리한다(수동 kubectl 대신). overlays/local을 그대로 상속하고,
+# 그동안 secrets.sh로 따로 넣던 app-secrets Secret을 **ksops generator로 sync 시점에
+# 복호화 생성**해 GitOps 폐루프를 완성한다.
+#
+#   ⚠️ ksops generator라 로컬 `kubectl kustomize`로는 빌드 불가(ksops 미탑재).
+#      ArgoCD repo-server의 ksops-kustomize(v5.3.0+ksops.v4.5.1)에서만 렌더된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../local
+
+# app-secrets Secret을 enc 파일에서 복호화 생성 (secrets.sh apply의 GitOps 대체)
+generators:
+  - ksops-secret.yaml

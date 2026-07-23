@@ -1,0 +1,28 @@
+# wave 2 — 앱 스택(overlays/local-gitops) — Kafka(wave 1) Healthy 후 sync (ADR-022)
+# overlays/local + ksops Secret 생성. 기존 수동배포 앱 5종+postgres/redis+Secret을
+# ArgoCD가 adopt한다. wave 2라 wave 1의 Kafka health가 Healthy가 될 때까지 대기.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rehearsal-apps
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/overlays/local-gitops
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mini-commerce
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=false

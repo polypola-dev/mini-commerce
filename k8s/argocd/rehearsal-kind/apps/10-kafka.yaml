@@ -1,0 +1,30 @@
+# wave 1 — 기존 Kafka CR을 ArgoCD가 adopt (ADR-022 kind 리허설)
+# 이미 떠 있는 Kafka(strimzi 관리)의 CR을 ArgoCD 관리로 흡수한다. 목적은 Kafka
+# health check가 실제로 Healthy를 읽어 wave 2를 통과시키는지 실증.
+#   prune=false: 리허설 중 Kafka CR 실수 삭제(=브로커/데이터 소멸) 방지.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rehearsal-kafka
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: mini-commerce
+  source:
+    repoURL: https://github.com/polypola-dev/mini-commerce.git
+    targetRevision: main
+    path: k8s/kafka
+    directory:
+      include: "kafka-cluster.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mini-commerce
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
